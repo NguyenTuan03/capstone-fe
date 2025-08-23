@@ -132,7 +132,7 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
           isLoading: false,
           isAuthenticated: true,
         });
-      } catch (error: any) {
+      } catch {
         setJWTAuthData({
           user: undefined,
           isLoading: false,
@@ -193,7 +193,7 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
       } else {
         location.href = '/';
       }
-    } catch (error: any) {
+    } catch {
       setJWTAuthData({
         ...firebaseData,
         isAuthenticated: false,
