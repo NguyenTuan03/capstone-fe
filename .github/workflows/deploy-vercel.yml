@@ -31,7 +31,7 @@ jobs:
           vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
           vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
           working-directory: .
-          scope: ${{ secrets.VERCEL_ORG_ID }}
+          # scope: ${{ secrets.VERCEL_ORG_ID }}
           github-comment: true
           vercel-args: '--prebuilt' # dùng .next đã build
 
