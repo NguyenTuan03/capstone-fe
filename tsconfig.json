@@ -22,11 +22,11 @@
     "paths": {
       "@/*": ["./src/*"],
 
-      "@components/*": ["./src/components/*"],
+      "@components/*": ["src/modules/*"],
       "@hooks/*": ["./src/hooks/*"],
       "@lib/*": ["./src/lib/*"],
       "@services/*": ["./src/services/*"],
-      "@types/*": ["./src/types/*"],
+      "@types/*": ["src/@crema/types/*"],
       "@utils/*": ["./src/utils/*"]
     }
   },

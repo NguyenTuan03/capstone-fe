@@ -1,19 +1,14 @@
 'use client';
 
-import { useAuth } from '@/lib/auth-provider';
-import { PageLoading } from '@/components/ui/loading';
-import { Sidebar } from '@/components/layout/sidebar';
-import { Header } from '@/components/layout/header';
+import { useJWTAuth } from '@/@crema/services/jwt-auth/JWTAuthProvider';
+import { Sidebar } from '@/modules/layout/sidebar';
+import { Header } from '@/modules/layout/header';
 
-export default function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const { user, loading } = useAuth();
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  const { user, isLoading } = useJWTAuth();
 
-  if (loading) {
-    return <PageLoading />;
+  if (isLoading) {
+    return <div>Loading...</div>;
   }
 
   if (!user) {
@@ -26,9 +21,7 @@ export default function DashboardLayout({
       <div className="lg:pl-72">
         <Header />
         <main className="py-8">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            {children}
-          </div>
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">{children}</div>
         </main>
       </div>
     </div>

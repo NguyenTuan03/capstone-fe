@@ -72,9 +72,7 @@ export function DashboardStats() {
               <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
             </div>
             <div className="text-right">
-              <span className="text-sm font-medium text-green-600">
-                {stat.change}
-              </span>
+              <span className="text-sm font-medium text-green-600">{stat.change}</span>
             </div>
           </div>
         </div>

@@ -1,8 +1,8 @@
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import { AuthProvider } from '@/lib/auth-provider';
-import { QueryProvider } from '@/lib/query-provider';
+import AppAuthProvider from '@/@crema/core/AppAuthProvider';
+import AppContextProvider from '@/@crema/context/AppContextProvider';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -25,11 +25,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi">
+    <html lang="vi" data-google-analytics-opt-out="">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        <QueryProvider>
-          <AuthProvider>{children}</AuthProvider>
-        </QueryProvider>
+        <AppContextProvider>
+          <AppAuthProvider>{children}</AppAuthProvider>
+        </AppContextProvider>
       </body>
     </html>
   );

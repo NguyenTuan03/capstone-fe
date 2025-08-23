@@ -3,14 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
-import { 
-  Home, 
-  CreditCard, 
-  Settings, 
-  Users, 
-  BarChart3,
-  LogOut 
-} from 'lucide-react';
+import { Home, CreditCard, Settings, Users, BarChart3, LogOut } from 'lucide-react';
 import { useAuth } from '@/lib/auth-provider';
 
 const navigation = [
@@ -25,9 +18,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
 
-  const filteredNavigation = navigation.filter(item => 
-    !item.adminOnly || user?.role === 'admin'
-  );
+  const filteredNavigation = navigation.filter((item) => !item.adminOnly || user?.role === 'admin');
 
   return (
     <div className="hidden lg:fixed lg:inset-y-0 lg:z-50 lg:flex lg:w-72 lg:flex-col">
@@ -49,13 +40,13 @@ export function Sidebar() {
                           isActive
                             ? 'bg-blue-50 text-blue-700'
                             : 'text-gray-700 hover:text-blue-700 hover:bg-gray-50',
-                          'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold'
+                          'group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold',
                         )}
                       >
                         <item.icon
                           className={cn(
                             isActive ? 'text-blue-700' : 'text-gray-400 group-hover:text-blue-700',
-                            'h-6 w-6 shrink-0'
+                            'h-6 w-6 shrink-0',
                           )}
                           aria-hidden="true"
                         />
