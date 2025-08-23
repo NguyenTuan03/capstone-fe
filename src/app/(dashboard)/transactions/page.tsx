@@ -1,7 +1,5 @@
 'use client';
 
-import { TransactionList } from '@/components/transactions/transaction-list';
-import { TransactionFilters } from '@/components/transactions/transaction-filters';
 import { useState } from 'react';
 
 export default function TransactionsPage() {
@@ -19,9 +17,6 @@ export default function TransactionsPage() {
           Quản lý và theo dõi tất cả các giao dịch của bạn
         </p>
       </div>
-
-      <TransactionFilters filters={filters} onFiltersChange={setFilters} />
-      <TransactionList filters={filters} />
     </div>
   );
 }
