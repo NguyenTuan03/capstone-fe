@@ -41,7 +41,7 @@ yarn-error.log*
 next-env.d.ts
 
 .next/
-.turbo/
-out/
+.out/
 dist/
+.turbo/
 coverage/
