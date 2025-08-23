@@ -19,7 +19,7 @@ const eslintConfig = [
       },
     },
   },
-
+  { ignores: ['node_modules/**', '.next/**', 'dist/**', 'out/**'] },
   {
     files: ['**/*.{ts,tsx}'],
     rules: {

@@ -13,11 +13,11 @@
     "test": "echo \"(no tests)\" && exit 0"
   },
   "lint-staged": {
-    "*.{js,jsx,ts,tsx}": [
+    "src/**/*.{js,jsx,ts,tsx}": [
       "eslint --fix",
       "prettier -w"
     ],
-    "*.{json,md,css,scss,html}": "prettier -w"
+    "src/**/*.{json,md,css,scss,html}": "prettier -w"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.85.0",
