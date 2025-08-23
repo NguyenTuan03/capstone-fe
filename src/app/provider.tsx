@@ -1,7 +1,7 @@
 import React from 'react'
 
 
-const Provider = (props: Props) => {
+const Provider = () => {
   return (
     <div>Provider</div>
   )
