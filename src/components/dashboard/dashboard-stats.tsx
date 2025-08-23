@@ -2,7 +2,6 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { formatCurrency } from '@/lib/utils';
-import { Loading } from '@/components/ui/loading';
 
 interface Stats {
   totalBalance: number;

@@ -1,13 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-
 export default function TransactionsPage() {
-  const [filters, setFilters] = useState({
-    status: '',
-    dateRange: '',
-    search: '',
-  });
 
   return (
     <div className="space-y-8">

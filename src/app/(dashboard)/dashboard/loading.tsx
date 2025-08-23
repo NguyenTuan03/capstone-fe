@@ -1,5 +1,3 @@
-import { Loading } from '@/components/ui/loading';
-
 export default function DashboardLoading() {
   return (
     <div className="space-y-8">
