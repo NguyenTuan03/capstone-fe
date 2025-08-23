@@ -9,7 +9,8 @@
     "lint": "next lint",
     "prepare": "husky",
     "format": "prettier -w .",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "echo \"(no tests)\" && exit 0"
   },
   "lint-staged": {
     "*.{js,jsx,ts,tsx}": [
@@ -22,7 +23,6 @@
     "@tanstack/react-query": "^5.85.0",
     "@tanstack/react-query-devtools": "^5.85.0",
     "clsx": "^2.1.0",
-    "husky": "^9.1.7",
     "js-cookie": "^3.0.5",
     "lucide-react": "^0.468.0",
     "next": "15.4.6",
@@ -40,6 +40,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "15.4.6",
+    "husky": "^9.1.7",
     "lint-staged": "^16.1.5",
     "prettier": "^3.6.2",
     "tailwindcss": "^4",

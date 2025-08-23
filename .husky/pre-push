@@ -1,2 +1,2 @@
-﻿# husky
- npm run typecheck && npm run lint && npm run build
+#!/usr/bin/env sh
+npm run typecheck && npm run lint && npm run build

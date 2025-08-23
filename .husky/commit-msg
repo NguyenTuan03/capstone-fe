@@ -1,2 +1,10 @@
-﻿# husky
- npx --no commitlint --edit ""
+#!/usr/bin/env sh
+MSG_FILE="$(git rev-parse --git-path COMMIT_EDITMSG)"
+cat "$MSG_FILE" | npx --no commitlint
+STATUS=$?
+echo ""
+echo "ℹ️  Conventional Commits:"
+echo "   Format: type(scope?): subject"
+echo "   Types:  feat | fix | chore | docs | style | refactor | perf | test | ci"
+echo "   Ví dụ:  feat: add refresh token"
+exit $STATUS

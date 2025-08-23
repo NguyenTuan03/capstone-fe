@@ -8,6 +8,5 @@ module.exports = {
     ],
     'subject-empty': [2, 'never'],
     'header-max-length': [2, 'always', 100],
-    'subject-disallowed-words': [2, 'always', ['test', 'temp', 'wip']],
   },
 };
