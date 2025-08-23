@@ -1,4 +1,4 @@
-name: capstone-fe
+name: Deploy (Vercel)
 
 on:
   pull_request:
