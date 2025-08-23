@@ -1,7 +1,6 @@
 'use client';
 
 import { useJWTAuth } from '@/@crema/services/jwt-auth/JWTAuthProvider';
-// import { Sidebar } from '@/modules/layout/sidebar';
 import { Header } from '@/modules/layout/header';
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -17,7 +16,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* <Sidebar /> */}
       <div className="lg:pl-72">
         <Header />
         <main className="py-8">
