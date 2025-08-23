@@ -26,10 +26,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="vi">
-      <head>
-        <link href='/assets/favicon.ico'  />
-        <meta name='them-color' content='#343434' />
-      </head>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <QueryProvider>
           <AuthProvider>{children}</AuthProvider>
