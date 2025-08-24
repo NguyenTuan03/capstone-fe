@@ -91,7 +91,7 @@ interface JWTAuthAuthProviderProps {
  */
 const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) => {
   const cookies = new Cookies();
-  const [firebaseData, setJWTAuthData] = useState<JWTAuthContextProps>({
+  const [jwtAuthData, setJWTAuthData] = useState<JWTAuthContextProps>({
     user: null,
     isAuthenticated: false,
     isLoading: true,
@@ -195,7 +195,7 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
       }
     } catch {
       setJWTAuthData({
-        ...firebaseData,
+        ...jwtAuthData,
         isAuthenticated: false,
         isLoading: false,
       });
@@ -241,7 +241,7 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
   return (
     <JWTAuthContext.Provider
       value={{
-        ...firebaseData,
+        ...jwtAuthData,
       }}
     >
       <JWTAuthActionsContext.Provider

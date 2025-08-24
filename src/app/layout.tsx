@@ -1,8 +1,8 @@
-import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import AppAuthProvider from '@/@crema/core/AppAuthProvider';
 import AppContextProvider from '@/@crema/context/AppContextProvider';
+import { buildMetadata } from '@/@crema/helper/seo';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -14,10 +14,7 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-export const metadata: Metadata = {
-  title: 'Matadata wep app',
-  description: 'descriptio right here',
-};
+export const metadata = buildMetadata();
 
 export default function RootLayout({
   children,
