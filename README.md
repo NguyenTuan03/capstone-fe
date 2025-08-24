@@ -25,14 +25,16 @@
 - **Node**: 20.x (pinned)
 - **Framework**: Next.js 15 (React 19)
 - **UI**: Ant Design
+- **Library**: Tailwind CSS
 - **Data**: TanStack Query
 - **Tools**: ESLint 9, Prettier 3, Husky 9, lint-staged 16, Commitlint 19
 
-## 🗂 Project Structure
+## 📁 Project Structure
+
+```text
 .
 ├─ public/
 │  └─ favicon.ico
-│
 ├─ src/
 │  ├─ @crema/
 │  │  ├─ axios/
@@ -46,7 +48,6 @@
 │  │  ├─ services/
 │  │  ├─ types/
 │  │  └─ utils/
-│  │
 │  ├─ app/
 │  │  ├─ (auth)/
 │  │  ├─ (dashboard)/
@@ -59,10 +60,7 @@
 │  │  ├─ page.tsx
 │  │  ├─ provider.tsx
 │  │  └─ template.tsx
-│  │
 │  └─ modules/
-│
 ├─ .env
-├─ .eslintrc.json
-└─ .gitattributes
+├─
 
