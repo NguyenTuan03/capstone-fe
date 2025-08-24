@@ -29,6 +29,7 @@
 - **Tools**: ESLint 9, Prettier 3, Husky 9, lint-staged 16, Commitlint 19
 
 ## 🗂 Project Structure
+.
 ├─ public/
 │  └─ favicon.ico
 │
@@ -64,3 +65,4 @@
 ├─ .env
 ├─ .eslintrc.json
 └─ .gitattributes
+
