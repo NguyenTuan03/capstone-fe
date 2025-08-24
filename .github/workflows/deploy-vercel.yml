@@ -1,40 +1,54 @@
-name: Deploy (Vercel)
+# .github/workflows/deploy-vercel-cli.yml
+name: Deploy (Vercel CLI)
 
 on:
-  pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: vercel-deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  PROJECT_DIR: . # đổi thành thư mục app nếu monorepo, ví dụ: apps/web
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    env:
-      HUSKY: 0
-      NEXT_TELEMETRY_DISABLED: 1
+    defaults:
+      run:
+        working-directory: ${{ env.PROJECT_DIR }}
+
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
+          cache: npm
+          cache-dependency-path: ${{ env.PROJECT_DIR }}/package-lock.json
 
-      - run: npm ci
-      - run: npm run build
+      - name: Install deps
+        run: npm ci
 
-      - name: Deploy Preview
-        if: ${{ github.event_name == 'pull_request' }}
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          github-comment: true
+      # Debug quyền/scope trước (nếu fail thì sửa secrets trước khi build)
+      - name: Sanity check Vercel access
+        run: |
+          npx vercel@25 whoami --token ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID=${{ secrets.VERCEL_ORG_ID }} \
+          VERCEL_PROJECT_ID=${{ secrets.VERCEL_PROJECT_ID }} \
+          npx vercel@25 pull --yes --environment=production --token ${{ secrets.VERCEL_TOKEN }}
 
-      - name: Deploy Production
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          vercel-args: '--prod'
+      - name: Build (prebuilt)
+        run: npx vercel@25 build --prod
+
+      - name: Deploy (prebuilt artifact)
+        run: npx vercel@25 deploy --prod --prebuilt --token ${{ secrets.VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
