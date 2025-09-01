@@ -22,7 +22,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="vi" data-google-analytics-opt-out="">
+    <html lang="vi" data-google-analytics-opt-out="" cz-shortcut-listen="true">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <AppContextProvider>
           <AppAuthProvider>{children}</AppAuthProvider>
