@@ -155,8 +155,6 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
     Object.keys(allCookies).forEach((cookieKey) => {
       if (cookieKey === cookieName) {
         cookies.remove(cookieKey, { path: '/' });
-        cookies.remove(cookieKey, { path: '/', domain: '.nanoco.com.vn' });
-        cookies.remove(cookieKey, { path: '/', domain: '.autopilot.nanoco.com.vn' });
       }
     });
   };
