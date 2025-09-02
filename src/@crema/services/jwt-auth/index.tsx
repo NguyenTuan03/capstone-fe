@@ -10,6 +10,7 @@
 
 import { REFRESH_TOKEN_KEY, REMEMBER_ME_KEY, TOKEN_KEY } from '@/@crema/constants/AppConst';
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import { log } from 'console';
 
 // Types definitions for internal use
 interface QueueItem {
@@ -26,8 +27,7 @@ interface RefreshTokenResponse {
 
 // Constants used throughout the service
 const AUTH_ERROR_STATUS = 401;
-const API_BASE_URL = process.env.NEXT_PUBLIC_REST_URL + '/api/v1/';
-
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL + '/' + process.env.NEXT_PUBLIC_VERSION;
 /**
  * Check if code is running in browser environment
  * This is important for Next.js SSR compatibility
@@ -175,7 +175,7 @@ const refreshAuthToken = async (): Promise<string> => {
 
   try {
     const response = await axios.post<RefreshTokenResponse>(
-      `${API_BASE_URL}refresh-token`,
+      `${API_BASE_URL}/refresh-token`,
       { refresh_token: refreshToken },
       {
         headers: {

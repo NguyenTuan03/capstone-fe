@@ -5,8 +5,8 @@ import React from 'react';
 
 const AppLoader = () => {
   return (
-    <div className="flex align-middle justify-center min-h-[100%] absolute left-0 right-0 top-0 bottom-0">
-      <Spin />
+    <div className="fixed inset-0 flex items-center justify-center bg-white/60 z-50">
+      <Spin size="large" />
     </div>
   );
 };
