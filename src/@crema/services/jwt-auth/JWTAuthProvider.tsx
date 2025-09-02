@@ -50,6 +50,8 @@ interface SignInProps {
 interface JWTAuthActionsProps {
   signInUser: (data: SignInProps) => void;
   logout: () => void;
+  requestPasswordReset: (email: string) => Promise<boolean>;
+  resetPassword: (token: string, newPassword: string, confirmPassword: string) => Promise<boolean>;
 }
 
 /**
@@ -69,6 +71,8 @@ const JWTAuthContext = createContext<JWTAuthContextProps>({
 const JWTAuthActionsContext = createContext<JWTAuthActionsProps>({
   signInUser: () => undefined,
   logout: () => undefined,
+  requestPasswordReset: () => Promise.resolve(false),
+  resetPassword: () => Promise.resolve(false),
 });
 
 // Custom hooks to access auth contexts
@@ -236,6 +240,49 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
     }
   };
 
+  /**
+   * Requests a password reset for a user
+   * Sends a reset email to the provided email address
+   * @param email User's email address
+   * @returns Promise resolving to success status
+   */
+  const requestPasswordReset = async (email: string): Promise<boolean> => {
+    try {
+      await jwtAxios.post('request-password-reset', {
+        email,
+      });
+      return true;
+    } catch (error) {
+      console.error('Password reset request error:', error);
+      return false;
+    }
+  };
+
+  /**
+   * Resets a user's password using the token received via email
+   * @param token Password reset token
+   * @param newPassword New password
+   * @param confirmPassword Confirmation of new password
+   * @returns Promise resolving to success status
+   */
+  const resetPassword = async (
+    token: string,
+    newPassword: string,
+    confirmPassword: string,
+  ): Promise<boolean> => {
+    try {
+      await jwtAxios.post('reset-password', {
+        token,
+        password: newPassword,
+        password_confirmation: confirmPassword,
+      });
+      return true;
+    } catch (error) {
+      console.error('Password reset error:', error);
+      return false;
+    }
+  };
+
   return (
     <JWTAuthContext.Provider
       value={{
@@ -246,6 +293,8 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
         value={{
           signInUser,
           logout,
+          requestPasswordReset,
+          resetPassword,
         }}
       >
         {children}
