@@ -6,6 +6,7 @@ import { buildMetadata } from '@/@crema/helper/seo';
 import { ConfigProvider } from 'antd';
 import viVN from 'antd/locale/vi_VN';
 import AppLocaleProvider from '@/@crema/context/AppLocaleProvider';
+import AppQueryProvider from '@/@crema/context/AppQueryProvider';
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
@@ -32,13 +33,15 @@ export default function RootLayout({
         cz-shortcut-listen="true"
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <ConfigProvider locale={viVN}>
-          <AppLocaleProvider>
-            <AppContextProvider>
-              <AppAuthProvider>{children}</AppAuthProvider>
-            </AppContextProvider>
-          </AppLocaleProvider>
-        </ConfigProvider>
+        <AppQueryProvider>
+          <ConfigProvider locale={viVN}>
+            <AppLocaleProvider>
+              <AppContextProvider>
+                <AppAuthProvider>{children}</AppAuthProvider>
+              </AppContextProvider>
+            </AppLocaleProvider>
+          </ConfigProvider>
+        </AppQueryProvider>
       </body>
     </html>
   );
