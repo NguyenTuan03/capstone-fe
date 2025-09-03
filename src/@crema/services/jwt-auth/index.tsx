@@ -10,7 +10,6 @@
 
 import { REFRESH_TOKEN_KEY, REMEMBER_ME_KEY, TOKEN_KEY } from '@/@crema/constants/AppConst';
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
-import { log } from 'console';
 
 // Types definitions for internal use
 interface QueueItem {
@@ -129,7 +128,6 @@ const jwtAxios: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
-    credentials: 'include',
   },
 });
 
@@ -156,13 +154,14 @@ const processQueue = (error: any | null, token: string | null = null): void => {
  * Handles user logout by clearing tokens and redirecting to signin page
  * Safe to use in both browser and SSR environments
  */
+let onLogout: null | (() => void) = null;
 const handleLogout = (): void => {
   clearTokens();
-  if (isBrowser) {
-    window.location.href = '/signin';
-  }
+  onLogout?.();
 };
-
+export const setLogoutHandler = (fn: () => void) => {
+  onLogout = fn;
+};
 /**
  * Refreshes the authentication token using the refresh token
  * Returns a new token if successful, throws an error if fails

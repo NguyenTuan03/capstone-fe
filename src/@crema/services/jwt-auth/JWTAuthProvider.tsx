@@ -95,6 +95,7 @@ interface JWTAuthAuthProviderProps {
  */
 const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) => {
   const cookies = new Cookies();
+
   const [jwtAuthData, setJWTAuthData] = useState<JWTAuthContextProps>({
     user: null,
     isAuthenticated: false,
@@ -188,13 +189,16 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
         isAuthenticated: true,
         isLoading: false,
       });
-      const redirectUrl = localStorage.getItem(REDIRECT_URL_KEY);
-      if (redirectUrl) {
-        location.href = redirectUrl;
-        localStorage.removeItem(REDIRECT_URL_KEY);
-      } else {
-        location.href = '/';
-      }
+      // Persist user per remember option
+      try {
+        if (remember) {
+          localStorage.setItem('user', JSON.stringify(metadata.user));
+          sessionStorage.removeItem('user');
+        } else {
+          sessionStorage.setItem('user', JSON.stringify(metadata.user));
+          localStorage.removeItem('user');
+        }
+      } catch {}
     } catch {
       setJWTAuthData({
         ...jwtAuthData,
@@ -232,6 +236,10 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
       setAuthToken();
       setRefreshToken();
       localStorage.removeItem(REFRESH_TOKEN_KEY);
+      try {
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
+      } catch {}
       setJWTAuthData({
         user: null,
         isLoading: false,
