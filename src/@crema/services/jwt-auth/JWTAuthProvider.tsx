@@ -173,18 +173,18 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
   const signInUser = async ({ email, password, remember }: SignInProps) => {
     removeAllXSRFTokens();
     try {
-      const { data } = await jwtAxios.post('login', {
+      const { data } = await jwtAxios.post('auth/login', {
         email,
         password,
       });
-
+      const { metadata } = data;
       // Store authentication tokens
-      setAuthToken(data.data.token, remember);
-      setRefreshToken(data.data.refresh_token, remember);
+      setAuthToken(metadata.accessToken, remember);
+      setRefreshToken(metadata.refresh_token, remember);
 
       // Update authentication state
       setJWTAuthData({
-        user: data.data.user,
+        user: metadata.user,
         isAuthenticated: true,
         isLoading: false,
       });

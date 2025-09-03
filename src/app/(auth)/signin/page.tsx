@@ -1,15 +1,26 @@
 'use client';
 import IntlMessages from '@/@crema/helper/IntlMessages';
-import { useAuthActions } from '@/@crema/hooks/useAuth';
+import { useAuthActions, useAuthUser } from '@/@crema/hooks/useAuth';
 import { Button, Checkbox, Form, Input } from 'antd';
 import Image from 'next/image';
 import React from 'react';
 import { useIntl } from 'react-intl';
+import { useRouter } from 'next/navigation';
 
 export default function Login() {
   const { messages: t } = useIntl();
   const { signInUser } = useAuthActions();
+  const { isAuthenticated } = useAuthUser();
+  const router = useRouter();
   const [form] = Form.useForm();
+
+  // Redirect về dashboard nếu đã đăng nhập
+  React.useEffect(() => {
+    if (isAuthenticated) {
+      router.replace('/dashboard');
+    }
+  }, [isAuthenticated, router]);
+
   const handleSignIn = (values: { remember: boolean; password: string; email: string }) => {
     signInUser({ ...values, email: values.email.toLowerCase().trim() });
   };
