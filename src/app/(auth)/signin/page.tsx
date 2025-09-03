@@ -3,7 +3,7 @@ import IntlMessages from '@/@crema/helper/IntlMessages';
 import { useAuthActions, useAuthUser } from '@/@crema/hooks/useAuth';
 import { Button, Checkbox, Form, Input } from 'antd';
 import Image from 'next/image';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import { useRouter } from 'next/navigation';
 
@@ -14,8 +14,7 @@ export default function Login() {
   const router = useRouter();
   const [form] = Form.useForm();
 
-  // Redirect về dashboard nếu đã đăng nhập
-  React.useEffect(() => {
+  useEffect(() => {
     if (isAuthenticated) {
       router.replace('/dashboard');
     }
@@ -26,6 +25,7 @@ export default function Login() {
   };
 
   const onFinish = (values: { remember: boolean; password: string; email: string }) => {
+    console.log('Form submitted with values:', values);
     handleSignIn(values);
   };
   const onFinishFailed = (errorInfo: any) => {

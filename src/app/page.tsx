@@ -9,10 +9,31 @@ export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
+    try {
+      const ssUser = typeof window !== 'undefined' ? sessionStorage.getItem('user') : null;
+      const lsUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+      if (ssUser || lsUser) {
+        router.replace('/dashboard');
+        return;
+      }
+    } catch {}
+
     if (!isLoading) {
-      !isAuthenticated ? router.replace('/signin') : router.replace('/dashboard');
+      if (!isAuthenticated) {
+        router.replace('/signin');
+      } else {
+        router.replace('/dashboard');
+      }
     }
   }, [isAuthenticated, isLoading, router]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen fixed inset-0 z-50">
+        <AppLoader />
+      </div>
+    );
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen fixed inset-0 z-50">
