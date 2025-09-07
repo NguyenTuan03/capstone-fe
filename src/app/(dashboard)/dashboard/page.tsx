@@ -9,7 +9,7 @@ export default function DashboardPage() {
     <div className="space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Xin chào, {user?.name}!</h1>
-        <p className="mt-1 text-sm text-gray-600">Tổng quan về hoạt động thanh toán của bạn</p>
+        <p className="mt-1 text-sm text-gray-600">Dashboard page</p>
       </div>
     </div>
   );
