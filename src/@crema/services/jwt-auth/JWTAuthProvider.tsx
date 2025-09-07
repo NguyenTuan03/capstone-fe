@@ -121,8 +121,9 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
       // Set up token and fetch user data
       const remember = JSON.parse(localStorage.getItem(REMEMBER_ME_KEY) || 'false');
       setAuthToken(token, remember);
+
       try {
-        const { data } = await jwtAxios.get('current-user', {
+        const { data } = await jwtAxios.get('auth/current-user', {
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
@@ -130,10 +131,9 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
           withCredentials: false,
           withXSRFToken: false,
         });
-
         // Update auth state with user data and permissions
         setJWTAuthData({
-          user: data?.data,
+          user: data?.metadata?.user,
           isLoading: false,
           isAuthenticated: true,
         });
