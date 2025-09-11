@@ -7,6 +7,7 @@ import { ConfigProvider } from 'antd';
 import viVN from 'antd/locale/vi_VN';
 import AppLocaleProvider from '@/@crema/context/AppLocaleProvider';
 import AppQueryProvider from '@/@crema/context/AppQueryProvider';
+import AppAuthGuard from '@/@crema/components/AppAuthGuard';
 const geistSans = Geist({
   variable: '--font-geist-sans',
   subsets: ['latin'],
@@ -37,7 +38,9 @@ export default function RootLayout({
           <ConfigProvider locale={viVN}>
             <AppLocaleProvider>
               <AppContextProvider>
-                <AppAuthProvider>{children}</AppAuthProvider>
+                <AppAuthProvider>
+                  <AppAuthGuard>{children}</AppAuthGuard>
+                </AppAuthProvider>
               </AppContextProvider>
             </AppLocaleProvider>
           </ConfigProvider>

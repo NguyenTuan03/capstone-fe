@@ -27,3 +27,20 @@ export interface PaginatedResponse<T> {
     totalPages: number;
   };
 }
+
+export type PaginatedAPIResponse<T> = {
+  data: T;
+  current_page: number;
+  last_page: number;
+  total: number;
+  per_page: number;
+};
+
+export interface ApiOptions<Body> {
+  params?: any;
+  payload?: Body | FormData;
+  onSuccess?: (data: any) => void;
+  onError?: (error: any) => void;
+  updateUrl?: string;
+  hideError?: boolean;
+}
