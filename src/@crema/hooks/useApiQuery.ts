@@ -164,3 +164,265 @@ export const useOptimisticUpdate = <TData = unknown>(
     },
   };
 };
+
+// ================================
+// ENHANCED HOOKS FOR COMMON PATTERNS
+// ================================
+
+// Paginated query hook
+export const usePaginatedQuery = <TData = unknown>(
+  endpoint: string,
+  options?: {
+    page?: number;
+    pageSize?: number;
+    params?: Record<string, any>;
+    queryOptions?: Omit<UseQueryOptions<TData>, 'queryKey' | 'queryFn'>;
+  },
+) => {
+  const { page = 1, pageSize = 10, params = {}, queryOptions = {} } = options || {};
+
+  const paginationParams = {
+    page,
+    pageSize,
+    ...params,
+  };
+
+  return useApiQuery<TData>({
+    endpoint,
+    params: paginationParams,
+    ...queryOptions,
+  });
+};
+
+// CRUD Hooks for specific entities
+export const useCrudOperations = <TData = unknown, TCreateData = unknown, TUpdateData = unknown>(
+  entityName: string,
+  options?: {
+    endpoints?: {
+      list?: string;
+      create?: string;
+      update?: string;
+      delete?: string;
+      detail?: string;
+    };
+  },
+) => {
+  const endpoints = {
+    list: `/${entityName}`,
+    create: `/${entityName}`,
+    update: `/${entityName}`,
+    delete: `/${entityName}`,
+    detail: `/${entityName}`,
+    ...options?.endpoints,
+  };
+
+  const queryClient = useQueryClient();
+
+  // List query
+  const useList = (params?: Record<string, any>) => {
+    return useApiQuery<TData>({
+      endpoint: endpoints.list,
+      params,
+    });
+  };
+
+  // Detail query
+  const useDetail = (id: string | number, enabled = true) => {
+    return useApiQuery<TData>({
+      endpoint: `${endpoints.detail}/${id}`,
+      enabled: enabled && !!id,
+    });
+  };
+
+  // Create mutation
+  const useCreate = () => {
+    return useApiMutation<TData, TCreateData>({
+      endpoint: endpoints.create,
+      method: 'POST',
+      onSuccess: () => {
+        // Invalidate list queries
+        queryClient.invalidateQueries({
+          queryKey: [endpoints.list],
+        });
+      },
+    });
+  };
+
+  // Update mutation
+  const useUpdate = () => {
+    return useMutation<TData, Error, TUpdateData & { id: string | number }>({
+      mutationFn: (variables) =>
+        apiCall<TData>(`${endpoints.update}/${variables.id}`, {
+          method: 'PUT',
+          data: variables,
+        }),
+      onSuccess: (data, variables) => {
+        // Update specific item in cache
+        queryClient.setQueryData([`${endpoints.detail}/${variables.id}`], data);
+        // Invalidate list queries
+        queryClient.invalidateQueries({
+          queryKey: [endpoints.list],
+        });
+      },
+    });
+  };
+
+  // Delete mutation
+  const useRemove = () => {
+    return useMutation<void, Error, { id: string | number }>({
+      mutationFn: (variables) =>
+        apiCall<void>(`${endpoints.delete}/${variables.id}`, { method: 'DELETE' }),
+      onSuccess: (data, variables) => {
+        // Remove from cache
+        queryClient.removeQueries({
+          queryKey: [`${endpoints.detail}/${variables.id}`],
+        });
+        // Invalidate list queries
+        queryClient.invalidateQueries({
+          queryKey: [endpoints.list],
+        });
+      },
+    });
+  };
+
+  return {
+    useList,
+    useDetail,
+    useCreate,
+    useUpdate,
+    useRemove,
+  };
+};
+
+// Search hook with debouncing
+export const useSearchQuery = <TData = unknown>(
+  endpoint: string,
+  searchTerm: string,
+  options?: {
+    debounceMs?: number;
+    minSearchLength?: number;
+    params?: Record<string, any>;
+  },
+) => {
+  const { debounceMs = 500, minSearchLength = 2, params = {} } = options || {};
+
+  return useApiQuery<TData>({
+    endpoint,
+    params: {
+      search: searchTerm,
+      ...params,
+    },
+    enabled: searchTerm.length >= minSearchLength,
+    staleTime: 30000, // 30 seconds for search results
+  });
+};
+
+// Cache management utilities
+export const useCacheManager = () => {
+  const queryClient = useQueryClient();
+
+  return {
+    // Prefetch data
+    prefetch: async <TData = unknown>(endpoint: string, params?: Record<string, any>) => {
+      await queryClient.prefetchQuery({
+        queryKey: [endpoint, params],
+        queryFn: () => apiCall<TData>(endpoint, { params }),
+        staleTime: 5 * 60 * 1000, // 5 minutes
+      });
+    },
+
+    // Set data directly in cache
+    setData: <TData = unknown>(
+      queryKey: (string | number)[],
+      data: TData | ((old: TData | undefined) => TData),
+    ) => {
+      queryClient.setQueryData(queryKey, data);
+    },
+
+    // Get data from cache
+    getData: <TData = unknown>(queryKey: (string | number)[]) => {
+      return queryClient.getQueryData<TData>(queryKey);
+    },
+
+    // Clear all cache
+    clearAll: () => {
+      queryClient.clear();
+    },
+
+    // Remove specific queries
+    removeQueries: (queryKey: (string | number)[]) => {
+      queryClient.removeQueries({ queryKey });
+    },
+
+    // Force refresh all queries
+    refetchAll: () => {
+      queryClient.refetchQueries();
+    },
+
+    // Get cache info
+    getCacheInfo: () => {
+      const queries = queryClient.getQueryCache().getAll();
+      return {
+        totalQueries: queries.length,
+        queries: queries.map((query) => ({
+          queryKey: query.queryKey,
+          state: query.state,
+          dataUpdatedAt: query.state.dataUpdatedAt,
+        })),
+      };
+    },
+  };
+};
+
+// Loading state manager for multiple queries
+export const useLoadingStates = (queries: { isLoading: boolean }[]) => {
+  const isAnyLoading = queries.some((query) => query.isLoading);
+  const loadingCount = queries.filter((query) => query.isLoading).length;
+  const totalCount = queries.length;
+  const loadingPercentage = totalCount > 0 ? ((totalCount - loadingCount) / totalCount) * 100 : 100;
+
+  return {
+    isAnyLoading,
+    loadingCount,
+    totalCount,
+    loadingPercentage,
+    isAllLoaded: loadingCount === 0,
+  };
+};
+
+// Form mutation with loading states
+export const useFormMutation = <TData = unknown, TVariables = unknown>(
+  endpoint: string,
+  options?: {
+    method?: 'POST' | 'PUT' | 'PATCH';
+    showSuccessMessage?: boolean;
+    successMessage?: string;
+    onSuccess?: (data: TData) => void;
+    onError?: (error: Error) => void;
+  },
+) => {
+  const {
+    method = 'POST',
+    showSuccessMessage = true,
+    successMessage = 'Lưu thành công!',
+    onSuccess,
+    onError,
+  } = options || {};
+
+  return useApiMutation<TData, TVariables>({
+    endpoint,
+    method,
+    onSuccess: (data) => {
+      if (showSuccessMessage) {
+        // This will be handled by global success handler in QueryProvider
+      }
+      onSuccess?.(data);
+    },
+    onError,
+    // Pass context for global handlers
+    meta: {
+      showSuccessMessage,
+      successMessage,
+    },
+  });
+};
