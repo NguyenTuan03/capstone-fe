@@ -2,6 +2,7 @@ import { Form, FormInstance } from 'antd';
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { MessageFormatElement, useIntl } from 'react-intl';
 import AppFormList from '../AppFormList';
+import AppAddEditModal from '../AppAddEditModal';
 interface AppPageRef {
   getFormInstance: () => FormInstance;
 }
@@ -138,6 +139,29 @@ const AppPage = forwardRef<AppPageRef, AppPageProps>(
           defaultParams={defaultParams}
           disableUrlSync={disableUrlSync}
         />
+
+        {visibleModal && fields && (
+          <AppAddEditModal
+            form={addEditForm}
+            isEdit={isEdit}
+            visible={visibleModal}
+            setVisible={(visible) => {
+              setVisibleModal(visible);
+              if (!visible) {
+                addEditForm.resetFields();
+                setSelectedItem(null);
+              }
+            }}
+            items={fields}
+            createApi={createItem}
+            title={modalTitle}
+            updateApi={isEdit ? updateItem : undefined}
+            loading={isEdit ? updateLoading : createLoading}
+            handleCallbackSuccess={handleSuccess}
+            model={selectedItem}
+            skipRouterPush={skipRouterPush}
+          />
+        )}
       </>
     );
   },

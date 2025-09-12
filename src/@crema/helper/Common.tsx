@@ -44,7 +44,7 @@ export const wrapIconWithBadge = (options: WrapIconWithBadgeOptions) => {
   return badge || dot || badgeIcon ? (
     <Badge
       offset={offset}
-      count={badgeIcon || (badge && badge > 0 ? badge : undefined)}
+      count={badgeIcon || (typeof badge === 'number' && badge > 0 ? badge : undefined)}
       size="small"
       dot={dot && !badgeIcon}
       color={color}
