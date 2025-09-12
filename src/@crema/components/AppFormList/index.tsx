@@ -5,6 +5,8 @@ import { Form } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import React, { forwardRef, useCallback, useImperativeHandle, useState } from 'react';
 import AppsContainer from '../AppsContainer';
+import AppFilterTable from './AppFilterTable';
+import ListTable from './Table';
 
 export interface FilterItem {
   type: FormInputType;
@@ -106,7 +108,33 @@ const AppFormList = forwardRef<AppFormListRef, AppFormListProps>(
     }));
     return (
       <AppsContainer>
-        <div>AppFormList</div>
+        <AppFilterTable
+          form={form}
+          loading={loading}
+          handleFilterChange={handleFilterChange}
+          filterItems={filterItems}
+          addFunction={addFunction}
+          showAddButton={showAddButton}
+          searchItems={searchItems}
+          filterData={filterData}
+          setFilterHeight={setFilterHeight}
+          additionalActionInFilter={additionalActionInFilter}
+          customActionButtons={customActionButtons}
+        />
+
+        <ListTable
+          initColumns={columns}
+          total={total}
+          dataSource={data?.data ?? []}
+          currPage={currPage}
+          currPageSize={currPageSize}
+          handlePageChange={handlePageChange}
+          loading={loading}
+          scrollX={scrollX}
+          filterData={filterData}
+          handleSortChange={handleSortChange}
+          filterHeight={filterHeight}
+        />
       </AppsContainer>
     );
   },
