@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { Result, Button } from 'antd';
 import { HomeOutlined, ReloadOutlined } from '@ant-design/icons';
+import { useIntl } from 'react-intl';
 
 interface ErrorPageProps {
   error: Error & { digest?: string };
@@ -19,6 +20,7 @@ interface ErrorPageProps {
  * - Layout/Page component errors
  */
 export default function ErrorPage({ error, reset }: ErrorPageProps) {
+  const { messages: t } = useIntl();
   useEffect(() => {
     // Log error for debugging
     console.error('Route Error:', error);
@@ -33,15 +35,15 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
 
   const getErrorMessage = () => {
     if (error.message.includes('ChunkLoadError')) {
-      return 'Có lỗi tải trang. Vui lòng thử lại.';
+      return t['common.chunkLoadError'] as string;
     }
     if (error.message.includes('NetworkError')) {
-      return 'Lỗi kết nối mạng. Vui lòng kiểm tra internet.';
+      return t['common.networkError'] as string;
     }
     if (error.message.includes('404')) {
-      return 'Không tìm thấy trang yêu cầu.';
+      return t['common.notFound'] as string;
     }
-    return 'Đã xảy ra lỗi không mong muốn.';
+    return t['common.unexpectedError'] as string;
   };
 
   return (
@@ -57,14 +59,14 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
     >
       <Result
         status="error"
-        title="Oops! Có lỗi xảy ra"
+        title={t['common.error'] as string}
         subTitle={getErrorMessage()}
         extra={[
           <Button type="primary" key="reset" icon={<ReloadOutlined />} onClick={reset}>
-            Thử lại
+            {t['common.tryAgain'] as string}
           </Button>,
           <Button key="home" icon={<HomeOutlined />} onClick={handleGoHome}>
-            Về trang chủ
+            {t['common.backToHome'] as string}
           </Button>,
         ]}
       >
@@ -82,15 +84,15 @@ export default function ErrorPage({ error, reset }: ErrorPageProps) {
               color: '#666',
             }}
           >
-            <strong>Error Details:</strong> {error.message}
+            <strong>{t['common.errorDetails'] as string}:</strong> {error.message}
             {error.digest && (
               <>
                 <br />
-                <strong>Digest:</strong> {error.digest}
+                <strong>{t['common.digest'] as string}:</strong> {error.digest}
               </>
             )}
             <br />
-            <strong>Stack:</strong>
+            <strong>{t['common.stack'] as string}:</strong>
             <pre
               style={{
                 fontSize: '11px',

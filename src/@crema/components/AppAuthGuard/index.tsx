@@ -4,6 +4,7 @@ import React from 'react';
 import { useJWTAuth } from '@/@crema/services/jwt-auth/JWTAuthProvider';
 import { Spin } from 'antd';
 import { usePathname } from 'next/navigation';
+import { useIntl } from 'react-intl';
 
 interface AppAuthGuardProps {
   children: React.ReactNode;
@@ -19,7 +20,8 @@ interface AppAuthGuardProps {
 const AppAuthGuard: React.FC<AppAuthGuardProps> = ({ children }) => {
   const { isAuthenticated, isLoading, user } = useJWTAuth();
   const pathname = usePathname();
-
+  const { messages: t } = useIntl();
+  console.log('pathname', pathname);
   // Define public routes that don't require authentication
   const publicRoutes = ['/signin', '/register', '/forgot-password', '/reset-password'];
   const isPublicRoute = publicRoutes.includes(pathname);
@@ -30,13 +32,16 @@ const AppAuthGuard: React.FC<AppAuthGuardProps> = ({ children }) => {
       <div
         style={{
           display: 'flex',
+          flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
           height: '100vh',
           backgroundColor: '#f5f5f5',
+          gap: '16px',
         }}
       >
-        <Spin size="large" tip="Đang tải..." />
+        <Spin size="large" />
+        <div style={{ color: '#666', fontSize: '16px' }}>{t['common.loading'] as string}</div>
       </div>
     );
   }
@@ -57,13 +62,16 @@ const AppAuthGuard: React.FC<AppAuthGuardProps> = ({ children }) => {
     <div
       style={{
         display: 'flex',
+        flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
         height: '100vh',
         backgroundColor: '#f5f5f5',
+        gap: '16px',
       }}
     >
-      <Spin size="large" tip="Đang chuyển hướng..." />
+      <Spin size="large" />
+      <div style={{ color: '#666', fontSize: '16px' }}>{t['common.redirecting'] as string}</div>
     </div>
   );
 };

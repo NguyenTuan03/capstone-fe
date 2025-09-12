@@ -8,5 +8,17 @@
   "common.login": "Đăng nhập",
   "common.email": "Email",
   "common.password": "Mật khẩu",
-  "common.passwordLength": "Mật khẩu phải có ít nhất 6 ký tự"
+  "common.passwordLength": "Mật khẩu phải có ít nhất 6 ký tự",
+  "common.notFound": "Xin lỗi, trang bạn tìm kiếm không tồn tại.",
+  "common.backToHome": "Về trang chủ",
+  "common.search": "Tìm kiếm",
+  "common.chunkLoadError": "Có lỗi tải trang. Vui lòng thử lại.",
+  "common.networkError": "Lỗi kết nối mạng. Vui lòng kiểm tra internet.",
+  "common.unexpectedError": "Đã xảy ra lỗi không mong muốn.",
+  "common.error": "Oops! Có lỗi xảy ra",
+  "common.errorDetails": "Error Details:",
+  "common.digest": "Digest:",
+  "common.stack": "Stack:",
+  "common.loading": "Đang tải...",
+  "common.redirecting": "Đang chuyển hướng..."
 }

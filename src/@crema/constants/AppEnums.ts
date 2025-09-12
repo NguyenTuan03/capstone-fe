@@ -19,3 +19,8 @@ export enum FormInputType {
   SelectWithPivot = 'SelectWithPivot',
   DynamicField = 'DynamicField',
 }
+
+export enum FormInputPicker {
+  YEAR = 'year',
+  YEAR_MONTH = 'month',
+}

@@ -1,7 +1,10 @@
 import { FormInputType } from '@/@crema/constants/AppEnums';
+import useUrlFilter from '@/@crema/hooks/useUrlFilter';
 import { ApiOptions, PaginatedAPIResponse } from '@/@crema/types/api';
+import { Form } from 'antd';
 import { ColumnsType } from 'antd/es/table';
-import React, { forwardRef } from 'react';
+import React, { forwardRef, useCallback, useImperativeHandle, useState } from 'react';
+import AppsContainer from '../AppsContainer';
 
 export interface FilterItem {
   type: FormInputType;
@@ -57,7 +60,55 @@ const AppFormList = forwardRef<AppFormListRef, AppFormListProps>(
     },
     ref,
   ) => {
-    return <div>AppFormList</div>;
+    const [form] = Form.useForm();
+    const [filterHeight, setFilterHeight] = useState<number>(0);
+    const { fetchApi, data, loading } = getApi;
+    const total = data?.total ?? 0;
+
+    const wrappedFetchApi = useCallback(
+      (options: any) => {
+        const params = options?.params || {};
+        const mergedParams = { ...defaultParams, ...params };
+        return fetchApi({ ...options, params: mergedParams });
+      },
+      [fetchApi, defaultParams],
+    );
+
+    const {
+      currPage,
+      currPageSize,
+      filterData,
+      handleFilterChange,
+      handlePageChange,
+      refreshData,
+      handleSortChange,
+      setCurrPage,
+      handleFetchData,
+    } = useUrlFilter({
+      form,
+      filterItems: filterItems ?? [],
+      fetchApi: wrappedFetchApi,
+      disableUrlSync,
+    });
+
+    const refreshDataWithPage = useCallback(
+      (page: number) => {
+        setCurrPage(page);
+        handleFetchData(page, currPageSize, filterData);
+      },
+      [setCurrPage, handleFetchData, currPageSize, filterData],
+    );
+
+    useImperativeHandle(ref, () => ({
+      refreshData,
+      setCurrPage,
+      refreshDataWithPage,
+    }));
+    return (
+      <AppsContainer>
+        <div>AppFormList</div>
+      </AppsContainer>
+    );
   },
 );
 
