@@ -222,11 +222,11 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
       // Store authentication tokens
       setAuthToken(metadata.accessToken, remember);
       setRefreshToken(metadata.refresh_token, remember);
-
+      const isAdmin = metadata.user.role.name === 'admin';
       // Update authentication state
       setJWTAuthData({
         user: metadata.user,
-        isAuthenticated: true,
+        isAuthenticated: isAdmin,
         isLoading: false,
       });
 
@@ -242,7 +242,11 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
       } catch {}
 
       // Redirect to dashboard after successful login
-      router.push('/dashboard');
+      if (isAdmin) {
+        router.push('/dashboard');
+      } else {
+        router.push('/');
+      }
     } catch (error) {
       console.error('Login error:', error);
       cleanupAuthState();
