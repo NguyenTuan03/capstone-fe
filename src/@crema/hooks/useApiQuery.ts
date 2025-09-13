@@ -304,7 +304,7 @@ export const useSearchQuery = <TData = unknown>(
     params?: Record<string, any>;
   },
 ) => {
-  const { debounceMs = 500, minSearchLength = 2, params = {} } = options || {};
+  const { minSearchLength = 2, params = {} } = options || {};
 
   return useApiQuery<TData>({
     endpoint,

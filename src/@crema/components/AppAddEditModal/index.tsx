@@ -301,8 +301,8 @@ const AppAddEditModal: React.FC<AppAddEditModalProps> = ({
       return acc;
     }, {});
     form.setFieldsValue(initialValues);
-  }, [isEdit, model]);
-  //isEdit, modal, items, form
+  }, [isEdit, model, items, form]);
+
   return (
     <>
       <Modal

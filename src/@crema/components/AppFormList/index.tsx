@@ -48,7 +48,6 @@ const AppFormList = forwardRef<AppFormListRef, AppFormListProps>(
   (
     {
       columns,
-      title = '',
       scrollX = 'calc(500px + 100%)',
       filterItems,
       getApi,

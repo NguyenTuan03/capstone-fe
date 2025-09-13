@@ -82,7 +82,7 @@ const AppFilterTable: React.FC<AppFilterTableProps> = ({
       const height = filterRef.current.getBoundingClientRect().height;
       setFilterHeight?.(height);
     }
-  }, [isCollapse]);
+  }, [isCollapse, setFilterHeight]);
 
   if (!filterItems) return null;
   const renderFilterForm = () => {

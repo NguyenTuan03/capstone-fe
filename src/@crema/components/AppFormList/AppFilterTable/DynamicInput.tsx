@@ -58,7 +58,7 @@ const DynamicInputField: React.FC<DynamicInputFieldProps> = ({
           ...props,
         })
       : icon;
-  }, [icon, isFieldRequired, props.badgeIcon, props.badge, props.dot, props.offset, props.color]);
+  }, [icon, isFieldRequired, props]);
 
   const renderFieldWithIcon = (field: React.ReactNode): React.ReactElement => {
     if (!processedIcon) {

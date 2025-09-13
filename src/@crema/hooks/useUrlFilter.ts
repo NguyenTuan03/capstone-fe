@@ -37,7 +37,7 @@ const useUrlFilter = (options: UseUrlFilterOptions) => {
         params: queryParams,
       });
     },
-    [currPageSize, filterData],
+    [currPageSize, filterData], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   const handleFilterChange = useCallback(
@@ -93,7 +93,7 @@ const useUrlFilter = (options: UseUrlFilterOptions) => {
         setFilterData(newFilterData);
       }
     },
-    [router, currPageSize, filterData, disableUrlSync],
+    [router, currPage, currPageSize, filterData, disableUrlSync],
   );
 
   //Update url query
@@ -121,7 +121,7 @@ const useUrlFilter = (options: UseUrlFilterOptions) => {
 
     // Reset URL syncing flag after completion
     setIsUrlSyncing(false);
-  }, [router.query, disableUrlSync]);
+  }, [router.query, disableUrlSync, currPage, currPageSize, form, isInitialFilterData]);
 
   //Fetch data
   useEffect(() => {
@@ -134,7 +134,15 @@ const useUrlFilter = (options: UseUrlFilterOptions) => {
 
     const params = Object.keys(filterData).length > 0 ? filterData : {};
     handleFetchData(currPage, currPageSize, params);
-  }, [currPage, currPageSize, filterData, disableUrlSync, isUrlSyncing]);
+  }, [
+    currPage,
+    currPageSize,
+    filterData,
+    disableUrlSync,
+    isUrlSyncing,
+    handleFetchData,
+    isInitialFilterData,
+  ]);
 
   //Initial filter data
   useEffect(() => {
@@ -186,7 +194,16 @@ const useUrlFilter = (options: UseUrlFilterOptions) => {
     const formattedMergedValues = formatDatesInObject(mergedValues, filterItems || []);
     updateUrlQuery(router, currPage, currPageSize, formattedMergedValues);
     setIsInitialFilterData(false);
-  }, [disableUrlSync]);
+  }, [
+    disableUrlSync,
+    currPage,
+    currPageSize,
+    filterItems,
+    form,
+    handleFetchData,
+    isInitialFilterData,
+    router,
+  ]);
 
   const refreshData = useCallback(() => {
     handleFetchData(currPage, currPageSize, filterData);

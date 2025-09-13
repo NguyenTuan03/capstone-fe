@@ -98,7 +98,7 @@ const FilterForm: React.FC<FilterFormProps> = ({
     const newFilterParams = ensureArrayFields(formattedValues);
 
     handleFilterChange(newFilterParams, 1, DEFAULT_PAGE_SIZE);
-  }, [form, items, handleFilterChange, isLoading]);
+  }, [form, items, handleFilterChange, isLoading, ensureArrayFields]);
 
   const initValues = useMemo(() => {
     return items.reduce(
@@ -114,7 +114,7 @@ const FilterForm: React.FC<FilterFormProps> = ({
 
   const formItems = useMemo(() => {
     return (items || []).map((item) => {
-      const { clearFilter: _clearFilter, ...itemProps } = item;
+      const { clearFilter: _clearFilter, ...itemProps } = item; // eslint-disable-line @typescript-eslint/no-unused-vars
 
       // Convert switch type to select with true/false/null options for filtering
       let fieldType = item.type;
@@ -151,7 +151,7 @@ const FilterForm: React.FC<FilterFormProps> = ({
         </Form.Item>
       );
     });
-  }, [items]);
+  }, [items, messages]);
 
   return (
     <Spin spinning={isLoading} tip="...">

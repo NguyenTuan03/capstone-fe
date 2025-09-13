@@ -186,7 +186,7 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
     };
 
     getAuthUser();
-  }, [pathname, isPublicRoute, router]);
+  }, [pathname, isPublicRoute, router, t]);
 
   /**
    * Cleanup authentication state and tokens
