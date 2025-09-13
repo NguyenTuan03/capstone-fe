@@ -25,7 +25,6 @@ export default function Login() {
   };
 
   const onFinish = (values: { remember: boolean; password: string; email: string }) => {
-    console.log('Form submitted with values:', values);
     handleSignIn(values);
   };
   const onFinishFailed = (errorInfo: any) => {

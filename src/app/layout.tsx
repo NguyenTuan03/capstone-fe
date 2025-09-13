@@ -18,11 +18,6 @@ const geistMono = Geist_Mono({
   subsets: ['latin'],
 });
 
-export const metadata = buildMetadata({
-  title: 'Pickle Ball Management System',
-  description: 'Hệ thống quản lý pickle ball',
-});
-
 export default function RootLayout({
   children,
 }: Readonly<{

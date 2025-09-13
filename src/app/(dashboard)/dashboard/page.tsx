@@ -1,16 +1,11 @@
-'use client';
+import { buildMetadata } from '@/@crema/helper/seo';
+import DashboardClient from '@/modules/dashboard/dashboard';
 
-import { useJWTAuth } from '@/@crema/services/jwt-auth/JWTAuthProvider';
+export const metadata = buildMetadata({
+  title: 'Dashboard',
+  description: 'Trang tổng quan hệ thống quản lý pickle ball',
+});
 
 export default function DashboardPage() {
-  const { user } = useJWTAuth();
-
-  return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Xin chào, {user?.name}!</h1>
-        <p className="mt-1 text-sm text-gray-600">Dashboard page</p>
-      </div>
-    </div>
-  );
+  return <DashboardClient />;
 }

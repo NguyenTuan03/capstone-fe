@@ -20,6 +20,9 @@ import { REFRESH_TOKEN_KEY, REMEMBER_ME_KEY, TOKEN_KEY } from '@/@crema/constant
 import { UserType } from '@/@crema/types/auth';
 import Cookies from 'universal-cookie';
 import { useRouter, usePathname } from 'next/navigation';
+import { RoleEnum } from '@/@crema/constants/AppEnums';
+import { message } from 'antd';
+import { useIntl } from 'react-intl';
 
 /**
  * Props for the authentication context
@@ -93,6 +96,7 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
   const cookies = new Cookies();
   const router = useRouter();
   const pathname = usePathname();
+  const { messages: t } = useIntl();
   const [jwtAuthData, setJWTAuthData] = useState<JWTAuthContextProps>({
     user: null,
     isAuthenticated: false,
@@ -148,16 +152,28 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
           return;
         }
 
+        // Check if user is Admin
+        const isAdmin = data?.metadata?.user?.role?.name === RoleEnum.ADMIN;
+
+        // Show notification for non-Admin users
+        if (!isAdmin) {
+          message.warning(t['common.adminOnly'] as string);
+        }
+
         // Update auth state with user data
         setJWTAuthData({
           user: data?.metadata?.user,
           isLoading: false,
-          isAuthenticated: true,
+          isAuthenticated: isAdmin,
         });
 
         // If on signin page and authenticated, redirect to dashboard
         if (pathname === '/signin') {
-          router.push('/dashboard');
+          if (isAdmin) {
+            router.push('/dashboard');
+          } else {
+            router.push('/');
+          }
         }
       } catch (error) {
         console.error('Auth error:', error);
@@ -222,11 +238,16 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
       // Store authentication tokens
       setAuthToken(metadata.accessToken, remember);
       setRefreshToken(metadata.refresh_token, remember);
+      const isAdmin = metadata.user.role.name === RoleEnum.ADMIN;
+
+      if (!isAdmin) {
+        message.warning(t['common.adminOnly'] as string);
+      }
 
       // Update authentication state
       setJWTAuthData({
         user: metadata.user,
-        isAuthenticated: true,
+        isAuthenticated: isAdmin,
         isLoading: false,
       });
 
@@ -242,7 +263,11 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
       } catch {}
 
       // Redirect to dashboard after successful login
-      router.push('/dashboard');
+      if (isAdmin) {
+        router.push('/dashboard');
+      } else {
+        router.push('/');
+      }
     } catch (error) {
       console.error('Login error:', error);
       cleanupAuthState();

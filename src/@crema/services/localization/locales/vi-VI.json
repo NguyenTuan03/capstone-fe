@@ -6,6 +6,12 @@
   "findData": "Tìm kiếm dữ liệu",
   "common.rememberMe": "Nhớ tôi",
   "common.login": "Đăng nhập",
+  "common.name": "Tên",
+  "common.phone": "Số điện thoại",
+  "common.role": "Vai trò",
+  "common.admin": "Admin",
+  "common.customer": "Khách hàng",
+  "common.coach": "Huấn luyện viên",
   "common.email": "Email",
   "common.password": "Mật khẩu",
   "common.passwordLength": "Mật khẩu phải có ít nhất 6 ký tự",
@@ -19,6 +25,9 @@
   "common.errorDetails": "Error Details:",
   "common.digest": "Digest:",
   "common.stack": "Stack:",
+  "common.adminOnly": "Bạn không có quyền truy cập với tư cách Admin. Vui lòng liên hệ quản trị viên để được cấp quyền.",
   "common.loading": "Đang tải...",
-  "common.redirecting": "Đang chuyển hướng..."
+  "common.redirecting": "Đang chuyển hướng...",
+
+  "users.title": "Quản lý người dùng"
 }

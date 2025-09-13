@@ -1,5 +1,5 @@
 import dayjs from 'dayjs';
-import { DATE_FORMATS, YEAR_MONTH_DATE_FORMAT } from '../constants/AppConst';
+import { DATE_FORMATS, DATE_TIME_FORMAT, YEAR_MONTH_DATE_FORMAT } from '../constants/AppConst';
 export const isDate = function (date: string | null): boolean {
   if (!date) return false;
   for (const format of DATE_FORMATS) {
@@ -65,4 +65,19 @@ export const formatDatesInObject = (obj: Record<string, any>, fields: any[]) => 
     }
   }
   return newObj;
+};
+
+export const getFormattedDate = (
+  dateObject?: string | dayjs.Dayjs,
+  format = DATE_TIME_FORMAT,
+  timezone?: number,
+) => {
+  if (!dateObject) return '';
+
+  let d = dayjs(dateObject);
+  if (timezone) {
+    d = d.subtract(Math.abs(timezone), 'hour');
+  }
+
+  return d.format(format);
 };

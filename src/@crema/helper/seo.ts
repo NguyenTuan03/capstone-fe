@@ -11,17 +11,18 @@ type SEOOpts = {
 export function buildMetadata(opts: SEOOpts = {}): Metadata {
   const title = opts.title ?? defaultSEO.title;
   const description = opts.description ?? defaultSEO.description;
-  const url = (opts.path ?? '/').replace(/\/+$/, '') || '/';
+  const path = (opts.path ?? '/').replace(/\/+$/, '') || '/';
+  const fullUrl = `${SITE_URL}${path}`;
   const image = opts.image ?? defaultSEO.ogImage;
 
   return {
     metadataBase: new URL(SITE_URL),
-    title: { default: defaultSEO.title, template: '%s | Metadata Web App' },
+    title: opts.title ? `${opts.title} | ${defaultSEO.title}` : defaultSEO.title,
     description,
-    alternates: { canonical: url },
+    alternates: { canonical: fullUrl },
     openGraph: {
       type: 'website',
-      url,
+      url: fullUrl,
       title,
       description,
       siteName: defaultSEO.title,

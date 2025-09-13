@@ -3,25 +3,32 @@ import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState }
 import { MessageFormatElement, useIntl } from 'react-intl';
 import AppFormList from '../AppFormList';
 import AppAddEditModal from '../AppAddEditModal';
+import { useBaseApiHooks } from '@/@crema/services/apis/BaseApi';
+
 interface AppPageRef {
   getFormInstance: () => FormInstance;
 }
+
 interface AppPageData {
   selectedItem?: any;
   currentData?: any;
   formVisible?: boolean;
   isEdit?: boolean;
 }
+
 interface AppPageProps {
   title: string;
   autoFetch?: boolean;
   disableUrlSync?: boolean;
   skipRouterPush?: boolean;
-  api: {
-    getItems: (autoFetch?: boolean) => any;
-    createItem?: () => any;
-    updateItem?: (id: number) => any;
+  // Support both old API format and new BaseApi format
+  api?: {
+    useGetItems: (autoFetch?: boolean) => any;
+    useCreateItem?: () => any;
+    useUpdateItem?: (id: number) => any;
   };
+  // New BaseApi props
+  endpoint?: string;
   columns: (props: {
     handleEditItem: (item: any) => void;
     refreshData: () => void;
@@ -44,10 +51,10 @@ const AppPage = forwardRef<AppPageRef, AppPageProps>(
   (
     {
       title,
-      autoFetch = false,
       disableUrlSync = false,
       skipRouterPush = false,
       api,
+      endpoint,
       columns,
       showAddButton,
       fields,
@@ -69,6 +76,10 @@ const AppPage = forwardRef<AppPageRef, AppPageProps>(
     const [visibleModal, setVisibleModal] = useState<boolean>(false);
     const [selectedItem, setSelectedItem] = useState<any | null>(null);
     const isEdit = useMemo(() => selectedItem !== null, [selectedItem]);
+
+    // Use BaseApi if endpoint is provided, otherwise use legacy api
+    const baseApi = useBaseApiHooks<any, any, any>(endpoint || '');
+
     useEffect(() => {
       onStateChange?.({
         selectedItem,
@@ -76,17 +87,44 @@ const AppPage = forwardRef<AppPageRef, AppPageProps>(
         formVisible: visibleModal,
         currentData: selectedItem,
       });
-    }, [selectedItem, isEdit, visibleModal]);
+    }, [selectedItem, isEdit, visibleModal, onStateChange]);
 
     useImperativeHandle(ref, () => ({
       getFormInstance: () => addEditForm,
     }));
 
-    const { fetchApi: createItem, loading: createLoading } = api.createItem
-      ? api.createItem()
+    // Create API object - use BaseApi if endpoint provided, otherwise use legacy api
+    const apiObject = endpoint
+      ? {
+          getItems: () => {
+            const query = baseApi.useGetItems(defaultParams);
+            return {
+              fetchApi: () => query,
+              loading: query.isLoading,
+            };
+          },
+          createItem: () => {
+            const mutation = baseApi.useCreateItem();
+            return {
+              fetchApi: () => mutation,
+              loading: mutation.isPending,
+            };
+          },
+          updateItem: () => {
+            const mutation = baseApi.useUpdateItem();
+            return {
+              fetchApi: () => mutation,
+              loading: mutation.isPending,
+            };
+          },
+        }
+      : api;
+
+    const { fetchApi: createItem, loading: createLoading } = (apiObject as any)?.createItem
+      ? (apiObject as any).createItem()
       : { fetchApi: undefined, loading: false };
-    const { fetchApi: updateItem, loading: updateLoading } = api.updateItem
-      ? api.updateItem(selectedItem?.id ?? 0)
+    const { fetchApi: updateItem, loading: updateLoading } = (apiObject as any)?.updateItem
+      ? (apiObject as any).updateItem(selectedItem?.id ?? 0)
       : { fetchApi: undefined, loading: false };
 
     const formListRef = useRef<any>(null);
@@ -127,7 +165,7 @@ const AppPage = forwardRef<AppPageRef, AppPageProps>(
         <AppFormList
           ref={formListRef}
           columns={columns({ handleEditItem, refreshData, t })}
-          getApi={api.getItems(autoFetch)}
+          getApi={(apiObject as any)?.getItems()}
           scrollX={scrollX ?? (isTableOrMobile ? 'calc(200px + 100%)' : 'calc(100%)')}
           filterItems={filterFields ?? fields}
           title={title}

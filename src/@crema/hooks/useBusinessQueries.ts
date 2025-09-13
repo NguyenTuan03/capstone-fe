@@ -1,4 +1,5 @@
 // Specialized hooks for Pickle Ball Management System business logic
+import { RoleEnum } from '../constants/AppEnums';
 import {
   useCrudOperations,
   usePaginatedQuery,
@@ -15,7 +16,10 @@ export interface User {
   name: string;
   email: string;
   phone?: string;
-  role: 'admin' | 'customer' | 'staff';
+  role: {
+    id: number;
+    name: RoleEnum;
+  };
   status: 'active' | 'inactive';
   createdAt: string;
   updatedAt: string;

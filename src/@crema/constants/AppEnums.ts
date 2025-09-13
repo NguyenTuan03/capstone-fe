@@ -24,3 +24,9 @@ export enum FormInputPicker {
   YEAR = 'year',
   YEAR_MONTH = 'month',
 }
+
+export enum RoleEnum {
+  ADMIN = 'ADMIN',
+  CUSTOMER = 'CUSTOMER',
+  COACH = 'COACH',
+}
