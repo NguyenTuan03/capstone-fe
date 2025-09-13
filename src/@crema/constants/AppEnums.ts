@@ -19,3 +19,9 @@ export enum FormInputType {
   SelectWithPivot = 'SelectWithPivot',
   DynamicField = 'DynamicField',
 }
+
+export enum RoleEnum {
+  Admin = 'Admin',
+  Customer = 'Customer',
+  Coach = 'Coach',
+}

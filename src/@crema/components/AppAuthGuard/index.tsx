@@ -3,7 +3,9 @@
 import React from 'react';
 import { useJWTAuth } from '@/@crema/services/jwt-auth/JWTAuthProvider';
 import { Spin } from 'antd';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { RoleEnum } from '@/@crema/constants/AppEnums';
+import { useIntl } from 'react-intl';
 
 interface AppAuthGuardProps {
   children: React.ReactNode;
@@ -18,7 +20,9 @@ interface AppAuthGuardProps {
  */
 const AppAuthGuard: React.FC<AppAuthGuardProps> = ({ children }) => {
   const { isAuthenticated, isLoading, user } = useJWTAuth();
+  const { messages: t } = useIntl();
   const pathname = usePathname();
+  const router = useRouter();
 
   // Define public routes that don't require authentication
   const publicRoutes = ['/signin', '/register', '/forgot-password', '/reset-password'];
@@ -36,7 +40,7 @@ const AppAuthGuard: React.FC<AppAuthGuardProps> = ({ children }) => {
           backgroundColor: '#f5f5f5',
         }}
       >
-        <Spin size="large" tip="Đang tải..." />
+        <Spin size="large" tip={t['common.loading'] as string} />
       </div>
     );
   }
@@ -46,9 +50,30 @@ const AppAuthGuard: React.FC<AppAuthGuardProps> = ({ children }) => {
     return <>{children}</>;
   }
 
-  // For protected routes, only render if authenticated
-  if (isAuthenticated && user) {
+  // Check if user exists and is Admin
+  const isAdmin = user?.role?.name === RoleEnum.Admin;
+
+  // For protected routes, only render if authenticated AND user is Admin
+  if (isAuthenticated && user && isAdmin) {
     return <>{children}</>;
+  }
+
+  // If user exists but is not Admin, redirect to signin
+  if (user && !isAdmin) {
+    router.replace('/signin');
+    return (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          backgroundColor: '#f5f5f5',
+        }}
+      >
+        <Spin size="large" tip={t['common.redirecting'] as string} />
+      </div>
+    );
   }
 
   // If not authenticated and not on public route,
@@ -63,7 +88,7 @@ const AppAuthGuard: React.FC<AppAuthGuardProps> = ({ children }) => {
         backgroundColor: '#f5f5f5',
       }}
     >
-      <Spin size="large" tip="Đang chuyển hướng..." />
+      <Spin size="large" tip={t['common.redirecting'] as string} />
     </div>
   );
 };

@@ -8,5 +8,8 @@
   "common.login": "Đăng nhập",
   "common.email": "Email",
   "common.password": "Mật khẩu",
-  "common.passwordLength": "Mật khẩu phải có ít nhất 6 ký tự"
+  "common.passwordLength": "Mật khẩu phải có ít nhất 6 ký tự",
+  "common.adminOnly": "Bạn không có quyền truy cập với tư cách Admin. Vui lòng liên hệ quản trị viên để được cấp quyền.",
+  "common.loading": "Đang tải...",
+  "common.redirecting": "Đang chuyển hướng..."
 }

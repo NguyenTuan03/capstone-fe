@@ -1,9 +1,11 @@
+import { RoleEnum } from '../constants/AppEnums';
+
 export interface UserType {
   id: string;
   email: string;
-  name: string;
-  role: 'admin' | 'user';
-  avatar?: string;
-  createdAt: string;
-  updatedAt: string;
+  fullName: string;
+  role: {
+    id: string;
+    name: RoleEnum;
+  };
 }

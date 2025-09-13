@@ -3,29 +3,33 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLoader from '@/@crema/components/AppLoader';
 import { useAuthUser } from '@/@crema/hooks/useAuth';
+import { useJWTAuth } from '@/@crema/services/jwt-auth/JWTAuthProvider';
+import { RoleEnum } from '@/@crema/constants/AppEnums';
 
 export default function Home() {
   const { isAuthenticated, isLoading } = useAuthUser();
+  const { user } = useJWTAuth();
   const router = useRouter();
 
   useEffect(() => {
-    try {
-      const ssUser = typeof window !== 'undefined' ? sessionStorage.getItem('user') : null;
-      const lsUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
-      if (ssUser || lsUser) {
-        router.replace('/dashboard');
+    if (!isLoading) {
+      // If no user data or not authenticated, redirect to signin
+      if (!user || !isAuthenticated) {
+        router.replace('/signin');
         return;
       }
-    } catch {}
 
-    if (!isLoading) {
-      if (!isAuthenticated) {
-        router.replace('/signin');
-      } else {
+      // Check if user is Admin
+      const isAdmin = user?.role?.name === RoleEnum.Admin;
+
+      if (isAdmin) {
         router.replace('/dashboard');
+      } else {
+        // Non-Admin users should be redirected to signin
+        router.replace('/signin');
       }
     }
-  }, [isAuthenticated, isLoading, router]);
+  }, [isAuthenticated, isLoading, user, router]);
 
   if (isLoading) {
     return (
