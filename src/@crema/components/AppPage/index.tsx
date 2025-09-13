@@ -1,3 +1,4 @@
+'use client';
 import { Form, FormInstance } from 'antd';
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { MessageFormatElement, useIntl } from 'react-intl';
@@ -21,13 +22,11 @@ interface AppPageProps {
   autoFetch?: boolean;
   disableUrlSync?: boolean;
   skipRouterPush?: boolean;
-  // Support both old API format and new BaseApi format
   api?: {
     useGetItems: (autoFetch?: boolean) => any;
     useCreateItem?: () => any;
     useUpdateItem?: (id: number) => any;
   };
-  // New BaseApi props
   endpoint?: string;
   columns: (props: {
     handleEditItem: (item: any) => void;
