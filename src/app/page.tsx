@@ -20,7 +20,7 @@ export default function Home() {
       }
 
       // Check if user is Admin
-      const isAdmin = user?.role?.name === RoleEnum.Admin;
+      const isAdmin = user?.role?.name === RoleEnum.ADMIN;
 
       if (isAdmin) {
         router.replace('/dashboard');
