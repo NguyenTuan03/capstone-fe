@@ -1,5 +1,5 @@
 import { buildMetadata } from '@/@crema/helper/seo';
-import UserPage from '@/modules/dashboard/users';
+import UserPageClient from '@/modules/dashboard/users/index';
 import React from 'react';
 
 export const metadata = buildMetadata({
@@ -8,7 +8,7 @@ export const metadata = buildMetadata({
 });
 
 const User = () => {
-  return <UserPage />;
+  return <UserPageClient />;
 };
 
 export default User;

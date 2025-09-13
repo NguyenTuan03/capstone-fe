@@ -1,3 +1,5 @@
+'use client';
+
 import AppPage from '@/@crema/components/AppPage';
 import React from 'react';
 import { useIntl } from 'react-intl';
@@ -5,7 +7,7 @@ import { Columns } from './columns';
 import { Fields } from './fields';
 import useBreakpoint from 'use-breakpoint';
 
-const UserPage = () => {
+const UserPageClient = () => {
   const { messages: t } = useIntl();
   const { breakpoint } = useBreakpoint({ tablet: 1024, mobile: 768 });
   const isTableOrMobile = breakpoint === 'tablet' || breakpoint === 'mobile';
@@ -25,4 +27,4 @@ const UserPage = () => {
   );
 };
 
-export default UserPage;
+export default UserPageClient;
