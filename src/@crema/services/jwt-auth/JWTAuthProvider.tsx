@@ -153,7 +153,7 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
         }
 
         // Check if user is Admin
-        const isAdmin = data?.metadata?.user?.role?.name === RoleEnum.Admin;
+        const isAdmin = data?.metadata?.user?.role?.name === RoleEnum.ADMIN;
 
         // Show notification for non-Admin users
         if (!isAdmin) {
@@ -238,7 +238,7 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
       // Store authentication tokens
       setAuthToken(metadata.accessToken, remember);
       setRefreshToken(metadata.refresh_token, remember);
-      const isAdmin = metadata.user.role.name === RoleEnum.Admin;
+      const isAdmin = metadata.user.role.name === RoleEnum.ADMIN;
 
       if (!isAdmin) {
         message.warning(t['common.adminOnly'] as string);

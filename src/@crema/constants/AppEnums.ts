@@ -21,7 +21,7 @@ export enum FormInputType {
 }
 
 export enum RoleEnum {
-  Admin = 'Admin',
-  Customer = 'Customer',
-  Coach = 'Coach',
+  ADMIN = 'ADMIN',
+  CUSTOMER = 'CUSTOMER',
+  COACH = 'COACH',
 }

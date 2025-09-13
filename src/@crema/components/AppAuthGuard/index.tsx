@@ -51,7 +51,7 @@ const AppAuthGuard: React.FC<AppAuthGuardProps> = ({ children }) => {
   }
 
   // Check if user exists and is Admin
-  const isAdmin = user?.role?.name === RoleEnum.Admin;
+  const isAdmin = user?.role?.name === RoleEnum.ADMIN;
 
   // For protected routes, only render if authenticated AND user is Admin
   if (isAuthenticated && user && isAdmin) {
