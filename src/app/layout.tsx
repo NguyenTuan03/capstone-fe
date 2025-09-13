@@ -2,7 +2,6 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import AppAuthProvider from '@/@crema/core/AppAuthProvider';
 import AppContextProvider from '@/@crema/context/AppContextProvider';
-import { buildMetadata } from '@/@crema/helper/seo';
 import { ConfigProvider } from 'antd';
 import viVN from 'antd/locale/vi_VN';
 import AppLocaleProvider from '@/@crema/context/AppLocaleProvider';

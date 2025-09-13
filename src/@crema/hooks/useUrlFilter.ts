@@ -57,7 +57,7 @@ const useUrlFilter = (options: UseUrlFilterOptions) => {
         setCurrPageSize(pageSize);
       }
     },
-    [router, currPageSize, disableUrlSync, filterItems],
+    [router, currPage, currPageSize, disableUrlSync, filterItems],
   );
 
   const handlePageChange = useCallback(

@@ -1,3 +1,4 @@
+'use client';
 import { Form, FormInstance } from 'antd';
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import { MessageFormatElement, useIntl } from 'react-intl';
