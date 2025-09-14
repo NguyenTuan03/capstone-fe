@@ -1,6 +1,8 @@
+'use client';
 import { Result, Button } from 'antd';
 import { HomeOutlined, SearchOutlined } from '@ant-design/icons';
 import Link from 'next/link';
+import { useIntl } from 'react-intl';
 
 /**
  * 404 Not Found Page
@@ -8,6 +10,7 @@ import Link from 'next/link';
  * This page is shown when a route doesn't exist
  */
 export default function NotFound() {
+  const { messages: t } = useIntl();
   return (
     <div
       style={{
@@ -22,15 +25,15 @@ export default function NotFound() {
       <Result
         status="404"
         title="404"
-        subTitle="Xin lỗi, trang bạn tìm kiếm không tồn tại."
+        subTitle={t['common.notFound'] as string}
         extra={[
           <Link href="/" key="home">
             <Button type="primary" icon={<HomeOutlined />}>
-              Về trang chủ
+              {t['common.backToHome'] as string}
             </Button>
           </Link>,
           <Link href="/dashboard" key="dashboard">
-            <Button icon={<SearchOutlined />}>Tìm kiếm</Button>
+            <Button icon={<SearchOutlined />}>{t['common.search'] as string}</Button>
           </Link>,
         ]}
       />

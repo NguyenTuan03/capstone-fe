@@ -1,4 +1,4 @@
-import viMessages from '../locales/vi-VI.json';
+import viMessages from '../locales/vi-VI';
 import viVI from 'antd/lib/locale/vi_VN';
 const viLang = {
   messages: {

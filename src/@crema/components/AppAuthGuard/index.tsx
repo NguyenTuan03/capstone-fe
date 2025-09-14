@@ -34,13 +34,16 @@ const AppAuthGuard: React.FC<AppAuthGuardProps> = ({ children }) => {
       <div
         style={{
           display: 'flex',
+          flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
           height: '100vh',
           backgroundColor: '#f5f5f5',
         }}
       >
-        <Spin size="large" tip={t['common.loading'] as string} />
+        <Spin size="large" tip={t['common.loading'] as string}>
+          <div style={{ height: '200px', width: '200px' }} />
+        </Spin>
       </div>
     );
   }
@@ -71,7 +74,9 @@ const AppAuthGuard: React.FC<AppAuthGuardProps> = ({ children }) => {
           backgroundColor: '#f5f5f5',
         }}
       >
-        <Spin size="large" tip={t['common.redirecting'] as string} />
+        <Spin size="large" tip={t['common.redirecting'] as string}>
+          <div style={{ height: '200px', width: '200px' }} />
+        </Spin>
       </div>
     );
   }
@@ -82,13 +87,16 @@ const AppAuthGuard: React.FC<AppAuthGuardProps> = ({ children }) => {
     <div
       style={{
         display: 'flex',
+        flexDirection: 'column',
         justifyContent: 'center',
         alignItems: 'center',
         height: '100vh',
         backgroundColor: '#f5f5f5',
       }}
     >
-      <Spin size="large" tip={t['common.redirecting'] as string} />
+      <Spin size="large" tip={t['common.redirecting'] as string}>
+        <div style={{ height: '200px', width: '200px' }} />
+      </Spin>
     </div>
   );
 };

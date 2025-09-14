@@ -2,7 +2,6 @@ import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import AppAuthProvider from '@/@crema/core/AppAuthProvider';
 import AppContextProvider from '@/@crema/context/AppContextProvider';
-import { buildMetadata } from '@/@crema/helper/seo';
 import { ConfigProvider } from 'antd';
 import viVN from 'antd/locale/vi_VN';
 import AppLocaleProvider from '@/@crema/context/AppLocaleProvider';
@@ -16,11 +15,6 @@ const geistSans = Geist({
 const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin'],
-});
-
-export const metadata = buildMetadata({
-  title: 'Pickle Ball Management System',
-  description: 'Hệ thống quản lý pickle ball',
 });
 
 export default function RootLayout({

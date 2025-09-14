@@ -1,3 +1,5 @@
+'use client';
+
 import {
   useQuery,
   useMutation,
@@ -5,6 +7,92 @@ import {
   UseQueryOptions,
   UseMutationOptions,
 } from '@tanstack/react-query';
+
+/* =========================
+   URL builder (Cách 1)
+   ========================= */
+const getBase = () => process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8386'; // ví dụ: http://localhost:8386/api
+const getVersion = () => process.env.NEXT_PUBLIC_VERSION || 'v1';
+
+const normalize = (...parts: string[]) =>
+  ('/' + parts.join('/')).replace(/\/{2,}/g, '/').replace(/\/+$/g, '');
+
+const buildUrl = (endpoint: string, params?: Record<string, any>) => {
+  // absolute URL -> dùng luôn
+  if (/^https?:\/\//i.test(endpoint)) {
+    const u = new URL(endpoint);
+    if (params)
+      Object.entries(params).forEach(([k, v]) => v != null && u.searchParams.append(k, String(v)));
+    return u.toString();
+  }
+
+  // tách origin & basePath từ NEXT_PUBLIC_API_URL
+  const baseRaw = getBase(); // ví dụ http://localhost:8386/api
+  let origin = 'http://localhost:8386';
+  let basePath = '/';
+  try {
+    const u = new URL(baseRaw);
+    origin = `${u.protocol}//${u.host}`; // http://localhost:8386
+    basePath = u.pathname || '/'; // /api hoặc /
+  } catch {
+    /* noop */
+  }
+
+  const version = getVersion(); // v1
+  const hasApiInBase = basePath.split('/').includes('api');
+
+  // QUAN TRỌNG:
+  // - endpoint bắt đầu bằng "/" => absolute path -> KHÔNG auto gắn /api/v1
+  // - endpoint KHÔNG "/" đầu (ví dụ "users") => auto gắn /api/v1
+  const finalPath = endpoint.startsWith('/')
+    ? endpoint
+    : hasApiInBase
+      ? normalize(basePath, version, endpoint) // base có /api -> /api/v1/users
+      : normalize('/api', version, endpoint); // base không có /api -> /api/v1/users
+
+  const url = new URL(finalPath, origin); // http://host/api/v1/users
+  if (params)
+    Object.entries(params).forEach(([k, v]) => v != null && url.searchParams.append(k, String(v)));
+  return url.toString();
+};
+
+const getAuthHeader = () => {
+  if (typeof window === 'undefined') return {};
+  const token = localStorage.getItem('token');
+  return token ? { Authorization: `Bearer ${token}` } : {};
+};
+
+/* =========================
+   API call dùng builder trên
+   ========================= */
+const apiCall = async <TData = unknown>(
+  endpoint: string,
+  options: {
+    method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
+    data?: any;
+    params?: Record<string, any>;
+  } = {},
+): Promise<TData> => {
+  const { method = 'GET', data, params } = options;
+  const url = buildUrl(endpoint, params);
+
+  // DEBUG khi cần:
+  // console.log('[fetch]', { endpoint, built: url, envUrl: process.env.NEXT_PUBLIC_API_URL, ver: process.env.NEXT_PUBLIC_VERSION });
+
+  const res = await fetch(url, {
+    method,
+    headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
+    ...(data && { body: JSON.stringify(data) }),
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `HTTP ${res.status}: ${res.statusText}`);
+  }
+  return res.json();
+};
+
+/* === phần dưới GIỮ NGUYÊN như bạn, dùng apiCall mới === */
 
 // Generic API hook types
 interface ApiQueryOptions<TData = unknown, TError = Error>
@@ -19,53 +107,11 @@ interface ApiMutationOptions<TData = unknown, TVariables = unknown, TError = Err
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
 }
 
-// Generic API functions
-const apiCall = async <TData = unknown>(
-  endpoint: string,
-  options: {
-    method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH';
-    data?: any;
-    params?: Record<string, any>;
-  } = {},
-): Promise<TData> => {
-  const { method = 'GET', data, params } = options;
-
-  // Build URL with query parameters
-  const url = new URL(endpoint, process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000');
-  if (params) {
-    Object.entries(params).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        url.searchParams.append(key, String(value));
-      }
-    });
-  }
-
-  // Get token from localStorage
-  const token = localStorage.getItem('token');
-
-  const response = await fetch(url.toString(), {
-    method,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
-    },
-    ...(data && { body: JSON.stringify(data) }),
-  });
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
-  }
-
-  return response.json();
-};
-
 // Generic query hook
 export const useApiQuery = <TData = unknown, TError = Error>(
   options: ApiQueryOptions<TData, TError>,
 ) => {
   const { endpoint, params, ...queryOptions } = options;
-
   return useQuery({
     queryKey: [endpoint, params],
     queryFn: () => apiCall<TData>(endpoint, { params }),
@@ -78,7 +124,6 @@ export const useApiMutation = <TData = unknown, TVariables = unknown, TError = E
   options: ApiMutationOptions<TData, TVariables, TError>,
 ) => {
   const { endpoint, method = 'POST', ...mutationOptions } = options;
-
   return useMutation({
     mutationFn: (variables: TVariables) => apiCall<TData>(endpoint, { method, data: variables }),
     ...mutationOptions,
@@ -304,7 +349,7 @@ export const useSearchQuery = <TData = unknown>(
     params?: Record<string, any>;
   },
 ) => {
-  const { debounceMs = 500, minSearchLength = 2, params = {} } = options || {};
+  const { minSearchLength = 2, params = {} } = options || {};
 
   return useApiQuery<TData>({
     endpoint,

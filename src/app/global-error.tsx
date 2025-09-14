@@ -1,8 +1,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Result, Button } from 'antd';
-import { HomeOutlined, ReloadOutlined } from '@ant-design/icons';
 
 interface GlobalErrorProps {
   error: Error & { digest?: string };

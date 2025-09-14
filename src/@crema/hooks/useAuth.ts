@@ -1,4 +1,5 @@
-import { useJWTAuth, useJWTAuthActions } from '../services/jwt-auth/JWTAuthProvider';
+'use client';
+import { useJWTAuth, useJWTAuthActions } from '@/@crema/services/jwt-auth/JWTAuthProvider';
 
 export const useAuthUser = () => {
   const { user, isAuthenticated, isLoading } = useJWTAuth();
