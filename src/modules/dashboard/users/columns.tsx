@@ -35,17 +35,11 @@ export const Columns = ({
       align: 'center',
     },
     {
-      title: <TitleTable id="common.phone" />,
-      dataIndex: 'phone',
-      key: 'phone',
-      align: 'center',
-    },
-    {
       title: <TitleTable id="common.role" />,
-      dataIndex: 'role',
+      dataIndex: ['role', 'name'],
       key: 'role',
       align: 'center',
-      render: (val: any) => <p>{val?.name}</p>,
+      render: (val: any) => <p>{val}</p>,
     },
     {
       title: <TitleTable id="common.createdAt" />,

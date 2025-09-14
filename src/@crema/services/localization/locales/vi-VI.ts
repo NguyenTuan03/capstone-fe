@@ -38,6 +38,7 @@ const viMessages = {
   'common.createdAt': 'Ngày tạo',
   'common.clearFilter': 'Xóa bộ lọc',
   'common.edit': 'Sửa',
+  'common.add': 'Tạo mới',
   'common.delete': 'Xóa',
   'common.delete.message': 'Bạn có chắc chắn muốn xóa {name} này không?',
   'common.cancel': 'Hủy',

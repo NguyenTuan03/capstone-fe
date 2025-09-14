@@ -22,12 +22,6 @@ export const Fields = ({
       rules: [{ required: true, message: t['common.validation.required'] as string }],
     },
     {
-      type: FormInputType.Text,
-      name: 'phone',
-      label: t['common.phone'] as string,
-      placeholder: t['common.phone'] as string,
-    },
-    {
       type: FormInputType.Select,
       name: 'roleId',
       label: t['common.role'] as string,
