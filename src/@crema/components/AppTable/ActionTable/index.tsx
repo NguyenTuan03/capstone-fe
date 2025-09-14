@@ -1,34 +1,51 @@
-import IntlMessages from '@/@crema/helper/IntlMessages';
-import { ButtonProps } from 'antd';
+'use client';
 
-interface TableActionButtonProps extends ButtonProps {
-  label: string;
+import IntlMessages from '@/@crema/helper/IntlMessages';
+import clsx from 'clsx';
+import React from 'react';
+
+type Variant = 'link' | 'primary' | 'danger' | 'neutral';
+
+interface TableActionButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  label: string; // IntlMessages id
+  variant?: Variant; // style preset
+  fullWidth?: boolean; // w-full nếu cần
+  icon?: React.ReactNode; // icon trái
 }
 
-const TableActionButton = ({ label, ...props }: TableActionButtonProps) => {
+const base =
+  'inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium ' +
+  'transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-1 ' +
+  'disabled:opacity-50 disabled:pointer-events-none';
+
+const fx = 'hover:-translate-y-[1px] active:translate-y-0'; // hiệu ứng nhấc nhẹ khi hover
+
+const variants: Record<Variant, string> = {
+  link: 'text-blue-600 hover:text-blue-700 hover:bg-gray-100 focus:ring-blue-300',
+  primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-300',
+  danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-300',
+  neutral: 'bg-gray-100 text-gray-800 hover:bg-gray-200 focus:ring-gray-300',
+};
+
+const TableActionButton: React.FC<TableActionButtonProps> = ({
+  label,
+  variant = 'link',
+  fullWidth,
+  icon,
+  className,
+  ...props
+}) => {
   return (
-    <div
-      className={`width: 100%;
-  &:hover {
-    opacity: 0.7 !important;
-    transform: translateY(-1px);
-    transition: all 0.2s ease-in-out;
-    background-color: #e9e9e9 !important;
-  }
-
-  &:active {
-    opacity: 0.5 !important;
-    transform: translateY(0px);
-  }
-
-  transition: all 0.2s ease-in-out;`}
-      type="link"
+    <button
+      type="button"
+      className={clsx(base, variants[variant], fx, fullWidth && 'w-full', className)}
       {...props}
     >
-      <span style={{ fontSize: 13 }}>
+      {icon ? <span className="shrink-0">{icon}</span> : null}
+      <span className="text-[13px]">
         <IntlMessages id={label} />
       </span>
-    </div>
+    </button>
   );
 };
 

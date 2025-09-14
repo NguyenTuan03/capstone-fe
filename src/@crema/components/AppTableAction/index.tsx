@@ -1,10 +1,8 @@
 import { MoreOutlined } from '@ant-design/icons';
-import { Dropdown } from 'antd';
-import Tooltip from 'antd/lib/tooltip';
+import { Dropdown, Tooltip, Button, Popconfirm, message } from 'antd';
+import type { PopconfirmProps } from 'antd';
 import React from 'react';
 import { useIntl } from 'react-intl';
-import { Button, message, Popconfirm } from 'antd';
-import type { PopconfirmProps } from 'antd';
 import TableActionButton from '../AppTable/ActionTable';
 
 export interface AdditionalActionProps {
@@ -20,10 +18,13 @@ interface TableActionProps {
   onRefresh?: () => void;
   handleEditItem?: (item: any) => void;
   api: {
-    removeItem: (id: number) => {
-      fetchApi: () => any;
-      loading: boolean;
-    };
+    removeItem: (id: number) =>
+      | {
+          fetchApi: () => any;
+          loading: boolean;
+        }
+      | Promise<any>
+      | any; // tuỳ bạn implement
   };
   canEdit?: boolean;
   canDelete?: boolean;
@@ -64,11 +65,13 @@ const TableAction: React.FC<TableActionProps> = ({
 
   const confirm: PopconfirmProps['onConfirm'] = async () => {
     try {
-      await removeItem(item.id);
+      const maybe = await removeItem(item.id);
+      if (maybe?.fetchApi) await maybe.fetchApi();
+
       message.success(formatMessage({ id: successMessage }, { name: itemName }));
       onRefresh?.();
     } catch (error: any) {
-      message.error(error.message);
+      message.error(error?.message || 'Error');
     }
   };
 
@@ -80,7 +83,12 @@ const TableAction: React.FC<TableActionProps> = ({
     .map((action) => ({
       key: action.key,
       label: (
-        <Button onClick={() => action.onClick?.(item)} type="link" icon={action.icon}>
+        <Button
+          onClick={() => action.onClick?.(item)}
+          type="link"
+          icon={action.icon}
+          className="w-full !justify-between text-xs px-3 py-2"
+        >
           {action.label}
         </Button>
       ),
@@ -94,8 +102,9 @@ const TableAction: React.FC<TableActionProps> = ({
           label: (
             <TableActionButton
               onClick={() => handleEditItem?.(item)}
-              style={{ color: 'black' }}
               label="common.view"
+              fullWidth
+              className="!justify-center px-3 py-2"
             />
           ),
         },
@@ -108,8 +117,9 @@ const TableAction: React.FC<TableActionProps> = ({
           label: (
             <TableActionButton
               onClick={() => handleEditItem?.(item)}
-              style={{ color: 'black' }}
               label={editLabel}
+              fullWidth
+              className="!justify-center px-3 py-2"
             />
           ),
         },
@@ -128,7 +138,14 @@ const TableAction: React.FC<TableActionProps> = ({
               okText={t[yesLabel] as string}
               cancelText={t[noLabel] as string}
             >
-              <TableActionButton danger label={deleteLabel} />
+              <div className="w-full">
+                <TableActionButton
+                  variant="danger"
+                  label={deleteLabel}
+                  fullWidth
+                  className="!justify-center px-3 py-2"
+                />
+              </div>
             </Popconfirm>
           ),
         },
@@ -147,6 +164,7 @@ const TableAction: React.FC<TableActionProps> = ({
     <Dropdown
       menu={{
         items,
+        className: 'min-w-[180px] p-1',
       }}
       trigger={['click']}
     >

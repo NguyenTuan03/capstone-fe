@@ -112,7 +112,7 @@ const AppFilterTable: React.FC<AppFilterTableProps> = ({
               <VscFilterFilled size={16} className="text-blue-600" />
             </Badge>
             <span>
-              <IntlMessages id="forecast.filter.icon" />
+              <IntlMessages id="common.filter.icon" />
             </span>
             {isOpen ? <IoIosArrowUp size={16} /> : <IoIosArrowDown size={16} />}
           </div>

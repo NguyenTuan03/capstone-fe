@@ -30,3 +30,7 @@ export enum RoleEnum {
   CUSTOMER = 'CUSTOMER',
   COACH = 'COACH',
 }
+
+export enum BaseApiENUM {
+  BASE_API = '/api/v1',
+}

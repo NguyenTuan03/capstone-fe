@@ -13,7 +13,7 @@ import {
 
 export interface User {
   id: number;
-  name: string;
+  fullName: string;
   email: string;
   phone?: string;
   role: {

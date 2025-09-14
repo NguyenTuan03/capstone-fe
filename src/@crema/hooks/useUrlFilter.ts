@@ -126,15 +126,7 @@ const useUrlFilter = (options: UseUrlFilterOptions) => {
 
     const params = Object.keys(filterData).length > 0 ? filterData : {};
     handleFetchData(currPage, currPageSize, params);
-  }, [
-    currPage,
-    currPageSize,
-    filterData,
-    disableUrlSync,
-    isUrlSyncing,
-    handleFetchData,
-    isInitialFilterData,
-  ]);
+  }, [currPage, currPageSize, filterData, disableUrlSync, isUrlSyncing, isInitialFilterData]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // khởi tạo từ initialValues + URL
   useEffect(() => {

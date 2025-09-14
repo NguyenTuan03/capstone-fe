@@ -30,10 +30,16 @@ export interface PaginatedResponse<T> {
 
 export type PaginatedAPIResponse<T> = {
   data: T;
-  current_page: number;
-  last_page: number;
+  currentPage: number;
+  lastPage: number;
   total: number;
-  per_page: number;
+  perPage: number;
+};
+
+export type ApiResponseWithMetadata<T> = {
+  statusCode: number;
+  message: string;
+  metadata: PaginatedAPIResponse<T>;
 };
 
 export interface ApiOptions<Body> {

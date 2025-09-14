@@ -74,7 +74,7 @@ const AppFormList = forwardRef<AppFormListRef, AppFormListProps>(
         const mergedParams = { ...(defaultParams ?? {}), ...params };
         return fetchApi({ ...options, params: mergedParams });
       },
-      [fetchApi, defaultParams],
+      [defaultParams], // eslint-disable-line react-hooks/exhaustive-deps
     );
 
     const {

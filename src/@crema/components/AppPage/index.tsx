@@ -92,6 +92,10 @@ const AppPage = forwardRef<AppPageRef, AppPageProps>(
     const [listParams, setListParams] = useState<Record<string, any>>(defaultParams ?? {});
     const listQuery = endpoint ? baseApi.useGetItems(listParams) : api?.useGetItems?.(listParams);
 
+    // Ref để lưu query instance để refetch
+    const queryRef = useRef(listQuery);
+    queryRef.current = listQuery;
+
     // expose state ra ngoài nếu cần
     useEffect(() => {
       onStateChange?.({
@@ -107,13 +111,11 @@ const AppPage = forwardRef<AppPageRef, AppPageProps>(
     }));
 
     // ---------- Adapter getApi cho AppFormList ----------
-    const getItemsAdapter = () => {
+    const getItemsAdapter = useMemo(() => {
       // AppFormList mong: { fetchApi(options), loading, data }
       const fetchApi = async (options?: { params?: Record<string, any> }) => {
-        const next = { ...(defaultParams ?? {}), ...(options?.params ?? {}) };
-        setListParams(next);
-        // Với TanStack, refetch trả { data, ... }
-        const res = await listQuery?.refetch?.();
+        // Chỉ refetch với params mới, không set state
+        const res = await queryRef.current?.refetch?.();
         return res?.data;
       };
 
@@ -122,7 +124,7 @@ const AppPage = forwardRef<AppPageRef, AppPageProps>(
         loading: !!(listQuery?.isFetching || listQuery?.isLoading),
         data: listQuery?.data, // PaginatedAPIResponse<any>
       };
-    };
+    }, [listQuery?.isFetching, listQuery?.isLoading, listQuery?.data]);
 
     // ---------- Adapter mutation cho AppAddEditModal ----------
     // AppAddEditModal gọi operation({ payload, onSuccess, onError })
@@ -211,7 +213,7 @@ const AppPage = forwardRef<AppPageRef, AppPageProps>(
         <AppFormList
           ref={formListRef}
           columns={columns({ handleEditItem, refreshData, t })}
-          getApi={getItemsAdapter()}
+          getApi={getItemsAdapter}
           scrollX={scrollX ?? 'calc(100%)'}
           filterItems={filterFields ?? fields}
           title={title}

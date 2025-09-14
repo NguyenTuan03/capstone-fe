@@ -1,7 +1,8 @@
+'use client';
 import React, { useState, useEffect } from 'react';
 import { Button, Modal, Form, message, Flex } from 'antd';
 import { useIntl } from 'react-intl';
-import { useRouter } from 'next/router';
+import { usePathname, useRouter } from 'next/navigation';
 import { FormInputPicker, FormInputType } from '@/@crema/constants/AppEnums';
 import {
   DATE_FORMAT_YMD,
@@ -59,6 +60,7 @@ const AppAddEditModal: React.FC<AppAddEditModalProps> = ({
   skipRouterPush = false,
 }) => {
   const router = useRouter();
+  const pathname = usePathname();
   const { messages: t } = useIntl();
   const [disabledSave, setDisabledSave] = useState(!isEdit);
   const onReset = () => {
@@ -171,12 +173,9 @@ const AppAddEditModal: React.FC<AppAddEditModalProps> = ({
 
     if (!skipRouterPush) {
       if (!isEdit) {
-        router.push({ pathname: router.pathname, query: { page: 1 } });
+        router.push(`${pathname}?page=1`);
       } else if (!handleCallbackSuccess) {
-        router.push({
-          pathname: router.pathname,
-          query: router.query,
-        });
+        router.push(pathname + window.location.search);
       }
     }
   };
@@ -348,7 +347,7 @@ const AppAddEditModal: React.FC<AppAddEditModalProps> = ({
             <Button
               htmlType="submit"
               type="primary"
-              danger={true}
+              danger
               loading={loading}
               disabled={disabledSave}
             >

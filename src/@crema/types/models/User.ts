@@ -1,16 +1,17 @@
 export interface User {
-  id: string;
+  id: number;
   fullName: string;
   email: string;
   phone?: string;
-  avatar?: string;
-  role: {
+  profilePicture?: string;
+  role?: {
     id: string;
     name: string;
   };
-  isActive: boolean;
+  isActive?: boolean;
   createdAt: string;
   updatedAt: string;
+  coachProfile?: any;
 }
 
 export interface CreateUserData {

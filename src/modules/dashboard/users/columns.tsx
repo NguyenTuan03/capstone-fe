@@ -24,8 +24,8 @@ export const Columns = ({
     },
     {
       title: <TitleTable id="common.name" />,
-      dataIndex: 'name',
-      key: 'name',
+      dataIndex: 'fullName',
+      key: 'fullName',
       align: 'center',
     },
     {
@@ -49,8 +49,8 @@ export const Columns = ({
     },
     {
       title: <TitleTable id="common.createdAt" />,
-      dataIndex: 'created_at',
-      key: 'created_at',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
       align: 'center',
       render: (createdAt: any) => <p>{getFormattedDate(createdAt, DATE_TIME_FORMAT)}</p>,
     },
@@ -73,7 +73,7 @@ export const Columns = ({
           }}
           canEdit
           canDelete
-          itemName={record.name || ''}
+          itemName={record.fullName || ''}
           itemType="users.title"
         />
       ),
