@@ -1,5 +1,4 @@
 'use client';
-
 import AppPage from '@/@crema/components/AppPage';
 import React from 'react';
 import { useIntl } from 'react-intl';

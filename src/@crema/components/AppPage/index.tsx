@@ -61,7 +61,7 @@ const AppPage = forwardRef<AppPageRef, AppPageProps>(
     {
       title,
       disableUrlSync = false,
-      skipRouterPush = false, // vẫn giữ prop để tương thích AppAddEditModal
+      skipRouterPush = false,
       api,
       endpoint,
       columns,
@@ -88,15 +88,15 @@ const AppPage = forwardRef<AppPageRef, AppPageProps>(
 
     // ---------- Base API (TanStack) ----------
     const baseApi = useBaseApiHooks<any, any, any>(endpoint || '');
-    // Params dùng cho useGetItems, thay đổi sẽ trigger query refetch
+    // Params for useGetItems, change will trigger query refetch
     const [listParams, setListParams] = useState<Record<string, any>>(defaultParams ?? {});
     const listQuery = endpoint ? baseApi.useGetItems(listParams) : api?.useGetItems?.(listParams);
 
-    // Ref để lưu query instance để refetch
+    // Ref to save query instance to refetch
     const queryRef = useRef(listQuery);
     queryRef.current = listQuery;
 
-    // expose state ra ngoài nếu cần
+    // expose state to outside if needed
     useEffect(() => {
       onStateChange?.({
         selectedItem,
@@ -110,11 +110,11 @@ const AppPage = forwardRef<AppPageRef, AppPageProps>(
       getFormInstance: () => addEditForm,
     }));
 
-    // ---------- Adapter getApi cho AppFormList ----------
+    // ---------- Adapter getApi for AppFormList ----------
     const getItemsAdapter = useMemo(() => {
-      // AppFormList mong: { fetchApi(options), loading, data }
+      // AppFormList expects: { fetchApi(options), loading, data }
       const fetchApi = async (options?: { params?: Record<string, any> }) => {
-        // Chỉ refetch với params mới, không set state
+        // Only refetch with new params, not set state
         const res = await queryRef.current?.refetch?.();
         return res?.data;
       };
@@ -126,8 +126,8 @@ const AppPage = forwardRef<AppPageRef, AppPageProps>(
       };
     }, [listQuery?.isFetching, listQuery?.isLoading, listQuery?.data]);
 
-    // ---------- Adapter mutation cho AppAddEditModal ----------
-    // AppAddEditModal gọi operation({ payload, onSuccess, onError })
+    // ---------- Adapter mutation for AppAddEditModal ----------
+    // AppAddEditModal calls operation({ payload, onSuccess, onError })
     const createAdapter = endpoint
       ? (() => {
           const m = baseApi.useCreateItem();
@@ -162,7 +162,7 @@ const AppPage = forwardRef<AppPageRef, AppPageProps>(
             onSuccess?: (data: any) => void;
             onError?: (e: any) => void;
           }) => {
-            // Chuẩn payload cho BaseApi: { id, data }
+            // Standard payload for BaseApi: { id, data }
             const final =
               payload && payload.id !== undefined && payload.data !== undefined
                 ? payload
@@ -198,7 +198,7 @@ const AppPage = forwardRef<AppPageRef, AppPageProps>(
 
     const handleSuccess = () => {
       setVisibleModal(false);
-      // reset page 1 nếu cần, AppFormList có sẵn hàm này
+      // reset page 1 if needed, AppFormList has this function
       if (!isEdit && formListRef.current?.refreshDataWithPage) {
         formListRef.current.refreshDataWithPage(1);
       } else {
@@ -243,7 +243,7 @@ const AppPage = forwardRef<AppPageRef, AppPageProps>(
             title={modalTitle}
             updateApi={isEdit ? updateAdapter : undefined}
             loading={
-              // optional: nếu muốn hiển thị loading từ mutation, bạn có thể map thêm isPending
+              // optional: if you want to show loading from mutation, you can map isPending
               false
             }
             handleCallbackSuccess={handleSuccess}
