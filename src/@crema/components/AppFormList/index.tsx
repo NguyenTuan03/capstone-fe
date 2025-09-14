@@ -1,15 +1,16 @@
-import { FormInputType } from '@/@crema/constants/AppEnums';
-import useUrlFilter from '@/@crema/hooks/useUrlFilter';
-import { ApiOptions, PaginatedAPIResponse } from '@/@crema/types/api';
-import { Form } from 'antd';
-import { ColumnsType } from 'antd/es/table';
+'use client';
+
 import React, { forwardRef, useCallback, useImperativeHandle, useState } from 'react';
+import { Form } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import AppsContainer from '../AppsContainer';
 import AppFilterTable from './AppFilterTable';
 import ListTable from './Table';
+import useUrlFilter from '@/@crema/hooks/useUrlFilter';
+import type { ApiOptions, PaginatedAPIResponse } from '@/@crema/types/api';
 
 export interface FilterItem {
-  type: FormInputType;
+  type: any; // giữ nguyên theo enum FormInputType ở project của bạn
   name: string;
   label?: string;
   placeholder?: string;
@@ -63,13 +64,14 @@ const AppFormList = forwardRef<AppFormListRef, AppFormListProps>(
   ) => {
     const [form] = Form.useForm();
     const [filterHeight, setFilterHeight] = useState<number>(0);
+
     const { fetchApi, data, loading } = getApi;
     const total = data?.total ?? 0;
 
     const wrappedFetchApi = useCallback(
       (options: any) => {
         const params = options?.params || {};
-        const mergedParams = { ...defaultParams, ...params };
+        const mergedParams = { ...(defaultParams ?? {}), ...params };
         return fetchApi({ ...options, params: mergedParams });
       },
       [fetchApi, defaultParams],
@@ -105,35 +107,42 @@ const AppFormList = forwardRef<AppFormListRef, AppFormListProps>(
       setCurrPage,
       refreshDataWithPage,
     }));
+
     return (
       <AppsContainer>
-        <AppFilterTable
-          form={form}
-          loading={loading}
-          handleFilterChange={handleFilterChange}
-          filterItems={filterItems}
-          addFunction={addFunction}
-          showAddButton={showAddButton}
-          searchItems={searchItems}
-          filterData={filterData}
-          setFilterHeight={setFilterHeight}
-          additionalActionInFilter={additionalActionInFilter}
-          customActionButtons={customActionButtons}
-        />
+        {/* Header + Filter */}
+        <div className="w-full">
+          <AppFilterTable
+            form={form}
+            loading={loading}
+            handleFilterChange={handleFilterChange}
+            filterItems={filterItems}
+            addFunction={addFunction}
+            showAddButton={showAddButton}
+            searchItems={searchItems}
+            filterData={filterData}
+            setFilterHeight={setFilterHeight}
+            additionalActionInFilter={additionalActionInFilter}
+            customActionButtons={customActionButtons}
+          />
+        </div>
 
-        <ListTable
-          initColumns={columns}
-          total={total}
-          dataSource={data?.data ?? []}
-          currPage={currPage}
-          currPageSize={currPageSize}
-          handlePageChange={handlePageChange}
-          loading={loading}
-          scrollX={scrollX}
-          filterData={filterData}
-          handleSortChange={handleSortChange}
-          filterHeight={filterHeight}
-        />
+        {/* Table */}
+        <div className="w-full">
+          <ListTable
+            initColumns={columns}
+            total={total}
+            dataSource={data?.data ?? []}
+            currPage={currPage}
+            currPageSize={currPageSize}
+            handlePageChange={handlePageChange}
+            loading={loading}
+            scrollX={scrollX}
+            filterData={filterData}
+            handleSortChange={handleSortChange}
+            filterHeight={filterHeight}
+          />
+        </div>
       </AppsContainer>
     );
   },

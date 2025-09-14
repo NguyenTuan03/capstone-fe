@@ -1,13 +1,15 @@
-import React, { useState, useEffect, useRef, SetStateAction } from 'react';
-import { FormInstance } from 'antd/lib/form/Form';
-import { FilterItem } from '..';
-import { Flex, Badge } from 'antd';
+'use client';
+
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { FormInstance } from 'antd';
+import { Badge, Flex } from 'antd';
 import useBreakpoint from 'use-breakpoint';
 import IntlMessages from '@/@crema/helper/IntlMessages';
 import { VscFilterFilled } from 'react-icons/vsc';
 import { IoIosArrowDown, IoIosArrowUp } from 'react-icons/io';
 import { MdAddCircleOutline } from 'react-icons/md';
 import FilterForm from './FilterForm';
+import type { FilterItem } from '..';
 
 interface AppFilterTableProps {
   form: FormInstance;
@@ -22,12 +24,12 @@ interface AppFilterTableProps {
   addFunction?: () => void;
   searchItems?: React.ReactNode;
   filterData?: Record<string, any>;
-  setFilterHeight?: React.Dispatch<SetStateAction<number>>;
+  setFilterHeight?: React.Dispatch<React.SetStateAction<number>>;
   additionalActionInFilter?: React.ReactNode;
   customActionButtons?: React.ReactNode;
 }
 
-const excludeFilterCountKeys = ['order_by', 'order_direction', 'page', 'limit'];
+const EXCLUDED_KEYS = ['order_by', 'order_direction', 'page', 'limit'];
 
 const AppFilterTable: React.FC<AppFilterTableProps> = ({
   form,
@@ -43,8 +45,9 @@ const AppFilterTable: React.FC<AppFilterTableProps> = ({
   customActionButtons,
 }) => {
   const { breakpoint } = useBreakpoint({ tablet: 1024, mobile: 768 });
-  const isTableOrMobile = breakpoint === 'tablet' || breakpoint === 'mobile';
-  const [isCollapse, setIsCollapse] = useState(!isTableOrMobile);
+  const isTabletOrMobile = breakpoint === 'tablet' || breakpoint === 'mobile';
+
+  const [isOpen, setIsOpen] = useState(!isTabletOrMobile);
   const [activeFilterCount, setActiveFilterCount] = useState<number>(0);
   const filterRef = useRef<HTMLDivElement>(null);
 
@@ -52,50 +55,82 @@ const AppFilterTable: React.FC<AppFilterTableProps> = ({
     if (value === undefined || value === null || value === '') return false;
     if (Array.isArray(value) && value.length === 0) return false;
     if (value && typeof value === 'object') {
-      if (value.$isDayjsObject) return true;
+      if ((value as any).$isDayjsObject) return true;
       if (Object.keys(value).length === 0) return false;
     }
     return true;
   };
 
-  const handleOpenFilterForm = () => {
-    setIsCollapse(!isCollapse);
-  };
-
   useEffect(() => {
-    setIsCollapse(!isTableOrMobile);
-  }, [isTableOrMobile]);
+    setIsOpen(!isTabletOrMobile);
+  }, [isTabletOrMobile]);
 
+  // đếm filter đang active
   useEffect(() => {
-    const formValues = form.getFieldsValue();
-    const dataToCheck = filterData || formValues;
-
-    const activeFilters = Object.entries(dataToCheck).filter(([field, value]) => {
-      return isValidFilterValue(value) && !excludeFilterCountKeys.includes(field);
-    });
-
-    setActiveFilterCount(activeFilters.length);
+    const values = form.getFieldsValue();
+    const data = filterData || values;
+    const count = Object.entries(data).filter(
+      ([k, v]) => isValidFilterValue(v) && !EXCLUDED_KEYS.includes(k),
+    ).length;
+    setActiveFilterCount(count);
   }, [form, filterData]);
 
+  // báo chiều cao filter cho parent tính scroll
   useEffect(() => {
-    if (filterRef.current) {
-      const height = filterRef.current.getBoundingClientRect().height;
-      setFilterHeight?.(height);
-    }
-  }, [isCollapse, setFilterHeight]);
+    if (!filterRef.current) return;
+    const el = filterRef.current;
+    const ro = new ResizeObserver(() => {
+      setFilterHeight?.(el.getBoundingClientRect().height);
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [setFilterHeight, isOpen]);
+
+  const containerCls = 'w-full px-5 pt-2.5 pb-1.5';
+  const toggleCls =
+    'flex items-center justify-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-600 cursor-pointer select-none';
+  const addBtnCls =
+    'inline-flex items-center justify-center bg-blue-600 text-white border-0 px-3.5 py-3 mb-2.5 rounded cursor-pointer font-semibold transition-colors duration-200 hover:bg-blue-500';
+
+  const panelCls = useMemo(
+    () =>
+      [
+        'overflow-hidden w-full my-2.5 origin-top transition-all duration-500 ease-out',
+        isOpen ? 'max-h-[1000px] opacity-100 scale-y-100' : 'max-h-0 opacity-0 scale-y-95',
+      ].join(' '),
+    [isOpen],
+  );
 
   if (!filterItems) return null;
-  const renderFilterForm = () => {
-    return (
-      <div
-        className="overflow-hidden w-full my-[10px] [transition-property:height,opacity,transform] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] [&_ .ant-form-vertical_.ant-form-item:not(.ant-form-item-horizontal)_.ant-form-item-label]:pb-1"
-        style={{
-          height: isCollapse ? 'auto' : 0,
-          opacity: isCollapse ? 1 : 0,
-          transform: isCollapse ? 'scaleY(1)' : 'scaleY(0.9)',
-          transformOrigin: 'top',
-        }}
-      >
+
+  return (
+    <div className={containerCls} ref={filterRef}>
+      <Flex justify="space-between" align="center" className="w-full">
+        <Flex align="center" gap={20}>
+          <div className={toggleCls} onClick={() => setIsOpen((v) => !v)}>
+            <Badge count={activeFilterCount} size="small" color="blue">
+              <VscFilterFilled size={16} className="text-blue-600" />
+            </Badge>
+            <span>
+              <IntlMessages id="forecast.filter.icon" />
+            </span>
+            {isOpen ? <IoIosArrowUp size={16} /> : <IoIosArrowDown size={16} />}
+          </div>
+          {searchItems}
+        </Flex>
+
+        <Flex gap={10} align="center">
+          {showAddButton && (
+            <div className={addBtnCls} onClick={addFunction}>
+              <MdAddCircleOutline size={18} className="mr-1" />
+              <IntlMessages id="common.createNew" />
+            </div>
+          )}
+          {customActionButtons}
+        </Flex>
+      </Flex>
+
+      <div className={panelCls}>
         <FilterForm
           form={form}
           items={filterItems}
@@ -103,39 +138,7 @@ const AppFilterTable: React.FC<AppFilterTableProps> = ({
           handleFilterChange={handleFilterChange}
         />
       </div>
-    );
-  };
 
-  return (
-    <div className="w-full p-[10px_20px_5px_20px]" ref={filterRef}>
-      <Flex justify={'space-between'} align={'center'}>
-        <Flex align="center" gap="20px">
-          <div
-            className="flex items-center justify-center gap-2 text-14px font-bold text-[#1677ff] transition-duration-300 hover:text-[#1677ff] hover:transition-duration-300"
-            onClick={handleOpenFilterForm}
-          >
-            <Badge count={activeFilterCount} size="small" color="blue">
-              <VscFilterFilled size={16} color="#1677ff" />
-            </Badge>
-            <IntlMessages id="forecast.filter.icon" />
-            {isCollapse ? <IoIosArrowUp size={16} /> : <IoIosArrowDown size={16} />}
-          </div>
-          {searchItems}
-        </Flex>
-        <Flex gap={10}>
-          {showAddButton && (
-            <div
-              className="inline-flex items-center justify-center bg-[#007bff] text-white border-none p-[16px_10px] mb-[10px] rounded-[4px] cursor-pointer font-semibold transition-duration-400 hover:bg-[#3380be]"
-              onClick={addFunction}
-            >
-              <MdAddCircleOutline size={18} />
-              <IntlMessages id="common.createNew" />
-            </div>
-          )}
-          {customActionButtons}
-        </Flex>
-      </Flex>
-      {renderFilterForm()}
       {additionalActionInFilter}
     </div>
   );

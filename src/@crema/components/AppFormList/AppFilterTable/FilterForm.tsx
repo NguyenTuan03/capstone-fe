@@ -1,6 +1,8 @@
-import { Button, Form, Spin } from 'antd';
-import { FormInstance } from 'antd/lib/form/Form';
+'use client';
+
 import React, { useCallback, useEffect, useMemo } from 'react';
+import { Button, Form, Spin } from 'antd';
+import type { FormInstance } from 'antd';
 import IntlMessages from '@/@crema/helper/IntlMessages';
 import { removeItemInvalidFromObject } from '@/@crema/helper/Common';
 import { DEFAULT_PAGE_SIZE } from '@/@crema/constants/AppConst';
@@ -28,6 +30,7 @@ const FilterForm: React.FC<FilterFormProps> = ({
   handleFilterChange,
 }) => {
   const { messages } = useIntl();
+
   const ensureArrayFields = useCallback(
     (values: any) => {
       const result = { ...values };
@@ -47,23 +50,19 @@ const FilterForm: React.FC<FilterFormProps> = ({
 
   const handleUpdateFilter = useCallback(
     (values: any) => {
-      // Don't update filter if loading
       if (isLoading) return;
-
       const cleanedValues = removeItemInvalidFromObject(values);
       const formattedValues = formatDatesInObject(cleanedValues, items);
-      const newFilterParams = ensureArrayFields(formattedValues);
-
-      handleFilterChange(newFilterParams, 1);
+      const newParams = ensureArrayFields(formattedValues);
+      handleFilterChange(newParams, 1);
     },
     [ensureArrayFields, items, handleFilterChange, isLoading],
   );
 
-  const debouncedFilterRef = useMemo(() => {
-    return debounce((params: Record<string, any>) => {
-      handleUpdateFilter(params);
-    }, 1000);
-  }, [handleUpdateFilter]);
+  const debouncedFilterRef = useMemo(
+    () => debounce((params: Record<string, any>) => handleUpdateFilter(params), 1000),
+    [handleUpdateFilter],
+  );
 
   useEffect(() => {
     return () => {
@@ -72,40 +71,30 @@ const FilterForm: React.FC<FilterFormProps> = ({
   }, [debouncedFilterRef]);
 
   const handleValuesChange = useCallback(
-    (_changedValues: any, allValues: any) => {
-      // Don't trigger debounced filter if loading
+    (_changed: any, allValues: any) => {
       if (isLoading) return;
-
       debouncedFilterRef(allValues);
     },
     [debouncedFilterRef, isLoading],
   );
 
   const handleResetFilter = useCallback(async () => {
-    // Don't reset filter if loading
     if (isLoading) return;
-
-    const fieldsToReset = items
-      .filter((item) => item.clearFilter !== false)
-      .map((item) => item.name);
-
+    const fieldsToReset = items.filter((i) => i.clearFilter !== false).map((i) => i.name);
     form.resetFields(fieldsToReset);
 
-    const allValues = form.getFieldsValue();
+    const all = form.getFieldsValue();
+    const cleaned = removeItemInvalidFromObject(all);
+    const formatted = formatDatesInObject(cleaned, items);
+    const newParams = ensureArrayFields(formatted);
 
-    const cleanedValues = removeItemInvalidFromObject(allValues);
-    const formattedValues = formatDatesInObject(cleanedValues, items);
-    const newFilterParams = ensureArrayFields(formattedValues);
-
-    handleFilterChange(newFilterParams, 1, DEFAULT_PAGE_SIZE);
+    handleFilterChange(newParams, 1, DEFAULT_PAGE_SIZE);
   }, [form, items, handleFilterChange, isLoading, ensureArrayFields]);
 
   const initValues = useMemo(() => {
     return items.reduce(
       (acc, item) => {
-        if (item.initialValue !== undefined) {
-          acc[item.name] = item.initialValue;
-        }
+        if (item.initialValue !== undefined) acc[item.name] = item.initialValue;
         return acc;
       },
       {} as Record<string, any>,
@@ -114,20 +103,17 @@ const FilterForm: React.FC<FilterFormProps> = ({
 
   const formItems = useMemo(() => {
     return (items || []).map((item) => {
-      const { clearFilter: _clearFilter, ...itemProps } = item; // eslint-disable-line @typescript-eslint/no-unused-vars
-
-      // Convert switch type to select with true/false/null options for filtering
+      const { clearFilter: _skip, ...itemProps } = item; // eslint-disable-line @typescript-eslint/no-unused-vars
+      // Switch → Select ở filter
       let fieldType = item.type;
       let options = item.options;
 
       if (item.type === FormInputType.Switch) {
         fieldType = FormInputType.Select;
-        // Use original switch options if they exist, otherwise use default true/false
         const switchOptions = item.options || [
           { label: messages['common.yes'] as string, value: true },
           { label: messages['common.no'] as string, value: false },
         ];
-        // Add "All" option for filtering
         options = [...switchOptions, { label: messages['common.all'] as string, value: null }];
       }
 
@@ -137,10 +123,7 @@ const FilterForm: React.FC<FilterFormProps> = ({
           label={item.label}
           name={item.name}
           hidden={item.hide}
-          style={{
-            width: item.width ? item.width : '240px',
-            marginBottom: '12px',
-          }}
+          className="mb-3 w-[240px]" // tailwind width và spacing
         >
           <DynamicInputField
             fieldType={fieldType}
@@ -162,19 +145,15 @@ const FilterForm: React.FC<FilterFormProps> = ({
         className="filter-form"
         initialValues={initValues}
       >
-        <div className="flex flex-wrap gap-[8px] justify-start items-center h-full">
+        <div className="flex flex-wrap gap-2 justify-start items-end">
           {formItems}
+
           <Button
             onClick={handleResetFilter}
             disabled={isLoading}
             loading={isLoading}
-            style={{
-              marginLeft: 10,
-              // height: '35px',
-              alignSelf: 'flex-end',
-              marginBottom: '12px',
-            }}
             danger
+            className="ml-2 mb-3"
           >
             <IntlMessages id="common.clearFilter" />
           </Button>

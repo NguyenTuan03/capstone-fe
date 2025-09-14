@@ -1,4 +1,4 @@
-// Specialized hooks for Pickle Ball Management System business logic
+'use client';
 import { RoleEnum } from '../constants/AppEnums';
 import {
   useCrudOperations,

@@ -1,81 +1,54 @@
-import { NextRouter } from 'next/router';
-import { removeItemInvalidFromObject } from './Common';
+// helper/UrlHelper.ts
+'use client';
 
-export const formatQueryParams = (queryParams: Record<string, any>) => {
-  return Object.entries(queryParams).reduce(
-    (acc, [key, value]) => {
-      acc[key] = value;
+import { ReadonlyURLSearchParams } from 'next/navigation';
 
-      if (typeof value !== 'string') {
-        return acc;
-      }
+export function buildSearchString(
+  searchParams: ReadonlyURLSearchParams,
+  updates: Record<string, any>,
+) {
+  const sp = new URLSearchParams(searchParams.toString());
+  Object.entries(updates).forEach(([k, v]) => {
+    if (v === undefined || v === null || v === '') sp.delete(k);
+    else sp.set(k, String(v));
+  });
+  return sp.toString();
+}
 
-      // Handle boolean values
-      if (value === 'true') {
-        acc[key] = true;
-        return acc;
-      }
-      if (value === 'false') {
-        acc[key] = false;
-        return acc;
-      }
-
-      if (value.startsWith('[') || value.startsWith('{')) {
-        try {
-          acc[key] = JSON.parse(value);
-        } catch {
-          acc[key] = value;
-        }
-        return acc;
-      }
-
-      return acc;
-    },
-    {} as Record<string, any>,
-  );
-};
-
-export const updateUrlQuery = (
-  router: NextRouter,
-  page?: number,
-  pageSize?: number,
-  params: any = {},
-) => {
-  /**
-   * Processes a query value, converting arrays and objects to comma-separated strings
-   * @param value The value to process
-   * @returns Processed value as a string
-   */
-  const processQueryValue = (value: any) => {
-    if (Array.isArray(value)) {
-      return JSON.stringify(value);
-    }
-    if (typeof value === 'object' && value !== null) {
-      return JSON.stringify(Object.values(value));
-    }
-    return value;
+export function updateUrlQuery({
+  router,
+  pathname,
+  searchParams,
+  page,
+  pageSize,
+  filters,
+}: {
+  router: any;
+  pathname: string | null;
+  searchParams: ReadonlyURLSearchParams;
+  page: number;
+  pageSize: number;
+  filters: Record<string, any>;
+}) {
+  const base = {
+    page,
+    limit: pageSize,
+    ...filters,
   };
+  const qs = buildSearchString(searchParams, base);
+  router.push(`${pathname}?${qs}`, { scroll: false });
+}
 
-  const queryParams = Object.entries(
-    removeItemInvalidFromObject({
-      page,
-      limit: pageSize,
-      ...params,
-    }),
-  ).reduce(
-    (acc, [key, value]) => {
-      acc[key] = processQueryValue(value);
-      return acc;
-    },
-    {} as Record<string, any>,
-  );
-
-  router.push(
-    {
-      pathname: router.pathname,
-      query: queryParams,
-    },
-    undefined,
-    { shallow: true },
-  );
-};
+export function formatQueryParams(obj: Record<string, any>) {
+  // ép kiểu đúng: true/false/null/number khi có thể
+  const out: Record<string, any> = {};
+  Object.entries(obj).forEach(([k, v]) => {
+    if (v === 'true') out[k] = true;
+    else if (v === 'false') out[k] = false;
+    else if (v === 'null') out[k] = null;
+    else if (!Number.isNaN(Number(v)) && v !== '' && /^[0-9]+(\.[0-9]+)?$/.test(String(v)))
+      out[k] = Number(v);
+    else out[k] = v;
+  });
+  return out;
+}
