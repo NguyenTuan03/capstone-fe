@@ -1,8 +1,48 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, Table, Button, Space, Tag, Input, Select, Avatar, Modal, Form, Typography, Row, Col, message, Tabs, Descriptions, List, Rate, Dropdown, Tooltip, Alert } from 'antd';
-import { TeamOutlined, SearchOutlined, EyeOutlined, CheckOutlined, CloseOutlined, StopOutlined, PlayCircleOutlined, FilterOutlined, ExportOutlined, StarOutlined, MoreOutlined, CheckCircleOutlined, ClockCircleOutlined, FileTextOutlined, WarningOutlined, DownloadOutlined, DeleteOutlined } from '@ant-design/icons';
+import {
+  Card,
+  Table,
+  Button,
+  Space,
+  Tag,
+  Input,
+  Select,
+  Avatar,
+  Modal,
+  Form,
+  Typography,
+  Row,
+  Col,
+  message,
+  Tabs,
+  Descriptions,
+  List,
+  Rate,
+  Dropdown,
+  Tooltip,
+  Alert,
+} from 'antd';
+import {
+  TeamOutlined,
+  SearchOutlined,
+  EyeOutlined,
+  CheckOutlined,
+  CloseOutlined,
+  StopOutlined,
+  PlayCircleOutlined,
+  FilterOutlined,
+  ExportOutlined,
+  StarOutlined,
+  MoreOutlined,
+  CheckCircleOutlined,
+  ClockCircleOutlined,
+  FileTextOutlined,
+  WarningOutlined,
+  DownloadOutlined,
+  DeleteOutlined,
+} from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import type { MenuProps } from 'antd';
 
@@ -45,7 +85,7 @@ export default function CoachesPage() {
         search: searchText,
         status: statusFilter === 'all' ? undefined : statusFilter,
         specialty: specialtyFilter === 'all' ? undefined : specialtyFilter,
-        rating: ratingFilter === 'all' ? undefined : ratingFilter
+        rating: ratingFilter === 'all' ? undefined : ratingFilter,
       };
 
       const response = await CoachApiService.getCoaches(params);
@@ -69,21 +109,31 @@ export default function CoachesPage() {
   // Helper functions
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'approved': return 'green';
-      case 'pending': return 'orange';
-      case 'suspended': return 'red';
-      case 'rejected': return 'default';
-      default: return 'default';
+      case 'approved':
+        return 'green';
+      case 'pending':
+        return 'orange';
+      case 'suspended':
+        return 'red';
+      case 'rejected':
+        return 'default';
+      default:
+        return 'default';
     }
   };
 
   const getStatusText = (status: string) => {
     switch (status) {
-      case 'approved': return 'Đã duyệt';
-      case 'pending': return 'Chờ duyệt';
-      case 'suspended': return 'Đình chỉ';
-      case 'rejected': return 'Từ chối';
-      default: return status;
+      case 'approved':
+        return 'Đã duyệt';
+      case 'pending':
+        return 'Chờ duyệt';
+      case 'suspended':
+        return 'Đình chỉ';
+      case 'rejected':
+        return 'Từ chối';
+      default:
+        return status;
     }
   };
 
@@ -150,7 +200,7 @@ export default function CoachesPage() {
 
   const submitReject = async (values: { reason: string }) => {
     if (!selectedCoach) return;
-    
+
     try {
       await CoachApiService.rejectCoach(selectedCoach.id, values.reason, 'current_admin');
       message.success('Từ chối hồ sơ thành công');
@@ -164,7 +214,7 @@ export default function CoachesPage() {
 
   const submitSuspend = async (values: { reason: string }) => {
     if (!selectedCoach) return;
-    
+
     try {
       await CoachApiService.suspendCoach(selectedCoach.id, values.reason, 'current_admin');
       message.success('Đình chỉ huấn luyện viên thành công');
@@ -182,72 +232,80 @@ export default function CoachesPage() {
       key: 'view',
       icon: <EyeOutlined />,
       label: 'Xem chi tiết',
-      onClick: () => handleViewCoach(coach.id)
+      onClick: () => handleViewCoach(coach.id),
     },
-    ...(coach.status === 'pending' ? [
-      {
-        type: 'divider' as const
-      },
-      {
-        key: 'approve',
-        icon: <CheckOutlined />,
-        label: 'Duyệt hồ sơ',
-        onClick: () => Modal.confirm({
-          title: 'Xác nhận duyệt',
-          content: 'Bạn có chắc muốn duyệt huấn luyện viên này?',
-          okText: 'Duyệt',
-          cancelText: 'Hủy',
-          onOk: () => handleApproveCoach(coach.id)
-        })
-      },
-      {
-        key: 'reject',
-        icon: <CloseOutlined />,
-        label: 'Từ chối hồ sơ',
-        onClick: () => handleRejectCoach(coach),
-        danger: true
-      }
-    ] : []),
-    ...(coach.status === 'approved' ? [
-      {
-        type: 'divider' as const
-      },
-      {
-        key: 'suspend',
-        icon: <StopOutlined />,
-        label: 'Đình chỉ',
-        onClick: () => handleSuspendCoach(coach),
-        danger: true
-      }
-    ] : []),
-    ...(coach.status === 'suspended' ? [
-      {
-        type: 'divider' as const
-      },
-      {
-        key: 'unsuspend',
-        icon: <PlayCircleOutlined />,
-        label: 'Kích hoạt lại',
-        onClick: () => handleUnsuspendCoach(coach.id)
-      }
-    ] : []),
+    ...(coach.status === 'pending'
+      ? [
+          {
+            type: 'divider' as const,
+          },
+          {
+            key: 'approve',
+            icon: <CheckOutlined />,
+            label: 'Duyệt hồ sơ',
+            onClick: () =>
+              Modal.confirm({
+                title: 'Xác nhận duyệt',
+                content: 'Bạn có chắc muốn duyệt huấn luyện viên này?',
+                okText: 'Duyệt',
+                cancelText: 'Hủy',
+                onOk: () => handleApproveCoach(coach.id),
+              }),
+          },
+          {
+            key: 'reject',
+            icon: <CloseOutlined />,
+            label: 'Từ chối hồ sơ',
+            onClick: () => handleRejectCoach(coach),
+            danger: true,
+          },
+        ]
+      : []),
+    ...(coach.status === 'approved'
+      ? [
+          {
+            type: 'divider' as const,
+          },
+          {
+            key: 'suspend',
+            icon: <StopOutlined />,
+            label: 'Đình chỉ',
+            onClick: () => handleSuspendCoach(coach),
+            danger: true,
+          },
+        ]
+      : []),
+    ...(coach.status === 'suspended'
+      ? [
+          {
+            type: 'divider' as const,
+          },
+          {
+            key: 'unsuspend',
+            icon: <PlayCircleOutlined />,
+            label: 'Kích hoạt lại',
+            onClick: () => handleUnsuspendCoach(coach.id),
+          },
+        ]
+      : []),
     {
-      type: 'divider' as const
+      type: 'divider' as const,
     },
     {
       key: 'delete',
       icon: <DeleteOutlined />,
       label: 'Xóa huấn luyện viên',
-      onClick: () => Modal.confirm({
-        title: 'Xác nhận xóa',
-        content: 'Bạn có chắc muốn xóa huấn luyện viên này?',
-        okText: 'Xóa',
-        okType: 'danger',
-        cancelText: 'Hủy',
-        onOk: () => handleDeleteCoach(coach.id)
-      }),
-      danger: true
-    }
+      onClick: () =>
+        Modal.confirm({
+          title: 'Xác nhận xóa',
+          content: 'Bạn có chắc muốn xóa huấn luyện viên này?',
+          okText: 'Xóa',
+          okType: 'danger',
+          cancelText: 'Hủy',
+          onOk: () => handleDeleteCoach(coach.id),
+        }),
+      danger: true,
+    },
   ];
 
   // Table columns
@@ -258,11 +316,7 @@ export default function CoachesPage() {
       width: 280,
       render: (_, record) => (
         <div className="flex items-center space-x-3">
-          <Avatar 
-            src={record.avatar}
-            className="bg-blue-500"
-            size="large"
-          >
+          <Avatar src={record.avatar} className="bg-blue-500" size="large">
             {record.name.charAt(0).toUpperCase()}
           </Avatar>
           <div className="flex-1">
@@ -281,9 +335,7 @@ export default function CoachesPage() {
             </div>
             <Text className="text-sm text-gray-500">{record.email}</Text>
             <div className="flex items-center space-x-2 mt-1">
-              <Tag color={getStatusColor(record.status)} size="small">
-                {getStatusText(record.status)}
-              </Tag>
+              <Tag color={getStatusColor(record.status)}>{getStatusText(record.status)}</Tag>
             </div>
           </div>
         </div>
@@ -298,12 +350,12 @@ export default function CoachesPage() {
           {record.profile?.specialties && record.profile.specialties.length > 0 ? (
             <div>
               {record.profile.specialties.slice(0, 2).map((specialty, index) => (
-                <Tag key={index} color="blue" size="small" className="mb-1">
+                <Tag key={index} color="blue" className="mb-1">
                   {specialty}
                 </Tag>
               ))}
               {record.profile.specialties.length > 2 && (
-                <Tag size="small">+{record.profile.specialties.length - 2}</Tag>
+                <Tag>+{record.profile.specialties.length - 2}</Tag>
               )}
             </div>
           ) : (
@@ -327,7 +379,9 @@ export default function CoachesPage() {
           {record.profile?.hourlyRate ? (
             <Text className="font-medium">{formatCurrency(record.profile.hourlyRate)}</Text>
           ) : record.application?.requestedProfile.hourlyRate ? (
-            <Text className="text-gray-500">{formatCurrency(record.application.requestedProfile.hourlyRate)}</Text>
+            <Text className="text-gray-500">
+              {formatCurrency(record.application.requestedProfile.hourlyRate)}
+            </Text>
           ) : (
             <Text className="text-gray-400">N/A</Text>
           )}
@@ -364,7 +418,7 @@ export default function CoachesPage() {
       key: 'actions',
       width: 80,
       render: (_, record) => (
-        <Dropdown 
+        <Dropdown
           menu={{ items: getActionMenu(record) }}
           placement="bottomRight"
           trigger={['click']}
@@ -455,15 +509,15 @@ export default function CoachesPage() {
               />
             </div>
           </div>
-          
+
           <div className="flex flex-wrap gap-4 items-center">
             <div className="flex items-center space-x-2">
               <FilterOutlined />
               <Text>Bộ lọc:</Text>
             </div>
-            
-            <Select 
-              value={statusFilter} 
+
+            <Select
+              value={statusFilter}
               onChange={(value) => {
                 setStatusFilter(value);
                 setCurrentPage(1);
@@ -478,8 +532,8 @@ export default function CoachesPage() {
               <Option value="rejected">Từ chối</Option>
             </Select>
 
-            <Select 
-              value={specialtyFilter} 
+            <Select
+              value={specialtyFilter}
               onChange={(value) => {
                 setSpecialtyFilter(value);
                 setCurrentPage(1);
@@ -495,8 +549,8 @@ export default function CoachesPage() {
               <Option value="Youth Development">Phát triển trẻ em</Option>
             </Select>
 
-            <Select 
-              value={ratingFilter} 
+            <Select
+              value={ratingFilter}
               onChange={(value) => {
                 setRatingFilter(value);
                 setCurrentPage(1);
@@ -511,14 +565,16 @@ export default function CoachesPage() {
               <Option value="2">2+ sao</Option>
               <Option value="1">1+ sao</Option>
             </Select>
-            
-            <Button onClick={() => {
-              setStatusFilter('all');
-              setSpecialtyFilter('all');
-              setRatingFilter('all');
-              setSearchText('');
-              setCurrentPage(1);
-            }}>
+
+            <Button
+              onClick={() => {
+                setStatusFilter('all');
+                setSpecialtyFilter('all');
+                setRatingFilter('all');
+                setSearchText('');
+                setCurrentPage(1);
+              }}
+            >
               <IntlMessages id="coach.filter.clear" />
             </Button>
           </div>
@@ -538,7 +594,7 @@ export default function CoachesPage() {
             total: total,
             showSizeChanger: true,
             showQuickJumper: true,
-            showTotal: (total, range) => 
+            showTotal: (total, range) =>
               `${range[0]}-${range[1]} trong tổng số ${total} huấn luyện viên`,
             onChange: (page, size) => {
               setCurrentPage(page);
@@ -572,11 +628,7 @@ export default function CoachesPage() {
                 children: (
                   <div className="space-y-4">
                     <div className="flex items-center space-x-4 pb-4 border-b">
-                      <Avatar 
-                        src={selectedCoach.avatar}
-                        size={80}
-                        className="bg-blue-500"
-                      >
+                      <Avatar src={selectedCoach.avatar} size={80} className="bg-blue-500">
                         {selectedCoach.name.charAt(0).toUpperCase()}
                       </Avatar>
                       <div className="flex-1">
@@ -585,15 +637,14 @@ export default function CoachesPage() {
                           <Tag color={getStatusColor(selectedCoach.status)}>
                             {getStatusText(selectedCoach.status)}
                           </Tag>
-                          {selectedCoach.isVerified && (
-                            <Tag color="green">ĐÃ XÁC MINH</Tag>
-                          )}
+                          {selectedCoach.isVerified && <Tag color="green">ĐÃ XÁC MINH</Tag>}
                         </Space>
                         {selectedCoach.profile?.rating !== undefined && (
                           <div className="mt-2">
                             <Rate disabled value={selectedCoach.profile.rating} />
                             <Text className="ml-2">
-                              {selectedCoach.profile.rating.toFixed(1)} ({selectedCoach.profile.totalSessions} sessions)
+                              {selectedCoach.profile.rating.toFixed(1)} (
+                              {selectedCoach.profile.totalSessions} sessions)
                             </Text>
                           </div>
                         )}
@@ -642,156 +693,210 @@ export default function CoachesPage() {
                         <Title level={5}>Chuyên môn</Title>
                         <Space wrap>
                           {selectedCoach.profile.specialties.map((specialty, index) => (
-                            <Tag key={index} color="blue">{specialty}</Tag>
+                            <Tag key={index} color="blue">
+                              {specialty}
+                            </Tag>
                           ))}
                         </Space>
                       </div>
                     )}
                   </div>
-                )
+                ),
               },
-              ...(selectedCoach.application ? [{
-                key: 'application',
-                label: 'Hồ sơ đăng ký',
-                children: (
-                  <div className="space-y-4">
-                    <Alert
-                      message="Hồ sơ đăng ký làm huấn luyện viên"
-                      description="Thông tin do ứng viên cung cấp khi đăng ký làm huấn luyện viên"
-                      type="info"
-                      showIcon
-                    />
+              ...(selectedCoach.application
+                ? [
+                    {
+                      key: 'application',
+                      label: 'Hồ sơ đăng ký',
+                      children: (
+                        <div className="space-y-4">
+                          <Alert
+                            message="Hồ sơ đăng ký làm huấn luyện viên"
+                            description="Thông tin do ứng viên cung cấp khi đăng ký làm huấn luyện viên"
+                            type="info"
+                            showIcon
+                          />
 
-                    <div>
-                      <Title level={5}>Động lực</Title>
-                      <Paragraph>{selectedCoach.application.motivation}</Paragraph>
-                    </div>
+                          <div>
+                            <Title level={5}>Động lực</Title>
+                            <Paragraph>{selectedCoach.application.motivation}</Paragraph>
+                          </div>
 
-                    <div>
-                      <Title level={5}>Thông tin yêu cầu</Title>
-                      <Descriptions column={2} bordered>
-                        <Descriptions.Item label="Kinh nghiệm" span={1}>
-                          {selectedCoach.application.requestedProfile.experience} năm
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Giá/giờ mong muốn" span={1}>
-                          {formatCurrency(selectedCoach.application.requestedProfile.hourlyRate)}
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Chuyên môn" span={2}>
-                          <Space wrap>
-                            {selectedCoach.application.requestedProfile.specialties.map((specialty, index) => (
-                              <Tag key={index} color="purple">{specialty}</Tag>
-                            ))}
-                          </Space>
-                        </Descriptions.Item>
-                        <Descriptions.Item label="Phương pháp dạy" span={2}>
-                          <Space wrap>
-                            {selectedCoach.application.requestedProfile.teachingMethods.map((method, index) => (
-                              <Tag key={index} color="green">{method}</Tag>
-                            ))}
-                          </Space>
-                        </Descriptions.Item>
-                      </Descriptions>
-                    </div>
-
-                    <div>
-                      <Title level={5}>Tài liệu đính kèm</Title>
-                      <List
-                        dataSource={selectedCoach.application.documents}
-                        renderItem={(doc) => (
-                          <List.Item
-                            actions={[
-                              <Button key="download" icon={<DownloadOutlined />} size="small">
-                                Tải xuống
-                              </Button>
-                            ]}
-                          >
-                            <List.Item.Meta
-                              avatar={<FileTextOutlined className="text-blue-500" />}
-                              title={doc.name}
-                              description={
-                                <div>
-                                  <Text className="text-sm text-gray-500">
-                                    Tải lên: {formatDate(doc.uploadedAt)}
-                                  </Text>
-                                  <div className="mt-1">
-                                    {doc.verified ? (
-                                      <Tag color="green">Đã xác minh</Tag>
-                                    ) : (
-                                      <Tag color="orange">Chờ xác minh</Tag>
-                                    )}
-                                  </div>
-                                </div>
-                              }
-                            />
-                          </List.Item>
-                        )}
-                      />
-                    </div>
-
-                    {selectedCoach.status === 'pending' && (
-                      <div className="flex justify-end space-x-2">
-                        <Button 
-                          type="primary" 
-                          icon={<CheckOutlined />}
-                          onClick={() => handleApproveCoach(selectedCoach.id)}
-                        >
-                          Duyệt hồ sơ
-                        </Button>
-                        <Button 
-                          danger 
-                          icon={<CloseOutlined />}
-                          onClick={() => handleRejectCoach(selectedCoach)}
-                        >
-                          Từ chối
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )
-              }] : []),
-              ...(selectedCoach.recentFeedbacks ? [{
-                key: 'feedbacks',
-                label: `Phản hồi (${selectedCoach.recentFeedbacks.length})`,
-                children: (
-                  <div className="space-y-4">
-                    <List
-                      dataSource={selectedCoach.recentFeedbacks}
-                      renderItem={(feedback) => (
-                        <List.Item>
-                          <Card size="small" className="w-full">
-                            <div className="space-y-2">
-                              <div className="flex items-center justify-between">
-                                <div className="flex items-center space-x-2">
-                                  <Avatar size="small">{feedback.studentName.charAt(0)}</Avatar>
-                                  <Text className="font-medium">{feedback.studentName}</Text>
-                                  <Text className="text-sm text-gray-500">
-                                    {formatDate(feedback.sessionDate)}
-                                  </Text>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                  <Rate disabled value={feedback.rating} size="small" />
-                                  {feedback.reported && (
-                                    <Tag color="red" icon={<WarningOutlined />}>
-                                      Đã báo cáo
-                                    </Tag>
+                          <div>
+                            <Title level={5}>Thông tin yêu cầu</Title>
+                            <Descriptions column={2} bordered>
+                              <Descriptions.Item label="Kinh nghiệm" span={1}>
+                                {selectedCoach.application.requestedProfile.experience} năm
+                              </Descriptions.Item>
+                              <Descriptions.Item label="Giá/giờ mong muốn" span={1}>
+                                {formatCurrency(
+                                  selectedCoach.application.requestedProfile.hourlyRate,
+                                )}
+                              </Descriptions.Item>
+                              <Descriptions.Item label="Chuyên môn" span={2}>
+                                <Space wrap>
+                                  {selectedCoach.application.requestedProfile.specialties.map(
+                                    (specialty, index) => (
+                                      <Tag key={index} color="purple">
+                                        {specialty}
+                                      </Tag>
+                                    ),
                                   )}
-                                </div>
-                              </div>
-                              <Paragraph className="mb-2">{feedback.comment}</Paragraph>
-                              <div className="grid grid-cols-4 gap-2 text-sm">
-                                <div>Chuyên môn: <Rate disabled value={feedback.aspectRatings.expertise} count={5} className="text-xs" /></div>
-                                <div>Giao tiếp: <Rate disabled value={feedback.aspectRatings.communication} count={5} className="text-xs" /></div>
-                                <div>Đúng giờ: <Rate disabled value={feedback.aspectRatings.punctuality} count={5} className="text-xs" /></div>
-                                <div>Kiên nhẫn: <Rate disabled value={feedback.aspectRatings.patience} count={5} className="text-xs" /></div>
-                              </div>
+                                </Space>
+                              </Descriptions.Item>
+                              <Descriptions.Item label="Phương pháp dạy" span={2}>
+                                <Space wrap>
+                                  {selectedCoach.application.requestedProfile.teachingMethods.map(
+                                    (method, index) => (
+                                      <Tag key={index} color="green">
+                                        {method}
+                                      </Tag>
+                                    ),
+                                  )}
+                                </Space>
+                              </Descriptions.Item>
+                            </Descriptions>
+                          </div>
+
+                          <div>
+                            <Title level={5}>Tài liệu đính kèm</Title>
+                            <List
+                              dataSource={selectedCoach.application.documents}
+                              renderItem={(doc) => (
+                                <List.Item
+                                  actions={[
+                                    <Button key="download" icon={<DownloadOutlined />} size="small">
+                                      Tải xuống
+                                    </Button>,
+                                  ]}
+                                >
+                                  <List.Item.Meta
+                                    avatar={<FileTextOutlined className="text-blue-500" />}
+                                    title={doc.name}
+                                    description={
+                                      <div>
+                                        <Text className="text-sm text-gray-500">
+                                          Tải lên: {formatDate(doc.uploadedAt)}
+                                        </Text>
+                                        <div className="mt-1">
+                                          {doc.verified ? (
+                                            <Tag color="green">Đã xác minh</Tag>
+                                          ) : (
+                                            <Tag color="orange">Chờ xác minh</Tag>
+                                          )}
+                                        </div>
+                                      </div>
+                                    }
+                                  />
+                                </List.Item>
+                              )}
+                            />
+                          </div>
+
+                          {selectedCoach.status === 'pending' && (
+                            <div className="flex justify-end space-x-2">
+                              <Button
+                                type="primary"
+                                icon={<CheckOutlined />}
+                                onClick={() => handleApproveCoach(selectedCoach.id)}
+                              >
+                                Duyệt hồ sơ
+                              </Button>
+                              <Button
+                                danger
+                                icon={<CloseOutlined />}
+                                onClick={() => handleRejectCoach(selectedCoach)}
+                              >
+                                Từ chối
+                              </Button>
                             </div>
-                          </Card>
-                        </List.Item>
-                      )}
-                    />
-                  </div>
-                )
-              }] : [])
+                          )}
+                        </div>
+                      ),
+                    },
+                  ]
+                : []),
+              ...(selectedCoach.recentFeedbacks
+                ? [
+                    {
+                      key: 'feedbacks',
+                      label: `Phản hồi (${selectedCoach.recentFeedbacks.length})`,
+                      children: (
+                        <div className="space-y-4">
+                          <List
+                            dataSource={selectedCoach.recentFeedbacks}
+                            renderItem={(feedback) => (
+                              <List.Item>
+                                <Card size="small" className="w-full">
+                                  <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center space-x-2">
+                                        <Avatar size="small">
+                                          {feedback.studentName.charAt(0)}
+                                        </Avatar>
+                                        <Text className="font-medium">{feedback.studentName}</Text>
+                                        <Text className="text-sm text-gray-500">
+                                          {formatDate(feedback.sessionDate)}
+                                        </Text>
+                                      </div>
+                                      <div className="flex items-center space-x-2">
+                                        <Rate disabled value={feedback.rating} />
+                                        {feedback.reported && (
+                                          <Tag color="red" icon={<WarningOutlined />}>
+                                            Đã báo cáo
+                                          </Tag>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <Paragraph className="mb-2">{feedback.comment}</Paragraph>
+                                    <div className="grid grid-cols-4 gap-2 text-sm">
+                                      <div>
+                                        Chuyên môn:{' '}
+                                        <Rate
+                                          disabled
+                                          value={feedback.aspectRatings.expertise}
+                                          count={5}
+                                          className="text-xs"
+                                        />
+                                      </div>
+                                      <div>
+                                        Giao tiếp:{' '}
+                                        <Rate
+                                          disabled
+                                          value={feedback.aspectRatings.communication}
+                                          count={5}
+                                          className="text-xs"
+                                        />
+                                      </div>
+                                      <div>
+                                        Đúng giờ:{' '}
+                                        <Rate
+                                          disabled
+                                          value={feedback.aspectRatings.punctuality}
+                                          count={5}
+                                          className="text-xs"
+                                        />
+                                      </div>
+                                      <div>
+                                        Kiên nhẫn:{' '}
+                                        <Rate
+                                          disabled
+                                          value={feedback.aspectRatings.patience}
+                                          count={5}
+                                          className="text-xs"
+                                        />
+                                      </div>
+                                    </div>
+                                  </div>
+                                </Card>
+                              </List.Item>
+                            )}
+                          />
+                        </div>
+                      ),
+                    },
+                  ]
+                : []),
             ]}
           />
         )}

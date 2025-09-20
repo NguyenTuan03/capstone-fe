@@ -1,8 +1,55 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, Table, Button, Space, Tag, Input, Select, Avatar, Modal, Form, Typography, Row, Col, Badge, Popconfirm, message, Tabs, Descriptions, List, Progress, Rate, Dropdown, Tooltip } from 'antd';
-import { UserOutlined, TeamOutlined, SearchOutlined, EyeOutlined, EditOutlined, DeleteOutlined, LockOutlined, UnlockOutlined, MailOutlined, PhoneOutlined, EnvironmentOutlined, CalendarOutlined, FilterOutlined, ExportOutlined, PlusOutlined, TrophyOutlined, ClockCircleOutlined, StarOutlined, MoreOutlined, CheckCircleOutlined, ExclamationCircleOutlined, RiseOutlined } from '@ant-design/icons';
+import {
+  Card,
+  Table,
+  Button,
+  Space,
+  Tag,
+  Input,
+  Select,
+  Avatar,
+  Modal,
+  Form,
+  Typography,
+  Row,
+  Col,
+  Badge,
+  Popconfirm,
+  message,
+  Tabs,
+  Descriptions,
+  List,
+  Progress,
+  Rate,
+  Dropdown,
+  Tooltip,
+} from 'antd';
+import {
+  UserOutlined,
+  TeamOutlined,
+  SearchOutlined,
+  EyeOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  LockOutlined,
+  UnlockOutlined,
+  MailOutlined,
+  PhoneOutlined,
+  EnvironmentOutlined,
+  CalendarOutlined,
+  FilterOutlined,
+  ExportOutlined,
+  PlusOutlined,
+  TrophyOutlined,
+  ClockCircleOutlined,
+  StarOutlined,
+  MoreOutlined,
+  CheckCircleOutlined,
+  ExclamationCircleOutlined,
+  RiseOutlined,
+} from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import type { MenuProps } from 'antd';
 
@@ -42,7 +89,7 @@ export default function UsersPage() {
         search: searchText,
         role: roleFilter === 'all' ? undefined : roleFilter,
         status: statusFilter === 'all' ? undefined : statusFilter,
-        skillLevel: skillFilter === 'all' ? undefined : skillFilter
+        skillLevel: skillFilter === 'all' ? undefined : skillFilter,
       };
 
       const response = await UserApiService.getUsers(params);
@@ -66,19 +113,27 @@ export default function UsersPage() {
   // Helper functions
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return 'green';
-      case 'banned': return 'red';
-      case 'pending_coach_approval': return 'orange';
-      default: return 'default';
+      case 'active':
+        return 'green';
+      case 'banned':
+        return 'red';
+      case 'pending_coach_approval':
+        return 'orange';
+      default:
+        return 'default';
     }
   };
 
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'admin': return 'purple';
-      case 'coach': return 'blue';
-      case 'user': return 'cyan';
-      default: return 'default';
+      case 'admin':
+        return 'purple';
+      case 'coach':
+        return 'blue';
+      case 'user':
+        return 'cyan';
+      default:
+        return 'default';
     }
   };
 
@@ -108,7 +163,7 @@ export default function UsersPage() {
       location: user.location,
       role: user.role,
       status: user.status,
-      skillLevel: user.skillLevel
+      skillLevel: user.skillLevel,
     });
     setIsEditModalVisible(true);
   };
@@ -126,7 +181,9 @@ export default function UsersPage() {
   const handleUpdateUserStatus = async (userId: string, status: 'active' | 'banned') => {
     try {
       await UserApiService.updateUserStatus(userId, status);
-      message.success(status === 'banned' ? 'Khóa tài khoản thành công' : 'Mở khóa tài khoản thành công');
+      message.success(
+        status === 'banned' ? 'Khóa tài khoản thành công' : 'Mở khóa tài khoản thành công',
+      );
       loadUsers();
     } catch (error) {
       message.error('Không thể cập nhật trạng thái');
@@ -145,7 +202,7 @@ export default function UsersPage() {
 
   const handleSaveEdit = async (values: any) => {
     if (!selectedUser) return;
-    
+
     try {
       await UserApiService.updateUser(selectedUser.id, values);
       message.success('Cập nhật thành công');
@@ -162,53 +219,63 @@ export default function UsersPage() {
       key: 'view',
       icon: <EyeOutlined />,
       label: 'Xem chi tiết',
-      onClick: () => handleViewUser(user.id)
+      onClick: () => handleViewUser(user.id),
     },
     {
       key: 'edit',
       icon: <EditOutlined />,
       label: 'Chỉnh sửa',
-      onClick: () => handleEditUser(user)
+      onClick: () => handleEditUser(user),
     },
     {
-      type: 'divider'
+      type: 'divider',
     },
-    ...(user.role === 'user' && user.status === 'pending_coach_approval' ? [{
-      key: 'promote-coach',
-      icon: <RiseOutlined />,
-      label: 'Duyệt làm Coach',
-      onClick: () => handlePromoteUser(user.id, 'coach')
-    }] : []),
-    ...(user.role !== 'admin' ? [{
-      key: 'promote-admin',
-      icon: <RiseOutlined />,
-      label: 'Thăng cấp Admin',
-      onClick: () => handlePromoteUser(user.id, 'admin')
-    }] : []),
+    ...(user.role === 'user' && user.status === 'pending_coach_approval'
+      ? [
+          {
+            key: 'promote-coach',
+            icon: <RiseOutlined />,
+            label: 'Duyệt làm Coach',
+            onClick: () => handlePromoteUser(user.id, 'coach'),
+          },
+        ]
+      : []),
+    ...(user.role !== 'admin'
+      ? [
+          {
+            key: 'promote-admin',
+            icon: <RiseOutlined />,
+            label: 'Thăng cấp Admin',
+            onClick: () => handlePromoteUser(user.id, 'admin'),
+          },
+        ]
+      : []),
     {
-      type: 'divider'
+      type: 'divider',
     },
     {
       key: user.status === 'active' ? 'ban' : 'unban',
       icon: user.status === 'active' ? <LockOutlined /> : <UnlockOutlined />,
       label: user.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa',
-      onClick: () => handleUpdateUserStatus(user.id, user.status === 'active' ? 'banned' : 'active'),
-      danger: user.status === 'active'
+      onClick: () =>
+        handleUpdateUserStatus(user.id, user.status === 'active' ? 'banned' : 'active'),
+      danger: user.status === 'active',
     },
     {
       key: 'delete',
       icon: <DeleteOutlined />,
       label: 'Xóa người dùng',
-      onClick: () => Modal.confirm({
-        title: 'Xác nhận xóa',
-        content: 'Bạn có chắc muốn xóa người dùng này?',
-        okText: 'Xóa',
-        okType: 'danger',
-        cancelText: 'Hủy',
-        onOk: () => handleDeleteUser(user.id)
-      }),
-      danger: true
-    }
+      onClick: () =>
+        Modal.confirm({
+          title: 'Xác nhận xóa',
+          content: 'Bạn có chắc muốn xóa người dùng này?',
+          okText: 'Xóa',
+          okType: 'danger',
+          cancelText: 'Hủy',
+          onOk: () => handleDeleteUser(user.id),
+        }),
+      danger: true,
+    },
   ];
 
   // Table columns
@@ -219,11 +286,7 @@ export default function UsersPage() {
       width: 300,
       render: (_, record) => (
         <div className="flex items-center space-x-3">
-          <Avatar 
-            src={record.avatar}
-            className="bg-blue-500"
-            size="large"
-          >
+          <Avatar src={record.avatar} className="bg-blue-500" size="large">
             {record.name.charAt(0).toUpperCase()}
           </Avatar>
           <div className="flex-1">
@@ -242,12 +305,16 @@ export default function UsersPage() {
             </div>
             <Text className="text-sm text-gray-500">{record.email}</Text>
             <div className="flex items-center space-x-2 mt-1">
-              <Tag color={getRoleColor(record.role)} size="small">
+              <Tag color={getRoleColor(record.role)}>
                 {record.role === 'user' ? 'Học viên' : record.role === 'coach' ? 'HLV' : 'Admin'}
               </Tag>
               {record.skillLevel && (
-                <Tag color="default" size="small">
-                  {record.skillLevel === 'beginner' ? 'Mới' : record.skillLevel === 'intermediate' ? 'TB' : 'NC'}
+                <Tag color="default">
+                  {record.skillLevel === 'beginner'
+                    ? 'Mới'
+                    : record.skillLevel === 'intermediate'
+                      ? 'TB'
+                      : 'NC'}
                 </Tag>
               )}
             </div>
@@ -279,8 +346,7 @@ export default function UsersPage() {
       width: 120,
       render: (status) => (
         <Tag color={getStatusColor(status)}>
-          {status === 'active' ? 'Hoạt động' : 
-           status === 'banned' ? 'Đã khóa' : 'Chờ duyệt'}
+          {status === 'active' ? 'Hoạt động' : status === 'banned' ? 'Đã khóa' : 'Chờ duyệt'}
         </Tag>
       ),
     },
@@ -312,7 +378,7 @@ export default function UsersPage() {
       key: 'actions',
       width: 80,
       render: (_, record) => (
-        <Dropdown 
+        <Dropdown
           menu={{ items: getActionMenu(record) }}
           placement="bottomRight"
           trigger={['click']}
@@ -406,15 +472,15 @@ export default function UsersPage() {
               />
             </div>
           </div>
-          
+
           <div className="flex flex-wrap gap-4 items-center">
             <div className="flex items-center space-x-2">
               <FilterOutlined />
               <Text>Bộ lọc:</Text>
             </div>
-            
-            <Select 
-              value={roleFilter} 
+
+            <Select
+              value={roleFilter}
               onChange={(value) => {
                 setRoleFilter(value);
                 setCurrentPage(1);
@@ -428,8 +494,8 @@ export default function UsersPage() {
               <Option value="admin">Quản trị viên</Option>
             </Select>
 
-            <Select 
-              value={statusFilter} 
+            <Select
+              value={statusFilter}
               onChange={(value) => {
                 setStatusFilter(value);
                 setCurrentPage(1);
@@ -443,8 +509,8 @@ export default function UsersPage() {
               <Option value="pending_coach_approval">Chờ duyệt</Option>
             </Select>
 
-            <Select 
-              value={skillFilter} 
+            <Select
+              value={skillFilter}
               onChange={(value) => {
                 setSkillFilter(value);
                 setCurrentPage(1);
@@ -457,14 +523,16 @@ export default function UsersPage() {
               <Option value="intermediate">Trung bình</Option>
               <Option value="advanced">Nâng cao</Option>
             </Select>
-            
-            <Button onClick={() => {
-              setRoleFilter('all');
-              setStatusFilter('all');
-              setSkillFilter('all');
-              setSearchText('');
-              setCurrentPage(1);
-            }}>
+
+            <Button
+              onClick={() => {
+                setRoleFilter('all');
+                setStatusFilter('all');
+                setSkillFilter('all');
+                setSearchText('');
+                setCurrentPage(1);
+              }}
+            >
               <IntlMessages id="user.filter.clear" />
             </Button>
           </div>
@@ -484,7 +552,7 @@ export default function UsersPage() {
             total: total,
             showSizeChanger: true,
             showQuickJumper: true,
-            showTotal: (total, range) => 
+            showTotal: (total, range) =>
               `${range[0]}-${range[1]} trong tổng số ${total} người dùng`,
             onChange: (page, size) => {
               setCurrentPage(page);
@@ -507,10 +575,14 @@ export default function UsersPage() {
           <Button key="close" onClick={() => setIsDetailModalVisible(false)}>
             Đóng
           </Button>,
-          <Button key="edit" type="primary" onClick={() => {
-            setIsDetailModalVisible(false);
-            if (selectedUser) handleEditUser(selectedUser);
-          }}>
+          <Button
+            key="edit"
+            type="primary"
+            onClick={() => {
+              setIsDetailModalVisible(false);
+              if (selectedUser) handleEditUser(selectedUser);
+            }}
+          >
             Chỉnh sửa
           </Button>,
         ]}
@@ -518,27 +590,27 @@ export default function UsersPage() {
         {selectedUser && (
           <div className="space-y-4">
             <div className="flex items-center space-x-4 pb-4 border-b">
-              <Avatar 
-                src={selectedUser.avatar}
-                size={80}
-                className="bg-blue-500"
-              >
+              <Avatar src={selectedUser.avatar} size={80} className="bg-blue-500">
                 {selectedUser.name.charAt(0).toUpperCase()}
               </Avatar>
               <div className="flex-1">
                 <Title level={4}>{selectedUser.name}</Title>
                 <Space>
                   <Tag color={getRoleColor(selectedUser.role)}>
-                    {selectedUser.role === 'user' ? 'Học viên' : 
-                     selectedUser.role === 'coach' ? 'Huấn luyện viên' : 'Quản trị viên'}
+                    {selectedUser.role === 'user'
+                      ? 'Học viên'
+                      : selectedUser.role === 'coach'
+                        ? 'Huấn luyện viên'
+                        : 'Quản trị viên'}
                   </Tag>
                   <Tag color={getStatusColor(selectedUser.status)}>
-                    {selectedUser.status === 'active' ? 'Hoạt động' : 
-                     selectedUser.status === 'banned' ? 'Đã khóa' : 'Chờ duyệt'}
+                    {selectedUser.status === 'active'
+                      ? 'Hoạt động'
+                      : selectedUser.status === 'banned'
+                        ? 'Đã khóa'
+                        : 'Chờ duyệt'}
                   </Tag>
-                  {selectedUser.coachProfile?.isVerified && (
-                    <Tag color="green">ĐÃ XÁC MINH</Tag>
-                  )}
+                  {selectedUser.coachProfile?.isVerified && <Tag color="green">ĐÃ XÁC MINH</Tag>}
                 </Space>
               </div>
             </div>
@@ -561,8 +633,11 @@ export default function UsersPage() {
               </Descriptions.Item>
               {selectedUser.skillLevel && (
                 <Descriptions.Item label="Trình độ" span={1}>
-                  {selectedUser.skillLevel === 'beginner' ? 'Mới bắt đầu' :
-                   selectedUser.skillLevel === 'intermediate' ? 'Trung bình' : 'Nâng cao'}
+                  {selectedUser.skillLevel === 'beginner'
+                    ? 'Mới bắt đầu'
+                    : selectedUser.skillLevel === 'intermediate'
+                      ? 'Trung bình'
+                      : 'Nâng cao'}
                 </Descriptions.Item>
               )}
               {selectedUser.status === 'banned' && (
@@ -589,11 +664,7 @@ export default function UsersPage() {
         okText="Lưu"
         cancelText="Hủy"
       >
-        <Form
-          form={editForm}
-          layout="vertical"
-          onFinish={handleSaveEdit}
-        >
+        <Form form={editForm} layout="vertical" onFinish={handleSaveEdit}>
           <Form.Item
             name="name"
             label="Họ và tên"
@@ -601,18 +672,18 @@ export default function UsersPage() {
           >
             <Input />
           </Form.Item>
-          
+
           <Form.Item
             name="email"
             label="Email"
             rules={[
               { required: true, message: 'Vui lòng nhập email' },
-              { type: 'email', message: 'Email không hợp lệ' }
+              { type: 'email', message: 'Email không hợp lệ' },
             ]}
           >
             <Input />
           </Form.Item>
-          
+
           <Form.Item
             name="phone"
             label="Số điện thoại"
@@ -620,40 +691,28 @@ export default function UsersPage() {
           >
             <Input />
           </Form.Item>
-          
-          <Form.Item
-            name="location"
-            label="Địa chỉ"
-          >
+
+          <Form.Item name="location" label="Địa chỉ">
             <Input />
           </Form.Item>
-          
-          <Form.Item
-            name="role"
-            label="Vai trò"
-          >
+
+          <Form.Item name="role" label="Vai trò">
             <Select>
               <Option value="user">Học viên</Option>
               <Option value="coach">Huấn luyện viên</Option>
               <Option value="admin">Quản trị viên</Option>
             </Select>
           </Form.Item>
-          
-          <Form.Item
-            name="status"
-            label="Trạng thái"
-          >
+
+          <Form.Item name="status" label="Trạng thái">
             <Select>
               <Option value="active">Hoạt động</Option>
               <Option value="banned">Đã khóa</Option>
               <Option value="pending_coach_approval">Chờ duyệt coach</Option>
             </Select>
           </Form.Item>
-          
-          <Form.Item
-            name="skillLevel"
-            label="Trình độ"
-          >
+
+          <Form.Item name="skillLevel" label="Trình độ">
             <Select>
               <Option value="beginner">Mới bắt đầu</Option>
               <Option value="intermediate">Trung bình</Option>
