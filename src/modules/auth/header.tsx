@@ -48,30 +48,17 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white shadow-sm border-b border-gray-200">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="bg-white border-b border-gray-200" style={{ boxShadow: 'none' }}>
+      <div className="px-6 py-0">
         <div className="flex justify-between items-center h-16">
-          {/* Left side - Logo + Back button */}
-          <div className="flex items-center space-x-3">
-            <Button
-              type="text"
-              icon={<ArrowLeftOutlined />}
-              onClick={handleBack}
-              className="text-gray-600 hover:text-gray-900"
-            />
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">PB</span>
-              </div>
-              <span className="text-lg font-semibold text-gray-800">
-                Pickleball Learning
-              </span>
-            </div>
+          {/* Left side - Title only */}
+          <div className="flex items-center">
+            <h1 className="text-xl font-semibold text-gray-800 mb-0">Admin Dashboard</h1>
           </div>
 
-          {/* Right side - 3 buttons */}
-          <div className="flex items-center space-x-2">
-            {/* Language button (outermost) */}
+          {/* Right side - User actions */}
+          <div className="flex items-center space-x-3">
+            {/* Language selector */}
             <Dropdown
               menu={{
                 items: languageMenuItems,
@@ -83,26 +70,29 @@ const Header = () => {
               <Button
                 type="text"
                 icon={<GlobalOutlined />}
-                className="text-gray-600 hover:text-gray-900"
+                className="text-gray-600 hover:text-gray-900 border-0"
+                size="middle"
               >
-                {currentLanguage === 'vi' ? '🇻🇳' : '🇺🇸'}
+                {currentLanguage === 'vi' ? 'VN' : 'EN'}
               </Button>
             </Dropdown>
 
-            {/* Theme toggle button (middle) */}
+            {/* Theme toggle */}
             <Button
               type="text"
               icon={isDarkMode ? <SunOutlined /> : <MoonOutlined />}
               onClick={handleToggleTheme}
-              className="text-gray-600 hover:text-gray-900"
+              className="text-gray-600 hover:text-gray-900 border-0"
+              size="middle"
             />
 
-            {/* Settings button (innermost) */}
+            {/* Settings */}
             <Button
               type="text"
               icon={<SettingOutlined />}
               onClick={handleSettings}
-              className="text-gray-600 hover:text-gray-900"
+              className="text-gray-600 hover:text-gray-900 border-0"
+              size="middle"
             />
           </div>
         </div>
