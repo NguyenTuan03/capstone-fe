@@ -1,0 +1,630 @@
+{
+  "sessions": [
+    {
+      "id": "ses_001",
+      "learnerId": "usr_001",
+      "learnerName": "Nguyễn Văn An",
+      "learnerAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=An",
+      "coachId": "coach_001",
+      "coachName": "Sarah Wilson",
+      "coachAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
+      "date": "2024-01-25",
+      "time": "14:00",
+      "duration": 60,
+      "type": "online",
+      "status": "completed",
+      "paymentStatus": "paid",
+      "amount": 300000,
+      "currency": "VND",
+      "createdAt": "2024-01-20T10:00:00Z",
+      "updatedAt": "2024-01-25T15:00:00Z",
+      "goals": [
+        {
+          "title": "Cải thiện kỹ thuật serve",
+          "description": "Luyện tập serve cơ bản và nâng cao độ chính xác",
+          "completed": true
+        },
+        {
+          "title": "Học footwork cơ bản",
+          "description": "Nắm vững các bước di chuyển trên sân",
+          "completed": true
+        }
+      ],
+      "progressNotes": [
+        {
+          "id": "note_001",
+          "coachId": "coach_001",
+          "sessionId": "ses_001",
+          "content": "Học viên đã cải thiện đáng kể kỹ thuật serve. Footwork cần luyện tập thêm.",
+          "skillsImproved": ["Serve technique", "Hand position"],
+          "areasToFocus": ["Footwork", "Backhand"],
+          "homeworkAssigned": "Luyện tập serve 30 phút mỗi ngày",
+          "createdAt": "2024-01-25T15:00:00Z",
+          "updatedAt": "2024-01-25T15:00:00Z"
+        }
+      ],
+      "learnerFeedback": {
+        "id": "fb_001",
+        "sessionId": "ses_001",
+        "fromId": "usr_001",
+        "fromName": "Nguyễn Văn An",
+        "fromType": "learner",
+        "toId": "coach_001",
+        "toName": "Sarah Wilson",
+        "toType": "coach",
+        "rating": 5,
+        "comment": "Coach Sarah rất tận tình và giải thích dễ hiểu. Tôi đã học được nhiều kỹ thuật mới.",
+        "aspectRatings": {
+          "expertise": 5,
+          "communication": 5,
+          "punctuality": 5,
+          "patience": 4,
+          "teaching": 5
+        },
+        "isReported": false,
+        "createdAt": "2024-01-25T16:00:00Z"
+      },
+      "coachFeedback": {
+        "id": "fb_002",
+        "sessionId": "ses_001",
+        "fromId": "coach_001",
+        "fromName": "Sarah Wilson",
+        "fromType": "coach",
+        "toId": "usr_001",
+        "toName": "Nguyễn Văn An",
+        "toType": "learner",
+        "rating": 4,
+        "comment": "Học viên rất chăm chỉ và tiếp thu tốt. Cần luyện tập thêm để hoàn thiện kỹ thuật.",
+        "aspectRatings": {
+          "engagement": 4,
+          "punctuality": 5,
+          "communication": 4
+        },
+        "isReported": false,
+        "createdAt": "2024-01-25T15:30:00Z"
+      },
+      "paymentDetails": {
+        "transactionId": "txn_001",
+        "paymentMethod": "Thẻ tín dụng",
+        "paidAt": "2024-01-20T10:15:00Z"
+      }
+    },
+    {
+      "id": "ses_002",
+      "learnerId": "usr_002",
+      "learnerName": "Trần Thị Bình",
+      "learnerAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Binh",
+      "coachId": "coach_002",
+      "coachName": "Mike Johnson",
+      "coachAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Mike",
+      "date": "2024-01-28",
+      "time": "10:00",
+      "duration": 90,
+      "type": "offline",
+      "location": "Sân Pickleball Paradise - Quận 3, TP.HCM",
+      "status": "upcoming",
+      "paymentStatus": "paid",
+      "amount": 450000,
+      "currency": "VND",
+      "createdAt": "2024-01-22T09:00:00Z",
+      "updatedAt": "2024-01-22T09:00:00Z",
+      "goals": [
+        {
+          "title": "Nâng cao kỹ thuật volley",
+          "description": "Luyện tập volley và net play",
+          "completed": false
+        },
+        {
+          "title": "Chiến thuật doubles",
+          "description": "Học các chiến thuật cơ bản trong pickleball doubles",
+          "completed": false
+        }
+      ],
+      "paymentDetails": {
+        "transactionId": "txn_002",
+        "paymentMethod": "Chuyển khoản",
+        "paidAt": "2024-01-22T09:30:00Z"
+      }
+    },
+    {
+      "id": "ses_003",
+      "learnerId": "usr_003",
+      "learnerName": "Lê Minh Cường",
+      "learnerAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Cuong",
+      "coachId": "coach_001",
+      "coachName": "Sarah Wilson",
+      "coachAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
+      "date": "2024-01-26",
+      "time": "16:00",
+      "duration": 60,
+      "type": "online",
+      "status": "cancelled",
+      "paymentStatus": "refunded",
+      "amount": 300000,
+      "currency": "VND",
+      "createdAt": "2024-01-21T14:00:00Z",
+      "updatedAt": "2024-01-26T15:00:00Z",
+      "cancelledAt": "2024-01-26T15:00:00Z",
+      "cancelledBy": "admin_001",
+      "cancelReason": "Coach bị ốm đột xuất",
+      "refundedAt": "2024-01-26T16:00:00Z",
+      "refundAmount": 300000,
+      "goals": [
+        {
+          "title": "Ôn tập serve technique",
+          "description": "Củng cố kỹ thuật serve đã học",
+          "completed": false
+        }
+      ],
+      "paymentDetails": {
+        "transactionId": "txn_003",
+        "paymentMethod": "Ví điện tử",
+        "paidAt": "2024-01-21T14:15:00Z",
+        "refundTransactionId": "rfn_003"
+      }
+    },
+    {
+      "id": "ses_004",
+      "learnerId": "usr_004",
+      "learnerName": "Phạm Thị Dung",
+      "learnerAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Dung",
+      "coachId": "coach_003",
+      "coachName": "David Lee",
+      "coachAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=David",
+      "date": "2024-01-24",
+      "time": "09:00",
+      "duration": 60,
+      "type": "offline",
+      "location": "Sân Pickleball Center - Quận 7, TP.HCM",
+      "status": "completed",
+      "paymentStatus": "pending",
+      "amount": 350000,
+      "currency": "VND",
+      "createdAt": "2024-01-19T11:00:00Z",
+      "updatedAt": "2024-01-24T10:00:00Z",
+      "goals": [
+        {
+          "title": "Học dink shot",
+          "description": "Nắm vững kỹ thuật dink shot cơ bản",
+          "completed": true
+        },
+        {
+          "title": "Tăng cường thể lực",
+          "description": "Bài tập thể lực cho pickleball",
+          "completed": false
+        }
+      ],
+      "progressNotes": [
+        {
+          "id": "note_004",
+          "coachId": "coach_003",
+          "sessionId": "ses_004",
+          "content": "Học viên đã nắm vững dink shot. Cần tăng cường luyện tập thể lực.",
+          "skillsImproved": ["Dink shot", "Court positioning"],
+          "areasToFocus": ["Endurance", "Power shots"],
+          "homeworkAssigned": "Chạy bộ 3 lần/tuần, luyện dink 20 phút/ngày",
+          "createdAt": "2024-01-24T10:00:00Z",
+          "updatedAt": "2024-01-24T10:00:00Z"
+        }
+      ],
+      "learnerFeedback": {
+        "id": "fb_004",
+        "sessionId": "ses_004",
+        "fromId": "usr_004",
+        "fromName": "Phạm Thị Dung",
+        "fromType": "learner",
+        "toId": "coach_003",
+        "toName": "David Lee",
+        "toType": "coach",
+        "rating": 2,
+        "comment": "Coach đến muộn 15 phút và không giải thích rõ ràng. Tôi không hài lòng về buổi học này.",
+        "aspectRatings": {
+          "expertise": 3,
+          "communication": 2,
+          "punctuality": 1,
+          "patience": 3,
+          "teaching": 2
+        },
+        "isReported": true,
+        "reportReason": "Coach đến muộn và thái độ không tốt",
+        "createdAt": "2024-01-24T11:00:00Z"
+      },
+      "reports": [
+        {
+          "id": "rpt_001",
+          "sessionId": "ses_004",
+          "reporterId": "usr_004",
+          "reporterName": "Phạm Thị Dung",
+          "reporterType": "learner",
+          "reportedId": "coach_003",
+          "reportedName": "David Lee",
+          "reportedType": "coach",
+          "reason": "inappropriate_behavior",
+          "description": "Coach đến muộn 15 phút không báo trước và có thái độ không chuyên nghiệp khi tôi hỏi về việc muộn.",
+          "status": "pending",
+          "priority": "medium",
+          "evidence": ["Screenshot tin nhắn", "Video đầu buổi học"],
+          "createdAt": "2024-01-24T11:30:00Z",
+          "updatedAt": "2024-01-24T11:30:00Z"
+        }
+      ],
+      "paymentDetails": {
+        "transactionId": "txn_004",
+        "paymentMethod": "Thẻ tín dụng"
+      }
+    },
+    {
+      "id": "ses_005",
+      "learnerId": "usr_005",
+      "learnerName": "Hoàng Văn Em",
+      "learnerAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Em",
+      "coachId": "coach_002",
+      "coachName": "Mike Johnson",
+      "coachAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Mike",
+      "date": "2024-01-23",
+      "time": "19:00",
+      "duration": 60,
+      "type": "online",
+      "status": "no_show",
+      "paymentStatus": "paid",
+      "amount": 300000,
+      "currency": "VND",
+      "createdAt": "2024-01-18T16:00:00Z",
+      "updatedAt": "2024-01-23T19:15:00Z",
+      "goals": [
+        {
+          "title": "Review advanced serves",
+          "description": "Ôn tập các loại serve nâng cao",
+          "completed": false
+        }
+      ],
+      "reports": [
+        {
+          "id": "rpt_002",
+          "sessionId": "ses_005",
+          "reporterId": "coach_002",
+          "reporterName": "Mike Johnson",
+          "reporterType": "coach",
+          "reportedId": "usr_005",
+          "reportedName": "Hoàng Văn Em",
+          "reportedType": "learner",
+          "reason": "no_show",
+          "description": "Học viên không tham gia buổi học và không thông báo trước. Tôi đã đợi 15 phút.",
+          "status": "resolved",
+          "priority": "low",
+          "adminNotes": "Đã liên hệ học viên. Lý do: có việc gia đình đột xuất.",
+          "resolution": "Cảnh cáo học viên lần đầu. Lần sau cần thông báo trước ít nhất 2 tiếng.",
+          "resolvedBy": "admin_001",
+          "resolvedAt": "2024-01-24T09:00:00Z",
+          "createdAt": "2024-01-23T19:15:00Z",
+          "updatedAt": "2024-01-24T09:00:00Z"
+        }
+      ],
+      "paymentDetails": {
+        "transactionId": "txn_005",
+        "paymentMethod": "Ví điện tử",
+        "paidAt": "2024-01-18T16:30:00Z"
+      }
+    },
+    {
+      "id": "ses_006",
+      "learnerId": "usr_006",
+      "learnerName": "Vũ Thị Phương",
+      "learnerAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Phuong",
+      "coachId": "coach_004",
+      "coachName": "Jenny Chen",
+      "coachAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Jenny",
+      "date": "2024-01-29",
+      "time": "15:00",
+      "duration": 90,
+      "type": "offline",
+      "location": "Sân Pickleball Club Elite - Quận 2, TP.HCM",
+      "status": "upcoming",
+      "paymentStatus": "pending",
+      "amount": 500000,
+      "currency": "VND",
+      "createdAt": "2024-01-23T13:00:00Z",
+      "updatedAt": "2024-01-23T13:00:00Z",
+      "goals": [
+        {
+          "title": "Tournament preparation",
+          "description": "Chuẩn bị kỹ thuật cho giải đấu sắp tới",
+          "completed": false
+        },
+        {
+          "title": "Advanced strategies",
+          "description": "Học các chiến thuật nâng cao",
+          "completed": false
+        }
+      ],
+      "paymentDetails": {
+        "transactionId": "txn_006",
+        "paymentMethod": "Chuyển khoản"
+      }
+    },
+    {
+      "id": "ses_007",
+      "learnerId": "usr_007",
+      "learnerName": "Đỗ Minh Quân",
+      "learnerAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Quan",
+      "coachId": "coach_001",
+      "coachName": "Sarah Wilson",
+      "coachAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah",
+      "date": "2024-01-27",
+      "time": "11:00",
+      "duration": 60,
+      "type": "online",
+      "status": "in_progress",
+      "paymentStatus": "paid",
+      "amount": 300000,
+      "currency": "VND",
+      "createdAt": "2024-01-22T15:00:00Z",
+      "updatedAt": "2024-01-27T11:00:00Z",
+      "goals": [
+        {
+          "title": "Perfect the third shot drop",
+          "description": "Hoàn thiện kỹ thuật third shot drop",
+          "completed": false
+        },
+        {
+          "title": "Court awareness",
+          "description": "Nâng cao khả năng đọc trận đấu",
+          "completed": false
+        }
+      ],
+      "paymentDetails": {
+        "transactionId": "txn_007",
+        "paymentMethod": "Thẻ tín dụng",
+        "paidAt": "2024-01-22T15:30:00Z"
+      }
+    },
+    {
+      "id": "ses_008",
+      "learnerId": "usr_008",
+      "learnerName": "Lương Thị Hoa",
+      "learnerAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Hoa",
+      "coachId": "coach_005",
+      "coachName": "Alex Thompson",
+      "coachAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Alex",
+      "date": "2024-01-22",
+      "time": "08:00",
+      "duration": 60,
+      "type": "offline",
+      "location": "Sân Pickleball Morning - Quận 1, TP.HCM",
+      "status": "completed",
+      "paymentStatus": "paid",
+      "amount": 320000,
+      "currency": "VND",
+      "createdAt": "2024-01-17T10:00:00Z",
+      "updatedAt": "2024-01-22T09:00:00Z",
+      "goals": [
+        {
+          "title": "Beginner fundamentals",
+          "description": "Học các kỹ năng cơ bản nhất",
+          "completed": true
+        },
+        {
+          "title": "Court rules and scoring",
+          "description": "Hiểu luật chơi và cách tính điểm",
+          "completed": true
+        }
+      ],
+      "progressNotes": [
+        {
+          "id": "note_008",
+          "coachId": "coach_005",
+          "sessionId": "ses_008",
+          "content": "Học viên mới bắt đầu nhưng rất nhiệt tình. Đã nắm vững rules và scoring.",
+          "skillsImproved": ["Basic rules", "Scoring system", "Basic stance"],
+          "areasToFocus": ["Serve consistency", "Forehand technique"],
+          "homeworkAssigned": "Xem video cơ bản và luyện tập serve tại nhà",
+          "createdAt": "2024-01-22T09:00:00Z",
+          "updatedAt": "2024-01-22T09:00:00Z"
+        }
+      ],
+      "learnerFeedback": {
+        "id": "fb_008",
+        "sessionId": "ses_008",
+        "fromId": "usr_008",
+        "fromName": "Lương Thị Hoa",
+        "fromType": "learner",
+        "toId": "coach_005",
+        "toName": "Alex Thompson",
+        "toType": "coach",
+        "rating": 5,
+        "comment": "Coach Alex rất kiên nhẫn và dạy dễ hiểu. Tôi đã hiểu rõ luật chơi và cảm thấy tự tin hơn.",
+        "aspectRatings": {
+          "expertise": 5,
+          "communication": 5,
+          "punctuality": 5,
+          "patience": 5,
+          "teaching": 5
+        },
+        "isReported": false,
+        "createdAt": "2024-01-22T10:00:00Z"
+      },
+      "coachFeedback": {
+        "id": "fb_009",
+        "sessionId": "ses_008",
+        "fromId": "coach_005",
+        "fromName": "Alex Thompson",
+        "fromType": "coach",
+        "toId": "usr_008",
+        "toName": "Lương Thị Hoa",
+        "toType": "learner",
+        "rating": 5,
+        "comment": "Học viên rất tích cực và học nhanh. Có tiềm năng phát triển tốt.",
+        "aspectRatings": {
+          "engagement": 5,
+          "punctuality": 5,
+          "communication": 4
+        },
+        "isReported": false,
+        "createdAt": "2024-01-22T09:30:00Z"
+      },
+      "paymentDetails": {
+        "transactionId": "txn_008",
+        "paymentMethod": "Tiền mặt",
+        "paidAt": "2024-01-22T08:00:00Z"
+      }
+    },
+    {
+      "id": "ses_009",
+      "learnerId": "usr_009",
+      "learnerName": "Ngô Văn Sơn",
+      "learnerAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Son",
+      "coachId": "coach_003",
+      "coachName": "David Lee",
+      "coachAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=David",
+      "date": "2024-01-30",
+      "time": "18:00",
+      "duration": 60,
+      "type": "online",
+      "status": "upcoming",
+      "paymentStatus": "failed",
+      "amount": 350000,
+      "currency": "VND",
+      "createdAt": "2024-01-24T14:00:00Z",
+      "updatedAt": "2024-01-24T14:30:00Z",
+      "goals": [
+        {
+          "title": "Fix backhand issues",
+          "description": "Sửa lỗi kỹ thuật backhand",
+          "completed": false
+        }
+      ],
+      "paymentDetails": {
+        "transactionId": "txn_009",
+        "paymentMethod": "Thẻ tín dụng"
+      }
+    },
+    {
+      "id": "ses_010",
+      "learnerId": "usr_010",
+      "learnerName": "Bùi Thị Lan",
+      "learnerAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Lan",
+      "coachId": "coach_002",
+      "coachName": "Mike Johnson",
+      "coachAvatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Mike",
+      "date": "2024-01-26",
+      "time": "13:00",
+      "duration": 90,
+      "type": "offline",
+      "location": "Sân Pickleball Weekend - Quận 5, TP.HCM",
+      "status": "completed",
+      "paymentStatus": "paid",
+      "amount": 450000,
+      "currency": "VND",
+      "createdAt": "2024-01-21T09:00:00Z",
+      "updatedAt": "2024-01-26T14:30:00Z",
+      "goals": [
+        {
+          "title": "Doubles strategy",
+          "description": "Học chiến thuật doubles nâng cao",
+          "completed": true
+        },
+        {
+          "title": "Communication on court",
+          "description": "Cải thiện giao tiếp trong doubles",
+          "completed": true
+        }
+      ],
+      "progressNotes": [
+        {
+          "id": "note_010",
+          "coachId": "coach_002",
+          "sessionId": "ses_010",
+          "content": "Học viên đã tiến bộ rõ rệt về doubles strategy. Communication tốt hơn nhiều.",
+          "skillsImproved": ["Doubles positioning", "Court communication", "Team coordination"],
+          "areasToFocus": ["Power shots", "Quick reflexes"],
+          "homeworkAssigned": "Tìm partner để luyện doubles, xem video phân tích trận đấu",
+          "createdAt": "2024-01-26T14:30:00Z",
+          "updatedAt": "2024-01-26T14:30:00Z"
+        }
+      ],
+      "learnerFeedback": {
+        "id": "fb_010",
+        "sessionId": "ses_010",
+        "fromId": "usr_010",
+        "fromName": "Bùi Thị Lan",
+        "fromType": "learner",
+        "toId": "coach_002",
+        "toName": "Mike Johnson",
+        "toType": "coach",
+        "rating": 4,
+        "comment": "Buổi học rất bổ ích. Coach Mike giải thích strategy rất rõ ràng và thực tế.",
+        "aspectRatings": {
+          "expertise": 5,
+          "communication": 4,
+          "punctuality": 4,
+          "patience": 4,
+          "teaching": 5
+        },
+        "isReported": false,
+        "createdAt": "2024-01-26T15:00:00Z"
+      },
+      "paymentDetails": {
+        "transactionId": "txn_010",
+        "paymentMethod": "Chuyển khoản",
+        "paidAt": "2024-01-21T09:30:00Z"
+      }
+    }
+  ],
+  "reports": [
+    {
+      "id": "rpt_003",
+      "sessionId": "ses_011",
+      "reporterId": "usr_011",
+      "reporterName": "Cao Văn Minh",
+      "reporterType": "learner",
+      "reportedId": "coach_006",
+      "reportedName": "Lisa Wang",
+      "reportedType": "coach",
+      "reason": "technical_issues",
+      "description": "Session online bị gián đoạn liên tục do vấn đề kỹ thuật từ phía coach. Không thể hoàn thành buổi học.",
+      "status": "investigating",
+      "priority": "high",
+      "evidence": ["Screenshot lỗi kết nối", "Log cuộc gọi"],
+      "adminNotes": "Đã liên hệ IT để kiểm tra. Coach báo cáo internet nhà bị sự cố.",
+      "createdAt": "2024-01-25T16:30:00Z",
+      "updatedAt": "2024-01-26T10:00:00Z"
+    },
+    {
+      "id": "rpt_004",
+      "sessionId": "ses_012",
+      "reporterId": "coach_007",
+      "reporterName": "Tom Wilson",
+      "reporterType": "coach",
+      "reportedId": "usr_012",
+      "reportedName": "Đinh Thị Mai",
+      "reportedType": "learner",
+      "reason": "inappropriate_behavior",
+      "description": "Học viên có thái độ không phù hợp, la hét và sử dụng ngôn từ không lịch sự khi được chỉ ra lỗi kỹ thuật.",
+      "status": "pending",
+      "priority": "urgent",
+      "evidence": ["Video ghi lại", "Screenshot chat"],
+      "createdAt": "2024-01-26T11:00:00Z",
+      "updatedAt": "2024-01-26T11:00:00Z"
+    },
+    {
+      "id": "rpt_005",
+      "sessionId": "ses_013",
+      "reporterId": "usr_013",
+      "reporterName": "Phan Văn Đức",
+      "reporterType": "learner",
+      "reportedId": "coach_008",
+      "reportedName": "Maria Garcia",
+      "reportedType": "coach",
+      "reason": "payment_dispute",
+      "description": "Coach yêu cầu thanh toán thêm phí cho việc dạy kỹ thuật nâng cao, nhưng điều này không được thỏa thuận trước.",
+      "status": "resolved",
+      "priority": "medium",
+      "adminNotes": "Đã xem lại booking và gói dịch vụ. Coach không được phép thu thêm phí.",
+      "resolution": "Hoàn tiền phần phí thêm cho học viên. Cảnh cáo coach về việc tuân thủ pricing policy.",
+      "resolvedBy": "admin_002",
+      "resolvedAt": "2024-01-27T14:00:00Z",
+      "createdAt": "2024-01-26T20:00:00Z",
+      "updatedAt": "2024-01-27T14:00:00Z"
+    }
+  ]
+}

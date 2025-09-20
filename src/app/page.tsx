@@ -1,12 +1,22 @@
 'use client';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import AppLoader from '@/@crema/components/AppLoader';
-import { useAuthUser } from '@/@crema/hooks/useAuth';
+// import AppLoader from '@/@crema/components/AppLoader';
+// import { useAuthUser } from '@/@crema/hooks/useAuth';
 
 export default function Home() {
-  const { isAuthenticated, isLoading } = useAuthUser();
   const router = useRouter();
+
+  // DEV-BYPASS: Always redirect to /dashboard while building UI.
+  // Comment out this block to restore the original auth-based redirection below.
+  useEffect(() => {
+    router.replace('/dashboard');
+  }, [router]);
+  return null;
+
+  /*
+  // ORIGINAL AUTH LOGIC
+  const { isAuthenticated, isLoading } = useAuthUser();
 
   useEffect(() => {
     try {
@@ -40,4 +50,5 @@ export default function Home() {
       <AppLoader />
     </div>
   );
+  */
 }

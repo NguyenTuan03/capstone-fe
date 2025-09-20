@@ -1,0 +1,315 @@
+{
+  "coaches": [
+    {
+      "id": "coach_001",
+      "userId": "usr_002",
+      "name": "Trần Thị Bình",
+      "email": "tranthibinh@yahoo.com",
+      "phone": "+84 902 345 678",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Binh",
+      "status": "approved",
+      "applicationStatus": "approved",
+      "approvedAt": "2024-01-12T09:00:00Z",
+      "approvedBy": "admin_001",
+      "isVerified": true,
+      "location": "Quận 3, TP.HCM",
+      "joinDate": "2024-01-10T10:15:00Z",
+      "lastActive": "2024-01-20T16:45:00Z",
+      "profile": {
+        "bio": "Huấn luyện viên pickleball với 5 năm kinh nghiệm. Chuyên hướng dẫn người mới bắt đầu và phân tích kỹ thuật chi tiết.",
+        "experience": 5,
+        "hourlyRate": 350000,
+        "rating": 4.8,
+        "totalSessions": 245,
+        "totalStudents": 89,
+        "totalEarnings": 85750000,
+        "specialties": ["Beginner Training", "Technique Analysis", "Serve Improvement"],
+        "certifications": [
+          {
+            "name": "PTR Certified Professional",
+            "issuer": "Professional Tennis Registry",
+            "issuedDate": "2022-03-15",
+            "expiryDate": "2025-03-15",
+            "documentUrl": "ptr_certificate.pdf",
+            "verified": true
+          },
+          {
+            "name": "USAPA Level 2 Instructor",
+            "issuer": "USA Pickleball Association",
+            "issuedDate": "2023-01-20",
+            "expiryDate": "2026-01-20",
+            "documentUrl": "usapa_level2.pdf", 
+            "verified": true
+          }
+        ],
+        "teachingMethods": ["Video Analysis", "Court Practice", "Personalized Drills"],
+        "availability": {
+          "monday": ["09:00-12:00", "14:00-18:00"],
+          "tuesday": ["09:00-12:00", "14:00-18:00"],
+          "wednesday": ["09:00-12:00"],
+          "thursday": ["09:00-12:00", "14:00-18:00"],
+          "friday": ["09:00-12:00", "14:00-18:00"],
+          "saturday": ["08:00-16:00"],
+          "sunday": ["08:00-12:00"]
+        }
+      },
+      "stats": {
+        "thisMonth": {
+          "sessionsCompleted": 18,
+          "newStudents": 5,
+          "earnings": 6300000,
+          "averageRating": 4.9
+        },
+        "lastMonth": {
+          "sessionsCompleted": 22,
+          "newStudents": 7,
+          "earnings": 7700000,
+          "averageRating": 4.7
+        }
+      },
+      "recentFeedbacks": [
+        {
+          "id": "fb_001",
+          "studentId": "usr_001",
+          "studentName": "Nguyễn Văn An",
+          "sessionId": "session_001",
+          "sessionDate": "2024-01-20T14:00:00Z",
+          "rating": 5,
+          "comment": "Coach Bình rất nhiệt tình và chuyên nghiệp. Giải thích kỹ thuật rất dễ hiểu và có phương pháp luyện tập hiệu quả.",
+          "aspectRatings": {
+            "expertise": 5,
+            "communication": 5,
+            "punctuality": 5,
+            "patience": 5
+          },
+          "createdAt": "2024-01-20T15:30:00Z"
+        },
+        {
+          "id": "fb_002", 
+          "studentId": "usr_003",
+          "studentName": "Lê Minh Châu",
+          "sessionId": "session_002",
+          "sessionDate": "2024-01-19T10:00:00Z",
+          "rating": 4,
+          "comment": "Coach dạy khá tốt nhưng có lúc hơi nhanh. Cần thêm thời gian để thực hành.",
+          "aspectRatings": {
+            "expertise": 5,
+            "communication": 4,
+            "punctuality": 5,
+            "patience": 3
+          },
+          "createdAt": "2024-01-19T11:30:00Z"
+        }
+      ]
+    },
+    {
+      "id": "coach_002",
+      "userId": "usr_004",
+      "name": "Phạm Hoàng Duy",
+      "email": "phamhoangduy@gmail.com",
+      "phone": "+84 904 567 890",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Duy",
+      "status": "pending",
+      "applicationStatus": "pending",
+      "appliedAt": "2024-01-19T10:30:00Z",
+      "isVerified": false,
+      "location": "Quận Bình Thạnh, TP.HCM",
+      "joinDate": "2024-01-18T09:45:00Z",
+      "application": {
+        "motivation": "Tôi muốn chia sẻ kinh nghiệm 7 năm chơi pickleball với cộng đồng. Đã tham gia nhiều giải đấu và có kinh nghiệm hướng dẫn bạn bè.",
+        "documents": [
+          {
+            "type": "id_card",
+            "name": "Chứng minh nhân dân",
+            "url": "id_card_copy.pdf",
+            "uploadedAt": "2024-01-19T10:30:00Z",
+            "verified": false
+          },
+          {
+            "type": "experience_letter",
+            "name": "Giấy chứng nhận kinh nghiệm",
+            "url": "experience_letter.pdf",
+            "uploadedAt": "2024-01-19T10:32:00Z",
+            "verified": false
+          },
+          {
+            "type": "ptr_certificate",
+            "name": "Chứng chỉ PTR",
+            "url": "ptr_certificate.pdf",
+            "uploadedAt": "2024-01-19T10:35:00Z",
+            "verified": false
+          }
+        ],
+        "requestedProfile": {
+          "bio": "Có 7 năm kinh nghiệm chơi pickleball. Đã tham gia nhiều giải đấu cấp quốc gia và có thành tích tốt. Muốn truyền đạt kiến thức cho thế hệ trẻ.",
+          "hourlyRate": 400000,
+          "specialties": ["Advanced Strategy", "Competitive Play", "Mental Training"],
+          "experience": 7,
+          "teachingMethods": ["Match Analysis", "Strategy Sessions", "Competitive Drills"]
+        }
+      }
+    },
+    {
+      "id": "coach_003",
+      "userId": "usr_006",
+      "name": "Ngô Thị Mai",
+      "email": "ngothimai@gmail.com",
+      "phone": "+84 906 789 012",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Mai",
+      "status": "suspended",
+      "applicationStatus": "approved",
+      "approvedAt": "2023-12-15T09:00:00Z",
+      "suspendedAt": "2024-01-18T14:00:00Z",
+      "suspendedBy": "admin_001",
+      "suspendReason": "Nhiều phản hồi tiêu cực từ học viên về thái độ không chuyên nghiệp",
+      "isVerified": true,
+      "location": "Quận 7, TP.HCM",
+      "joinDate": "2023-12-10T08:30:00Z",
+      "lastActive": "2024-01-17T20:15:00Z",
+      "profile": {
+        "bio": "Huấn luyện viên với 3 năm kinh nghiệm. Chuyên về kỹ thuật cơ bản và phát triển thể lực.",
+        "experience": 3,
+        "hourlyRate": 280000,
+        "rating": 3.2,
+        "totalSessions": 156,
+        "totalStudents": 67,
+        "totalEarnings": 43680000,
+        "specialties": ["Basic Techniques", "Fitness Training", "Youth Development"],
+        "certifications": [
+          {
+            "name": "Youth Sports Specialist",
+            "issuer": "Vietnam Sports Association",
+            "issuedDate": "2023-06-10",
+            "expiryDate": "2026-06-10",
+            "documentUrl": "youth_specialist.pdf",
+            "verified": true
+          }
+        ],
+        "teachingMethods": ["Fun Games", "Basic Drills", "Group Sessions"]
+      },
+      "stats": {
+        "thisMonth": {
+          "sessionsCompleted": 0,
+          "newStudents": 0,
+          "earnings": 0,
+          "averageRating": 0
+        },
+        "lastMonth": {
+          "sessionsCompleted": 8,
+          "newStudents": 2,
+          "earnings": 2240000,
+          "averageRating": 2.8
+        }
+      },
+      "recentFeedbacks": [
+        {
+          "id": "fb_003",
+          "studentId": "usr_007",
+          "studentName": "Võ Minh Tuấn",
+          "sessionId": "session_003",
+          "sessionDate": "2024-01-17T16:00:00Z",
+          "rating": 2,
+          "comment": "Coach thường xuyên đến muộn và không chuẩn bị bài dạy kỹ. Thái độ không nhiệt tình.",
+          "aspectRatings": {
+            "expertise": 3,
+            "communication": 2,
+            "punctuality": 1,
+            "patience": 2
+          },
+          "createdAt": "2024-01-17T17:30:00Z",
+          "reported": true,
+          "reportReason": "Unprofessional behavior"
+        },
+        {
+          "id": "fb_004",
+          "studentId": "usr_008", 
+          "studentName": "Trần Thị Hoa",
+          "sessionId": "session_004",
+          "sessionDate": "2024-01-16T14:00:00Z",
+          "rating": 1,
+          "comment": "Rất thất vọng. Coach không giải thích được kỹ thuật và có thái độ khó chịu khi tôi hỏi lại.",
+          "aspectRatings": {
+            "expertise": 2,
+            "communication": 1,
+            "punctuality": 3,
+            "patience": 1
+          },
+          "createdAt": "2024-01-16T15:30:00Z",
+          "reported": true,
+          "reportReason": "Poor teaching quality"
+        }
+      ]
+    },
+    {
+      "id": "coach_004",
+      "userId": "usr_009",
+      "name": "Lê Văn Minh",
+      "email": "levanminh@outlook.com",
+      "phone": "+84 907 890 123",
+      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Minh",
+      "status": "rejected",
+      "applicationStatus": "rejected",
+      "appliedAt": "2024-01-15T11:00:00Z",
+      "rejectedAt": "2024-01-17T10:00:00Z",
+      "rejectedBy": "admin_001",
+      "rejectReason": "Không đủ bằng cấp và kinh nghiệm để làm huấn luyện viên",
+      "isVerified": false,
+      "location": "Quận 9, TP.HCM", 
+      "joinDate": "2024-01-14T16:20:00Z",
+      "application": {
+        "motivation": "Tôi thích chơi pickleball và muốn kiếm thêm thu nhập.",
+        "documents": [
+          {
+            "type": "id_card",
+            "name": "Chứng minh nhân dân",
+            "url": "id_card_copy.pdf",
+            "uploadedAt": "2024-01-15T11:00:00Z",
+            "verified": true
+          }
+        ],
+        "requestedProfile": {
+          "bio": "Chơi pickleball được 6 tháng. Muốn dạy cho người mới.",
+          "hourlyRate": 200000,
+          "specialties": ["Beginner Training"],
+          "experience": 0.5,
+          "teachingMethods": ["Basic Instructions"]
+        }
+      }
+    }
+  ],
+  "stats": {
+    "total": 45,
+    "approved": 38,
+    "pending": 4,
+    "suspended": 2,
+    "rejected": 1,
+    "averageRating": 4.3,
+    "totalSessions": 2847,
+    "totalEarnings": 1254300000
+  },
+  "filters": {
+    "status": [
+      { "value": "all", "label": "Tất cả trạng thái" },
+      { "value": "approved", "label": "Đã duyệt" },
+      { "value": "pending", "label": "Chờ duyệt" },
+      { "value": "suspended", "label": "Đình chỉ" },
+      { "value": "rejected", "label": "Từ chối" }
+    ],
+    "specialties": [
+      { "value": "all", "label": "Tất cả chuyên môn" },
+      { "value": "Beginner Training", "label": "Hướng dẫn người mới" },
+      { "value": "Advanced Strategy", "label": "Chiến thuật nâng cao" },
+      { "value": "Technique Analysis", "label": "Phân tích kỹ thuật" },
+      { "value": "Competitive Play", "label": "Thi đấu" },
+      { "value": "Youth Development", "label": "Phát triển trẻ em" }
+    ],
+    "rating": [
+      { "value": "all", "label": "Tất cả đánh giá" },
+      { "value": "5", "label": "5 sao" },
+      { "value": "4", "label": "4 sao trở lên" },
+      { "value": "3", "label": "3 sao trở lên" },
+      { "value": "2", "label": "2 sao trở lên" },
+      { "value": "1", "label": "1 sao trở lên" }
+    ]
+  }
+}
