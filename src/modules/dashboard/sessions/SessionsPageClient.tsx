@@ -384,6 +384,7 @@ const SessionsPageClient = () => {
       />
       <SessionModals
         selectedSession={selectedSession}
+        loading={loading}
         detailModalVisible={detailModalVisible}
         refundModalVisible={refundModalVisible}
         suspendModalVisible={suspendModalVisible}
