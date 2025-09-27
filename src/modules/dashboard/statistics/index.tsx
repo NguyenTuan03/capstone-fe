@@ -381,9 +381,9 @@ const StatisticsPage: React.FC = () => {
               showGrid={showGrid}
               showStats={showStats}
               config={{
-                camera: { position: [10, 8, 10], fov: 60 },
-                animations: { enabled: animationsEnabled, duration: 1000 },
-                interactions: { hover: true, rotate: true, zoom: true },
+                camera: { position: [10, 8, 10], fov: 60 } as any,
+                animations: { enabled: animationsEnabled, duration: 1000 } as any,
+                interactions: { hover: true, rotate: true, zoom: true } as any,
               }}
             >
               <UserGrowthChart3D
@@ -408,9 +408,9 @@ const StatisticsPage: React.FC = () => {
               showGrid={showGrid}
               showStats={showStats}
               config={{
-                camera: { position: [0, 8, 12], fov: 50 },
-                animations: { enabled: animationsEnabled, duration: 1500 },
-                interactions: { hover: true, rotate: true, zoom: true },
+                camera: { position: [0, 8, 12], fov: 50 } as any,
+                animations: { enabled: animationsEnabled, duration: 1500 } as any,
+                interactions: { hover: true, rotate: true, zoom: true } as any,
               }}
             >
               <UserDistributionChart3D

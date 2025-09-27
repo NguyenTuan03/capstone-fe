@@ -60,6 +60,8 @@ import {
   SuspendUserRequest,
   WarnUserRequest,
 } from '@/types/session';
+import SessionsTable from './SessionsTable';
+import SessionModals from './SessionModals';
 
 const { RangePicker } = DatePicker;
 const { Option } = Select;
@@ -346,54 +348,65 @@ const SessionsPageClient = () => {
     }
   };
 
-  return {
-    sessions,
-    loading,
-    stats,
-    selectedSession,
-    detailModalVisible,
-    refundModalVisible,
-    suspendModalVisible,
-    warnModalVisible,
-    refundReasons,
-    refundForm,
-    suspendForm,
-    warnForm,
-    searchText,
-    statusFilter,
-    paymentFilter,
-    typeFilter,
-    issuesFilter,
-    recordingFilter,
-    dateRange,
-    pagination,
-    getStatusTag,
-    getPaymentTag,
-    formatCurrency,
-    formatDateTime,
-    formatDuration,
-    handleSearch,
-    handleClearFilters,
-    handleViewSession,
-    handleRefund,
-    handleSuspend,
-    handleWarn,
-    handleProcessRefund,
-    handleProcessSuspend,
-    handleProcessWarn,
-    setSearchText,
-    setStatusFilter,
-    setPaymentFilter,
-    setTypeFilter,
-    setIssuesFilter,
-    setRecordingFilter,
-    setDateRange,
-    setPagination,
-    setDetailModalVisible,
-    setRefundModalVisible,
-    setSuspendModalVisible,
-    setWarnModalVisible,
-  };
+  return (
+    <div style={{ padding: '24px' }}>
+      <SessionsTable
+        sessions={sessions}
+        loading={loading}
+        stats={stats}
+        searchText={searchText}
+        statusFilter={statusFilter}
+        paymentFilter={paymentFilter}
+        typeFilter={typeFilter}
+        issuesFilter={issuesFilter}
+        recordingFilter={recordingFilter}
+        dateRange={dateRange}
+        pagination={pagination}
+        getStatusTag={getStatusTag}
+        getPaymentTag={getPaymentTag}
+        formatCurrency={formatCurrency}
+        formatDateTime={formatDateTime}
+        formatDuration={formatDuration}
+        handleSearch={handleSearch}
+        handleClearFilters={handleClearFilters}
+        handleViewSession={handleViewSession}
+        handleRefund={handleRefund}
+        handleSuspend={handleSuspend}
+        handleWarn={handleWarn}
+        setSearchText={setSearchText}
+        setStatusFilter={setStatusFilter}
+        setPaymentFilter={setPaymentFilter}
+        setTypeFilter={setTypeFilter}
+        setIssuesFilter={setIssuesFilter}
+        setRecordingFilter={setRecordingFilter}
+        setDateRange={setDateRange}
+        setPagination={setPagination}
+      />
+      <SessionModals
+        selectedSession={selectedSession}
+        detailModalVisible={detailModalVisible}
+        refundModalVisible={refundModalVisible}
+        suspendModalVisible={suspendModalVisible}
+        warnModalVisible={warnModalVisible}
+        refundReasons={refundReasons}
+        refundForm={refundForm}
+        suspendForm={suspendForm}
+        warnForm={warnForm}
+        getStatusTag={getStatusTag}
+        getPaymentTag={getPaymentTag}
+        formatCurrency={formatCurrency}
+        formatDateTime={formatDateTime}
+        formatDuration={formatDuration}
+        handleProcessRefund={handleProcessRefund}
+        handleProcessSuspend={handleProcessSuspend}
+        handleProcessWarn={handleProcessWarn}
+        setDetailModalVisible={setDetailModalVisible}
+        setRefundModalVisible={setRefundModalVisible}
+        setSuspendModalVisible={setSuspendModalVisible}
+        setWarnModalVisible={setWarnModalVisible}
+      />
+    </div>
+  );
 };
 
 export default SessionsPageClient;
