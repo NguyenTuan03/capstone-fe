@@ -345,17 +345,11 @@ const AchievementGallery: React.FC<AchievementGalleryProps> = ({
                         >
                           <span>{achievement.name}</span>
                           {achievement.status !== 'active' && (
-                            <Tag size="small" color="default">
-                              {achievement.status}
-                            </Tag>
+                            <Tag color="default">{achievement.status}</Tag>
                           )}
                         </div>
                         <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
-                          <Tag
-                            size="small"
-                            color={categoryBadge.color}
-                            style={{ fontSize: '10px' }}
-                          >
+                          <Tag color={categoryBadge.color} style={{ fontSize: '10px' }}>
                             {categoryBadge.text}
                           </Tag>
                           <Tag size="small" color="gold" style={{ fontSize: '10px' }}>
@@ -398,7 +392,6 @@ const AchievementGallery: React.FC<AchievementGalleryProps> = ({
                             percent={achievement.unlockRate}
                             showInfo={false}
                             strokeColor={rarityBadge.color}
-                            size="small"
                           />
                         </div>
 

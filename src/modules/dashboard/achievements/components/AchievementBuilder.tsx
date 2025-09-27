@@ -708,15 +708,10 @@ const AchievementBuilder: React.FC<AchievementBuilderProps> = ({ onStatsUpdate }
                         {template.description}
                       </Text>
                       <div style={{ marginTop: '8px' }}>
-                        <Tag
-                          size="small"
-                          color={AchievementApiService.getCategoryColor(template.category)}
-                        >
+                        <Tag color={AchievementApiService.getCategoryColor(template.category)}>
                           {categoryOptions.find((c) => c.value === template.category)?.label}
                         </Tag>
-                        <Tag size="small" color="gold">
-                          {template.rewards.points} pts
-                        </Tag>
+                        <Tag color="gold">{template.rewards.points} pts</Tag>
                       </div>
                     </div>
                   }
