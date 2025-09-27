@@ -1,216 +1,195 @@
+// Session Management Types
+
 export interface Session {
   id: string;
-  learnerId: string;
-  learnerName: string;
-  learnerAvatar?: string;
-  coachId: string;
-  coachName: string;
-  coachAvatar?: string;
-  date: string;
-  time: string;
-  duration: number; // in minutes
+  learner: {
+    id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+  };
+  coach: {
+    id: string;
+    name: string;
+    email: string;
+    avatar?: string;
+  };
+
+  // Session Details
+  scheduledTime: string;
+  actualStartTime?: string;
+  actualEndTime?: string;
+  duration: number; // minutes
   type: 'online' | 'offline';
   location?: string; // for offline sessions
-  status: 'upcoming' | 'in_progress' | 'completed' | 'cancelled' | 'no_show';
-  paymentStatus: 'paid' | 'pending' | 'refunded' | 'failed';
-  amount: number;
-  currency: 'VND';
-  createdAt: string;
-  updatedAt: string;
-  cancelledAt?: string;
-  cancelledBy?: string;
-  cancelReason?: string;
-  refundedAt?: string;
+  subject: string;
+  objectives: string[];
+
+  // Status & Progress
+  status: 'scheduled' | 'in_progress' | 'completed' | 'cancelled' | 'no_show';
+  progressNotes?: string;
+  skillsImproved?: string[];
+  areasToFocus?: string[];
+  homework?: string;
+
+  // Payment & Pricing
+  hourlyRate: number;
+  totalAmount: number;
+  paymentStatus: 'paid' | 'pending' | 'refunded' | 'partial_refund';
   refundAmount?: number;
-}
+  refundReason?: string;
 
-export interface SessionGoal {
-  title: string;
-  description: string;
-  completed: boolean;
-}
+  // Feedback & Rating
+  learnerFeedback?: {
+    rating: number; // 1-5
+    comment: string;
+    createdAt: string;
+  };
+  coachFeedback?: {
+    rating: number; // 1-5
+    comment: string;
+    createdAt: string;
+  };
 
-export interface ProgressNote {
-  id: string;
-  coachId: string;
-  sessionId: string;
-  content: string;
-  skillsImproved: string[];
-  areasToFocus: string[];
-  homeworkAssigned?: string;
+  // Video Recording
+  recordingUrl?: string;
+  recordingDuration?: number; // minutes
+  hasRecording: boolean;
+
+  // Reports & Issues
+  reports: SessionReport[];
+  hasIssues: boolean;
+
+  // Timestamps
   createdAt: string;
   updatedAt: string;
-}
-
-export interface SessionFeedback {
-  id: string;
-  sessionId: string;
-  fromId: string;
-  fromName: string;
-  fromType: 'learner' | 'coach';
-  toId: string;
-  toName: string;
-  toType: 'learner' | 'coach';
-  rating: number;
-  comment: string;
-  aspectRatings?: {
-    expertise?: number;
-    communication?: number;
-    punctuality?: number;
-    patience?: number;
-    teaching?: number;
-    engagement?: number;
-  };
-  isReported: boolean;
-  reportReason?: string;
-  createdAt: string;
 }
 
 export interface SessionReport {
   id: string;
   sessionId: string;
   reporterId: string;
-  reporterName: string;
   reporterType: 'learner' | 'coach';
+  reporterName: string;
   reportedId: string;
-  reportedName: string;
   reportedType: 'learner' | 'coach';
-  reason: 'no_show' | 'inappropriate_behavior' | 'technical_issues' | 'quality_issues' | 'payment_dispute' | 'other';
+  reportedName: string;
+
+  reason:
+    | 'no_show'
+    | 'late_arrival'
+    | 'unprofessional'
+    | 'poor_quality'
+    | 'technical_issues'
+    | 'payment_dispute'
+    | 'inappropriate_behavior'
+    | 'other';
+  title: string;
   description: string;
-  status: 'pending' | 'investigating' | 'resolved' | 'dismissed';
+  evidence?: string[]; // URLs to uploaded files
+
   priority: 'low' | 'medium' | 'high' | 'urgent';
-  evidence?: string[];
+  status: 'pending' | 'investigating' | 'resolved' | 'dismissed';
+
   adminNotes?: string;
   resolution?: string;
   resolvedBy?: string;
   resolvedAt?: string;
+
   createdAt: string;
   updatedAt: string;
 }
 
-export interface SessionDetail extends Session {
-  goals: SessionGoal[];
-  progressNotes?: ProgressNote[];
-  learnerFeedback?: SessionFeedback;
-  coachFeedback?: SessionFeedback;
-  reports?: SessionReport[];
-  paymentDetails?: {
-    transactionId: string;
-    paymentMethod: string;
-    paidAt?: string;
-    refundTransactionId?: string;
-  };
-}
-
-export interface SessionListStats {
+export interface SessionStats {
   total: number;
-  upcoming: number;
   completed: number;
   cancelled: number;
+  scheduled: number;
   inProgress: number;
   noShow: number;
+
   totalRevenue: number;
-  pendingPayments: number;
   refundedAmount: number;
-}
+  pendingPayments: number;
 
-export interface ReportStats {
-  total: number;
-  pending: number;
-  investigating: number;
-  resolved: number;
-  dismissed: number;
-  highPriority: number;
-  avgResolutionTime: number; // in hours
-}
+  totalReports: number;
+  pendingReports: number;
+  resolvedReports: number;
 
-export interface FilterOption {
-  value: string;
-  label: string;
-}
-
-export interface SessionFilters {
-  status: FilterOption[];
-  paymentStatus: FilterOption[];
-  type: FilterOption[];
-  coaches: FilterOption[];
-  learners: FilterOption[];
-  dateRange: FilterOption[];
-}
-
-export interface ReportFilters {
-  status: FilterOption[];
-  priority: FilterOption[];
-  reason: FilterOption[];
-  reporterType: FilterOption[];
+  avgRating: number;
+  totalRatings: number;
 }
 
 export interface GetSessionsParams {
-  page?: number;
-  limit?: number;
+  page: number;
+  limit: number;
   search?: string;
   status?: string;
-  paymentStatus?: string;
   type?: string;
   coachId?: string;
   learnerId?: string;
-  dateFrom?: string;
-  dateTo?: string;
-  sortBy?: 'date' | 'amount' | 'createdAt';
-  sortOrder?: 'asc' | 'desc';
+  dateRange?: [string, string];
+  hasIssues?: boolean;
+  hasRecording?: boolean;
 }
 
 export interface GetSessionsResponse {
-  sessions: SessionDetail[];
+  sessions: Session[];
   total: number;
   page: number;
   limit: number;
-  totalPages: number;
+  stats: SessionStats;
 }
 
-export interface GetReportsParams {
-  page?: number;
-  limit?: number;
-  search?: string;
-  status?: string;
-  priority?: string;
-  reason?: string;
-  reporterType?: string;
-  sortBy?: 'createdAt' | 'priority' | 'status';
-  sortOrder?: 'asc' | 'desc';
-}
-
-export interface GetReportsResponse {
-  reports: SessionReport[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
-export interface SessionApiResponse {
-  sessions: SessionDetail[];
-  stats: SessionListStats;
-  filters: SessionFilters;
-}
-
-export interface ReportApiResponse {
-  reports: SessionReport[];
-  stats: ReportStats;
-  filters: ReportFilters;
-}
-
-export interface SessionAction {
-  type: 'cancel' | 'refund' | 'warn_learner' | 'warn_coach' | 'resolve_report' | 'dismiss_report';
-  sessionId?: string;
-  reportId?: string;
-  reason?: string;
+export interface AdminAction {
+  type:
+    | 'refund'
+    | 'partial_refund'
+    | 'suspend_coach'
+    | 'suspend_learner'
+    | 'warn_coach'
+    | 'warn_learner'
+    | 'resolve_report';
+  sessionId: string;
+  targetId: string;
+  reason: string;
+  amount?: number; // for refunds
   notes?: string;
-  refundAmount?: number;
+  evidence?: string[];
+  adminId: string;
 }
 
-export interface SessionActionResponse {
+export interface RefundRequest {
+  sessionId: string;
+  amount: number;
+  reason: string;
+  adminId: string;
+  notes?: string;
+}
+
+export interface SuspendUserRequest {
+  userId: string;
+  userType: 'coach' | 'learner';
+  sessionId: string;
+  reason: string;
+  duration?: number; // days, 0 = permanent
+  adminId: string;
+  notes?: string;
+  evidence?: string[];
+}
+
+export interface WarnUserRequest {
+  userId: string;
+  userType: 'coach' | 'learner';
+  sessionId: string;
+  reason: string;
+  severity: 'low' | 'medium' | 'high';
+  adminId: string;
+  notes?: string;
+}
+
+export interface ApiResponse<T = any> {
   success: boolean;
   message: string;
-  data?: any;
+  data?: T;
 }

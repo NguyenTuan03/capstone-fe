@@ -1,535 +1,359 @@
-import { 
-  GetSessionsParams, 
-  GetSessionsResponse, 
-  SessionDetail, 
-  SessionApiResponse, 
-  SessionListStats,
-  GetReportsParams,
-  GetReportsResponse,
+import {
+  Session,
+  SessionStats,
+  GetSessionsParams,
+  GetSessionsResponse,
   SessionReport,
-  ReportApiResponse,
-  ReportStats,
-  SessionAction,
-  SessionActionResponse,
-  SessionFilters,
-  ReportFilters
+  AdminAction,
+  RefundRequest,
+  SuspendUserRequest,
+  WarnUserRequest,
+  ApiResponse,
 } from '@/types/session';
 import sessionsData from '@/data/sessions.json';
+import sessionsExtended from '@/data/sessions-extended.json';
 
 // Simulate API delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const simulateDelay = (ms: number = 100) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// Combine all sessions data
+const allSessions = [...sessionsData.sessions, ...sessionsExtended.sessions] as Session[];
 
 export class SessionApiService {
-  private static sessions: SessionDetail[] = sessionsData.sessions as SessionDetail[];
-  private static reports: SessionReport[] = sessionsData.reports as SessionReport[];
+  /**
+   * Get sessions with pagination and filters
+   */
+  static async getSessions(params: GetSessionsParams): Promise<GetSessionsResponse> {
+    await simulateDelay();
 
-  // Get all sessions with pagination and filters
-  static async getSessions(params: GetSessionsParams = {}): Promise<GetSessionsResponse> {
-    await delay(800);
-
-    const {
-      page = 1,
-      limit = 10,
-      search = '',
-      status = 'all',
-      paymentStatus = 'all',
-      type = 'all',
-      coachId = '',
-      learnerId = '',
-      dateFrom = '',
-      dateTo = '',
-      sortBy = 'date',
-      sortOrder = 'desc'
-    } = params;
-
-    let filteredSessions = [...this.sessions];
+    let filteredSessions = [...allSessions];
 
     // Apply search filter
-    if (search) {
-      const searchLower = search.toLowerCase();
-      filteredSessions = filteredSessions.filter(session =>
-        session.learnerName.toLowerCase().includes(searchLower) ||
-        session.coachName.toLowerCase().includes(searchLower) ||
-        session.id.toLowerCase().includes(searchLower)
+    if (params.search) {
+      const searchTerm = params.search.toLowerCase();
+      filteredSessions = filteredSessions.filter(
+        (session) =>
+          session.learner.name.toLowerCase().includes(searchTerm) ||
+          session.coach.name.toLowerCase().includes(searchTerm) ||
+          session.subject.toLowerCase().includes(searchTerm) ||
+          session.id.toLowerCase().includes(searchTerm),
       );
     }
 
     // Apply status filter
-    if (status !== 'all') {
-      filteredSessions = filteredSessions.filter(session => session.status === status);
-    }
-
-    // Apply payment status filter
-    if (paymentStatus !== 'all') {
-      filteredSessions = filteredSessions.filter(session => session.paymentStatus === paymentStatus);
+    if (params.status && params.status !== 'all') {
+      filteredSessions = filteredSessions.filter((session) => session.status === params.status);
     }
 
     // Apply type filter
-    if (type !== 'all') {
-      filteredSessions = filteredSessions.filter(session => session.type === type);
+    if (params.type && params.type !== 'all') {
+      filteredSessions = filteredSessions.filter((session) => session.type === params.type);
     }
 
     // Apply coach filter
-    if (coachId) {
-      filteredSessions = filteredSessions.filter(session => session.coachId === coachId);
+    if (params.coachId) {
+      filteredSessions = filteredSessions.filter((session) => session.coach.id === params.coachId);
     }
 
     // Apply learner filter
-    if (learnerId) {
-      filteredSessions = filteredSessions.filter(session => session.learnerId === learnerId);
-    }
-
-    // Apply date range filter
-    if (dateFrom) {
-      filteredSessions = filteredSessions.filter(session => session.date >= dateFrom);
-    }
-    if (dateTo) {
-      filteredSessions = filteredSessions.filter(session => session.date <= dateTo);
-    }
-
-    // Apply sorting
-    filteredSessions.sort((a, b) => {
-      let aValue: any, bValue: any;
-      
-      switch (sortBy) {
-        case 'date':
-          aValue = new Date(a.date + ' ' + a.time);
-          bValue = new Date(b.date + ' ' + b.time);
-          break;
-        case 'amount':
-          aValue = a.amount;
-          bValue = b.amount;
-          break;
-        case 'createdAt':
-          aValue = new Date(a.createdAt);
-          bValue = new Date(b.createdAt);
-          break;
-        default:
-          aValue = a.createdAt;
-          bValue = b.createdAt;
-      }
-
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
-    });
-
-    // Apply pagination
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedSessions = filteredSessions.slice(startIndex, endIndex);
-
-    return {
-      sessions: paginatedSessions,
-      total: filteredSessions.length,
-      page,
-      limit,
-      totalPages: Math.ceil(filteredSessions.length / limit)
-    };
-  }
-
-  // Get session by ID
-  static async getSessionById(id: string): Promise<SessionDetail | null> {
-    await delay(500);
-    
-    const session = this.sessions.find(s => s.id === id);
-    return session || null;
-  }
-
-  // Get all sessions data (for admin overview)
-  static async getAllSessionsData(): Promise<SessionApiResponse> {
-    await delay(600);
-    
-    const stats = await this.getSessionStats();
-    const filters = await this.getSessionFilters();
-    
-    return {
-      sessions: this.sessions,
-      stats,
-      filters
-    };
-  }
-
-  // Get session statistics
-  static async getSessionStats(): Promise<SessionListStats> {
-    await delay(400);
-    
-    const stats: SessionListStats = {
-      total: this.sessions.length,
-      upcoming: this.sessions.filter(s => s.status === 'upcoming').length,
-      completed: this.sessions.filter(s => s.status === 'completed').length,
-      cancelled: this.sessions.filter(s => s.status === 'cancelled').length,
-      inProgress: this.sessions.filter(s => s.status === 'in_progress').length,
-      noShow: this.sessions.filter(s => s.status === 'no_show').length,
-      totalRevenue: this.sessions
-        .filter(s => s.paymentStatus === 'paid')
-        .reduce((sum, s) => sum + s.amount, 0),
-      pendingPayments: this.sessions.filter(s => s.paymentStatus === 'pending').length,
-      refundedAmount: this.sessions
-        .filter(s => s.paymentStatus === 'refunded')
-        .reduce((sum, s) => sum + (s.refundAmount || s.amount), 0)
-    };
-    
-    return stats;
-  }
-
-  // Get session filters
-  static async getSessionFilters(): Promise<SessionFilters> {
-    await delay(300);
-    
-    // Get unique coaches and learners
-    const coaches = [...new Set(this.sessions.map(s => ({ id: s.coachId, name: s.coachName })))];
-    const learners = [...new Set(this.sessions.map(s => ({ id: s.learnerId, name: s.learnerName })))];
-    
-    return {
-      status: [
-        { value: 'all', label: 'Tất cả trạng thái' },
-        { value: 'upcoming', label: 'Sắp diễn ra' },
-        { value: 'in_progress', label: 'Đang diễn ra' },
-        { value: 'completed', label: 'Đã hoàn thành' },
-        { value: 'cancelled', label: 'Đã hủy' },
-        { value: 'no_show', label: 'Không tham gia' }
-      ],
-      paymentStatus: [
-        { value: 'all', label: 'Tất cả thanh toán' },
-        { value: 'paid', label: 'Đã thanh toán' },
-        { value: 'pending', label: 'Chờ thanh toán' },
-        { value: 'refunded', label: 'Đã hoàn tiền' },
-        { value: 'failed', label: 'Thanh toán lỗi' }
-      ],
-      type: [
-        { value: 'all', label: 'Tất cả hình thức' },
-        { value: 'online', label: 'Online' },
-        { value: 'offline', label: 'Offline' }
-      ],
-      coaches: [
-        { value: '', label: 'Tất cả coach' },
-        ...coaches.map(c => ({ value: c.id, label: c.name }))
-      ],
-      learners: [
-        { value: '', label: 'Tất cả học viên' },
-        ...learners.map(l => ({ value: l.id, label: l.name }))
-      ],
-      dateRange: [
-        { value: 'all', label: 'Tất cả thời gian' },
-        { value: 'today', label: 'Hôm nay' },
-        { value: 'week', label: 'Tuần này' },
-        { value: 'month', label: 'Tháng này' },
-        { value: 'custom', label: 'Tùy chọn' }
-      ]
-    };
-  }
-
-  // Session Actions
-  static async cancelSession(sessionId: string, reason: string): Promise<SessionActionResponse> {
-    await delay(1000);
-    
-    const sessionIndex = this.sessions.findIndex(s => s.id === sessionId);
-    if (sessionIndex === -1) {
-      return { success: false, message: 'Không tìm thấy buổi học' };
-    }
-
-    this.sessions[sessionIndex] = {
-      ...this.sessions[sessionIndex],
-      status: 'cancelled',
-      cancelledAt: new Date().toISOString(),
-      cancelledBy: 'admin_001', // Should be current admin ID
-      cancelReason: reason,
-      updatedAt: new Date().toISOString()
-    };
-
-    return { 
-      success: true, 
-      message: 'Đã hủy buổi học thành công',
-      data: this.sessions[sessionIndex]
-    };
-  }
-
-  static async refundSession(sessionId: string, refundAmount?: number): Promise<SessionActionResponse> {
-    await delay(1200);
-    
-    const sessionIndex = this.sessions.findIndex(s => s.id === sessionId);
-    if (sessionIndex === -1) {
-      return { success: false, message: 'Không tìm thấy buổi học' };
-    }
-
-    const session = this.sessions[sessionIndex];
-    const finalRefundAmount = refundAmount || session.amount;
-
-    this.sessions[sessionIndex] = {
-      ...session,
-      paymentStatus: 'refunded',
-      refundedAt: new Date().toISOString(),
-      refundAmount: finalRefundAmount,
-      updatedAt: new Date().toISOString()
-    };
-
-    return { 
-      success: true, 
-      message: `Đã hoàn tiền ${finalRefundAmount.toLocaleString('vi-VN')} VND`,
-      data: this.sessions[sessionIndex]
-    };
-  }
-
-  static async warnUser(userId: string, reason: string, userType: 'learner' | 'coach'): Promise<SessionActionResponse> {
-    await delay(800);
-    
-    // In a real app, this would create a warning record in the user's profile
-    return { 
-      success: true, 
-      message: `Đã gửi cảnh cáo đến ${userType === 'learner' ? 'học viên' : 'coach'}`,
-      data: { userId, reason, userType, warnedAt: new Date().toISOString() }
-    };
-  }
-
-  // Reports Management
-  static async getReports(params: GetReportsParams = {}): Promise<GetReportsResponse> {
-    await delay(700);
-
-    const {
-      page = 1,
-      limit = 10,
-      search = '',
-      status = 'all',
-      priority = 'all',
-      reason = 'all',
-      reporterType = 'all',
-      sortBy = 'createdAt',
-      sortOrder = 'desc'
-    } = params;
-
-    let filteredReports = [...this.reports];
-
-    // Apply search filter
-    if (search) {
-      const searchLower = search.toLowerCase();
-      filteredReports = filteredReports.filter(report =>
-        report.reporterName.toLowerCase().includes(searchLower) ||
-        report.reportedName.toLowerCase().includes(searchLower) ||
-        report.description.toLowerCase().includes(searchLower) ||
-        report.id.toLowerCase().includes(searchLower)
+    if (params.learnerId) {
+      filteredSessions = filteredSessions.filter(
+        (session) => session.learner.id === params.learnerId,
       );
     }
 
-    // Apply status filter
-    if (status !== 'all') {
-      filteredReports = filteredReports.filter(report => report.status === status);
+    // Apply date range filter
+    if (params.dateRange && params.dateRange.length === 2) {
+      const [startDate, endDate] = params.dateRange;
+      filteredSessions = filteredSessions.filter((session) => {
+        const sessionDate = new Date(session.scheduledTime);
+        return sessionDate >= new Date(startDate) && sessionDate <= new Date(endDate);
+      });
     }
 
-    // Apply priority filter
-    if (priority !== 'all') {
-      filteredReports = filteredReports.filter(report => report.priority === priority);
+    // Apply issues filter
+    if (params.hasIssues !== undefined) {
+      filteredSessions = filteredSessions.filter(
+        (session) => session.hasIssues === params.hasIssues,
+      );
     }
 
-    // Apply reason filter
-    if (reason !== 'all') {
-      filteredReports = filteredReports.filter(report => report.reason === reason);
+    // Apply recording filter
+    if (params.hasRecording !== undefined) {
+      filteredSessions = filteredSessions.filter(
+        (session) => session.hasRecording === params.hasRecording,
+      );
     }
 
-    // Apply reporter type filter
-    if (reporterType !== 'all') {
-      filteredReports = filteredReports.filter(report => report.reporterType === reporterType);
-    }
+    // Sort by scheduled time (newest first)
+    filteredSessions.sort(
+      (a, b) => new Date(b.scheduledTime).getTime() - new Date(a.scheduledTime).getTime(),
+    );
 
-    // Apply sorting
-    filteredReports.sort((a, b) => {
-      let aValue: any, bValue: any;
-      
-      switch (sortBy) {
-        case 'createdAt':
-          aValue = new Date(a.createdAt);
-          bValue = new Date(b.createdAt);
-          break;
-        case 'priority':
-          const priorityOrder = { 'urgent': 4, 'high': 3, 'medium': 2, 'low': 1 };
-          aValue = priorityOrder[a.priority as keyof typeof priorityOrder];
-          bValue = priorityOrder[b.priority as keyof typeof priorityOrder];
-          break;
-        case 'status':
-          aValue = a.status;
-          bValue = b.status;
-          break;
-        default:
-          aValue = new Date(a.createdAt);
-          bValue = new Date(b.createdAt);
-      }
+    // Calculate pagination
+    const total = filteredSessions.length;
+    const startIndex = (params.page - 1) * params.limit;
+    const endIndex = startIndex + params.limit;
+    const paginatedSessions = filteredSessions.slice(startIndex, endIndex);
 
-      if (sortOrder === 'asc') {
-        return aValue > bValue ? 1 : -1;
-      } else {
-        return aValue < bValue ? 1 : -1;
-      }
-    });
-
-    // Apply pagination
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedReports = filteredReports.slice(startIndex, endIndex);
+    // Calculate stats
+    const stats = this.calculateStats(allSessions);
 
     return {
-      reports: paginatedReports,
-      total: filteredReports.length,
-      page,
-      limit,
-      totalPages: Math.ceil(filteredReports.length / limit)
-    };
-  }
-
-  // Get report by ID
-  static async getReportById(id: string): Promise<SessionReport | null> {
-    await delay(400);
-    
-    const report = this.reports.find(r => r.id === id);
-    return report || null;
-  }
-
-  // Get all reports data
-  static async getAllReportsData(): Promise<ReportApiResponse> {
-    await delay(500);
-    
-    const stats = await this.getReportStats();
-    const filters = await this.getReportFilters();
-    
-    return {
-      reports: this.reports,
+      sessions: paginatedSessions,
+      total,
+      page: params.page,
+      limit: params.limit,
       stats,
-      filters
     };
   }
 
-  // Get report statistics
-  static async getReportStats(): Promise<ReportStats> {
-    await delay(300);
-    
-    const resolvedReports = this.reports.filter(r => r.status === 'resolved' && r.resolvedAt);
-    const avgResolutionTime = resolvedReports.length > 0 
-      ? resolvedReports.reduce((sum, r) => {
-          const created = new Date(r.createdAt);
-          const resolved = new Date(r.resolvedAt!);
-          return sum + (resolved.getTime() - created.getTime()) / (1000 * 60 * 60); // hours
-        }, 0) / resolvedReports.length
-      : 0;
-    
-    const stats: ReportStats = {
-      total: this.reports.length,
-      pending: this.reports.filter(r => r.status === 'pending').length,
-      investigating: this.reports.filter(r => r.status === 'investigating').length,
-      resolved: this.reports.filter(r => r.status === 'resolved').length,
-      dismissed: this.reports.filter(r => r.status === 'dismissed').length,
-      highPriority: this.reports.filter(r => r.priority === 'high' || r.priority === 'urgent').length,
-      avgResolutionTime: Math.round(avgResolutionTime * 10) / 10
-    };
-    
-    return stats;
+  /**
+   * Get session by ID
+   */
+  static async getSessionById(sessionId: string): Promise<Session | null> {
+    await simulateDelay();
+
+    const session = allSessions.find((s) => s.id === sessionId);
+    return session || null;
   }
 
-  // Get report filters
-  static async getReportFilters(): Promise<ReportFilters> {
-    await delay(200);
-    
+  /**
+   * Calculate session statistics
+   */
+  private static calculateStats(sessions: Session[]): SessionStats {
+    const completed = sessions.filter((s) => s.status === 'completed').length;
+    const cancelled = sessions.filter((s) => s.status === 'cancelled').length;
+    const scheduled = sessions.filter((s) => s.status === 'scheduled').length;
+    const inProgress = sessions.filter((s) => s.status === 'in_progress').length;
+    const noShow = sessions.filter((s) => s.status === 'no_show').length;
+
+    const totalRevenue = sessions
+      .filter((s) => s.paymentStatus === 'paid')
+      .reduce((sum, s) => sum + s.totalAmount, 0);
+
+    const refundedAmount = sessions
+      .filter((s) => s.paymentStatus === 'refunded' || s.paymentStatus === 'partial_refund')
+      .reduce((sum, s) => sum + (s.refundAmount || 0), 0);
+
+    const pendingPayments = sessions
+      .filter((s) => s.paymentStatus === 'pending')
+      .reduce((sum, s) => sum + s.totalAmount, 0);
+
+    const allReports = sessions.flatMap((s) => s.reports);
+    const totalReports = allReports.length;
+    const pendingReports = allReports.filter(
+      (r) => r.status === 'pending' || r.status === 'investigating',
+    ).length;
+    const resolvedReports = allReports.filter((r) => r.status === 'resolved').length;
+
+    // Calculate average rating from both learner and coach feedback
+    const allRatings = sessions.flatMap((s) =>
+      [s.learnerFeedback?.rating, s.coachFeedback?.rating].filter((rating) => rating !== undefined),
+    ) as number[];
+
+    const avgRating =
+      allRatings.length > 0
+        ? allRatings.reduce((sum, rating) => sum + rating, 0) / allRatings.length
+        : 0;
+
     return {
-      status: [
-        { value: 'all', label: 'Tất cả trạng thái' },
-        { value: 'pending', label: 'Chờ xử lý' },
-        { value: 'investigating', label: 'Đang điều tra' },
-        { value: 'resolved', label: 'Đã giải quyết' },
-        { value: 'dismissed', label: 'Đã bác bỏ' }
-      ],
-      priority: [
-        { value: 'all', label: 'Tất cả mức độ' },
-        { value: 'urgent', label: 'Khẩn cấp' },
-        { value: 'high', label: 'Cao' },
-        { value: 'medium', label: 'Trung bình' },
-        { value: 'low', label: 'Thấp' }
-      ],
-      reason: [
-        { value: 'all', label: 'Tất cả lý do' },
-        { value: 'no_show', label: 'Không tham gia' },
-        { value: 'inappropriate_behavior', label: 'Hành vi không phù hợp' },
-        { value: 'technical_issues', label: 'Vấn đề kỹ thuật' },
-        { value: 'quality_issues', label: 'Vấn đề chất lượng' },
-        { value: 'payment_dispute', label: 'Tranh chấp thanh toán' },
-        { value: 'other', label: 'Khác' }
-      ],
-      reporterType: [
-        { value: 'all', label: 'Tất cả người báo cáo' },
-        { value: 'learner', label: 'Học viên' },
-        { value: 'coach', label: 'Coach' }
-      ]
+      total: sessions.length,
+      completed,
+      cancelled,
+      scheduled,
+      inProgress,
+      noShow,
+      totalRevenue,
+      refundedAmount,
+      pendingPayments,
+      totalReports,
+      pendingReports,
+      resolvedReports,
+      avgRating,
+      totalRatings: allRatings.length,
     };
   }
 
-  // Report Actions
-  static async resolveReport(reportId: string, resolution: string, notes?: string): Promise<SessionActionResponse> {
-    await delay(1000);
-    
-    const reportIndex = this.reports.findIndex(r => r.id === reportId);
-    if (reportIndex === -1) {
-      return { success: false, message: 'Không tìm thấy báo cáo' };
+  /**
+   * Process refund request
+   */
+  static async processRefund(request: RefundRequest): Promise<ApiResponse> {
+    await simulateDelay();
+
+    try {
+      console.log('Processing refund:', request);
+
+      return {
+        success: true,
+        message: `Đã hoàn tiền ${this.formatCurrency(request.amount)} thành công`,
+        data: {
+          sessionId: request.sessionId,
+          refundAmount: request.amount,
+          refundReason: request.reason,
+          processedAt: new Date().toISOString(),
+          processedBy: request.adminId,
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Không thể xử lý hoàn tiền',
+      };
     }
-
-    this.reports[reportIndex] = {
-      ...this.reports[reportIndex],
-      status: 'resolved',
-      resolution,
-      adminNotes: notes,
-      resolvedBy: 'admin_001', // Should be current admin ID
-      resolvedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    return { 
-      success: true, 
-      message: 'Đã giải quyết báo cáo thành công',
-      data: this.reports[reportIndex]
-    };
   }
 
-  static async dismissReport(reportId: string, notes?: string): Promise<SessionActionResponse> {
-    await delay(800);
-    
-    const reportIndex = this.reports.findIndex(r => r.id === reportId);
-    if (reportIndex === -1) {
-      return { success: false, message: 'Không tìm thấy báo cáo' };
+  /**
+   * Suspend user (coach or learner)
+   */
+  static async suspendUser(request: SuspendUserRequest): Promise<ApiResponse> {
+    await simulateDelay();
+
+    try {
+      console.log('Suspending user:', request);
+
+      const durationText = request.duration === 0 ? 'vĩnh viễn' : `${request.duration} ngày`;
+
+      return {
+        success: true,
+        message: `Đã tạm khóa ${request.userType === 'coach' ? 'huấn luyện viên' : 'học viên'} ${durationText}`,
+        data: {
+          userId: request.userId,
+          userType: request.userType,
+          sessionId: request.sessionId,
+          duration: request.duration,
+          suspendedAt: new Date().toISOString(),
+          suspendedBy: request.adminId,
+          reason: request.reason,
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Không thể tạm khóa người dùng',
+      };
     }
-
-    this.reports[reportIndex] = {
-      ...this.reports[reportIndex],
-      status: 'dismissed',
-      adminNotes: notes,
-      resolvedBy: 'admin_001', // Should be current admin ID
-      resolvedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    return { 
-      success: true, 
-      message: 'Đã bác bỏ báo cáo',
-      data: this.reports[reportIndex]
-    };
   }
 
-  static async updateReportStatus(reportId: string, status: 'pending' | 'investigating' | 'resolved' | 'dismissed', notes?: string): Promise<SessionActionResponse> {
-    await delay(600);
-    
-    const reportIndex = this.reports.findIndex(r => r.id === reportId);
-    if (reportIndex === -1) {
-      return { success: false, message: 'Không tìm thấy báo cáo' };
+  /**
+   * Send warning to user
+   */
+  static async warnUser(request: WarnUserRequest): Promise<ApiResponse> {
+    await simulateDelay();
+
+    try {
+      console.log('Warning user:', request);
+
+      return {
+        success: true,
+        message: `Đã gửi cảnh cáo đến ${request.userType === 'coach' ? 'huấn luyện viên' : 'học viên'}`,
+        data: {
+          userId: request.userId,
+          userType: request.userType,
+          sessionId: request.sessionId,
+          severity: request.severity,
+          warnedAt: new Date().toISOString(),
+          warnedBy: request.adminId,
+          reason: request.reason,
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Không thể gửi cảnh cáo',
+      };
     }
+  }
 
-    this.reports[reportIndex] = {
-      ...this.reports[reportIndex],
-      status,
-      adminNotes: notes,
-      updatedAt: new Date().toISOString()
-    };
+  /**
+   * Resolve report
+   */
+  static async resolveReport(
+    reportId: string,
+    resolution: string,
+    adminId: string,
+  ): Promise<ApiResponse> {
+    await simulateDelay();
 
-    return { 
-      success: true, 
-      message: `Đã cập nhật trạng thái báo cáo`,
-      data: this.reports[reportIndex]
-    };
+    try {
+      console.log('Resolving report:', { reportId, resolution, adminId });
+
+      return {
+        success: true,
+        message: 'Đã giải quyết báo cáo thành công',
+        data: {
+          reportId,
+          resolution,
+          resolvedAt: new Date().toISOString(),
+          resolvedBy: adminId,
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Không thể giải quyết báo cáo',
+      };
+    }
+  }
+
+  /**
+   * Get report reasons
+   */
+  static async getReportReasons(): Promise<string[]> {
+    await simulateDelay(200);
+
+    return sessionsData.reportReasons;
+  }
+
+  /**
+   * Get refund reasons
+   */
+  static async getRefundReasons(): Promise<string[]> {
+    await simulateDelay(200);
+
+    return sessionsData.refundReasons;
+  }
+
+  /**
+   * Format currency
+   */
+  private static formatCurrency(amount: number): string {
+    return new Intl.NumberFormat('vi-VN', {
+      style: 'currency',
+      currency: 'VND',
+    }).format(amount);
+  }
+
+  /**
+   * Update session status
+   */
+  static async updateSessionStatus(
+    sessionId: string,
+    status: Session['status'],
+    adminId: string,
+    notes?: string,
+  ): Promise<ApiResponse> {
+    await simulateDelay();
+
+    try {
+      console.log('Updating session status:', { sessionId, status, adminId, notes });
+
+      return {
+        success: true,
+        message: 'Đã cập nhật trạng thái buổi học thành công',
+        data: {
+          sessionId,
+          status,
+          updatedAt: new Date().toISOString(),
+          updatedBy: adminId,
+          notes,
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Không thể cập nhật trạng thái buổi học',
+      };
+    }
   }
 }

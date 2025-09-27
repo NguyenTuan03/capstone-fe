@@ -16,14 +16,13 @@
 
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import jwtAxios, { setAuthToken, setRefreshToken } from './index';
-import {
-  REDIRECT_URL_KEY,
-  REFRESH_TOKEN_KEY,
-  REMEMBER_ME_KEY,
-  TOKEN_KEY,
-} from '@/@crema/constants/AppConst';
+import { REFRESH_TOKEN_KEY, REMEMBER_ME_KEY, TOKEN_KEY } from '@/@crema/constants/AppConst';
 import { UserType } from '@/@crema/types/auth';
 import Cookies from 'universal-cookie';
+import { useRouter, usePathname } from 'next/navigation';
+import { RoleEnum } from '@/@crema/constants/AppEnums';
+import { message } from 'antd';
+import { useIntl } from 'react-intl';
 
 /**
  * Props for the authentication context
@@ -95,12 +94,18 @@ interface JWTAuthAuthProviderProps {
  */
 const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) => {
   const cookies = new Cookies();
-
+  const router = useRouter();
+  const pathname = usePathname();
+  const { messages: t } = useIntl();
   const [jwtAuthData, setJWTAuthData] = useState<JWTAuthContextProps>({
     user: null,
     isAuthenticated: false,
     isLoading: true,
   });
+
+  // Define public routes that don't require authentication
+  const publicRoutes = ['/signin', '/register', '/forgot-password', '/reset-password'];
+  const isPublicRoute = publicRoutes.includes(pathname);
 
   /**
    * Effect to load user data on component mount
@@ -109,12 +114,18 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
   useEffect(() => {
     const getAuthUser = async () => {
       const token = localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
+
+      // If no token and not on public route, redirect to signin
       if (!token) {
         setJWTAuthData({
           user: undefined,
           isLoading: false,
           isAuthenticated: false,
         });
+
+        // if (!isPublicRoute) {
+        //   router.push('/signin'); // DISABLED FOR UI DEVELOPMENT
+        // }
         return;
       }
 
@@ -123,31 +134,58 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
       setAuthToken(token, remember);
 
       try {
-        const { data } = await jwtAxios.get('auth/current-user', {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: false,
-          withXSRFToken: false,
-        });
-        // Update auth state with user data and permissions
-        setJWTAuthData({
-          user: data?.metadata?.user,
-          isLoading: false,
-          isAuthenticated: true,
-        });
-      } catch {
-        setJWTAuthData({
-          user: undefined,
-          isLoading: false,
-          isAuthenticated: false,
-        });
+        // Simple check - if token exists and user saved, restore session
+        const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+
+        if (savedUser && token.startsWith('admin-token-')) {
+          const user: UserType = JSON.parse(savedUser);
+
+          // Update auth state
+          setJWTAuthData({
+            user,
+            isLoading: false,
+            isAuthenticated: true,
+          });
+
+          // If on signin page, redirect to dashboard
+          if (pathname === '/signin' || pathname === '/') {
+            router.push('/dashboard');
+          }
+        } else {
+          // No valid session
+          cleanupAuthState();
+          // if (!isPublicRoute) {
+          //   router.push('/signin'); // DISABLED FOR UI DEVELOPMENT
+          // }
+        }
+      } catch (error) {
+        console.error('Auth error:', error);
+        cleanupAuthState();
+        // if (!isPublicRoute) {
+        //   router.push('/signin'); // DISABLED FOR UI DEVELOPMENT
+        // }
       }
     };
 
     getAuthUser();
-  }, []);
+  }, [pathname, isPublicRoute, router, t]);
+
+  /**
+   * Cleanup authentication state and tokens
+   */
+  const cleanupAuthState = () => {
+    setAuthToken();
+    setRefreshToken();
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+    sessionStorage.removeItem(TOKEN_KEY);
+
+    setJWTAuthData({
+      user: undefined,
+      isLoading: false,
+      isAuthenticated: false,
+    });
+  };
 
   /**
    * Utility function to remove all XSRF tokens from cookies
@@ -165,43 +203,63 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
   };
 
   /**
-   * Handles user sign-in
-   * 1. Makes login request to API
-   * 2. Stores received tokens
-   * 3. Updates authentication state
-   * 4. Loads user permissions
+   * Simple fake login - just check admin/admin1 and go to dashboard
    */
   const signInUser = async ({ email, password, remember }: SignInProps) => {
     removeAllXSRFTokens();
-    try {
-      const { data } = await jwtAxios.post('auth/login', {
-        email,
-        password,
-      });
-      const { metadata } = data;
-      // Store authentication tokens
-      setAuthToken(metadata.accessToken, remember);
-      setRefreshToken(metadata.refresh_token, remember);
 
-      // Update authentication state
+    // Set loading state
+    setJWTAuthData((prev) => ({ ...prev, isLoading: true }));
+
+    // Simple fake delay
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // Simple check
+    if (email.toLowerCase().trim() === 'admin' && password === 'admin1') {
+      // Create simple user
+      const fakeUser: UserType = {
+        id: 'admin-001',
+        email: 'admin',
+        name: 'Admin User',
+        role: 'admin',
+        avatar:
+          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+        phone: '+84 901 234 567',
+        location: 'Hồ Chí Minh',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Store simple token
+      const simpleToken = `admin-token-${Date.now()}`;
+      setAuthToken(simpleToken, remember);
+
+      // Update auth state
       setJWTAuthData({
-        user: metadata.user,
+        user: fakeUser,
         isAuthenticated: true,
         isLoading: false,
       });
-      // Persist user per remember option
+
+      // Save user data
       try {
         if (remember) {
-          localStorage.setItem('user', JSON.stringify(metadata.user));
-          sessionStorage.removeItem('user');
+          localStorage.setItem('user', JSON.stringify(fakeUser));
+          localStorage.setItem(REMEMBER_ME_KEY, 'true');
         } else {
-          sessionStorage.setItem('user', JSON.stringify(metadata.user));
-          localStorage.removeItem('user');
+          sessionStorage.setItem('user', JSON.stringify(fakeUser));
         }
-      } catch {}
-    } catch {
+      } catch (error) {
+        console.error('Error saving user:', error);
+      }
+
+      message.success('Đăng nhập thành công!');
+      router.push('/dashboard');
+    } else {
+      // Wrong credentials
+      message.error('Sai tài khoản hoặc mật khẩu!');
       setJWTAuthData({
-        ...jwtAuthData,
+        user: null,
         isAuthenticated: false,
         isLoading: false,
       });
@@ -233,18 +291,14 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
     } finally {
       // Clean up authentication state
       removeAllXSRFTokens();
-      setAuthToken();
-      setRefreshToken();
-      localStorage.removeItem(REFRESH_TOKEN_KEY);
+      cleanupAuthState();
       try {
         localStorage.removeItem('user');
         sessionStorage.removeItem('user');
       } catch {}
-      setJWTAuthData({
-        user: null,
-        isLoading: false,
-        isAuthenticated: false,
-      });
+
+      // Redirect to signin page
+      // router.push('/signin'); // DISABLED FOR UI DEVELOPMENT
     }
   };
 

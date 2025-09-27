@@ -1,246 +1,181 @@
 {
   "users": [
     {
-      "id": "usr_001",
-      "name": "Nguyễn Văn An",
-      "email": "nguyenvanan@gmail.com",
+      "id": "user-001",
+      "email": "nguyen.van.a@email.com",
+      "name": "Nguyễn Văn A",
       "phone": "+84 901 234 567",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=An",
-      "role": "user",
+      "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+      "role": "learner",
       "status": "active",
-      "location": "Quận 1, TP.HCM",
-      "joinDate": "2024-01-15T08:30:00Z",
-      "lastLogin": "2024-01-20T14:22:00Z",
       "skillLevel": "beginner",
-      "skillAssessment": {
-        "completedAt": "2024-01-15T09:00:00Z",
-        "score": 65,
-        "level": "beginner",
-        "strengths": ["Serve cơ bản", "Vị trí đứng"],
-        "weaknesses": ["Forehand", "Footwork"],
-        "recommendations": ["Luyện tập forehand", "Cải thiện di chuyển"]
-      },
-      "activityHistory": [
-        {
-          "date": "2024-01-20",
-          "action": "Hoàn thành bài học: Basic Serve Technique",
-          "type": "lesson_completed"
-        },
-        {
-          "date": "2024-01-19",
-          "action": "Đặt lịch với Coach Sarah Wilson",
-          "type": "booking_created"
-        },
-        {
-          "date": "2024-01-18",
-          "action": "Upload video phân tích kỹ thuật",
-          "type": "video_uploaded"
-        }
-      ],
+      "location": "Hồ Chí Minh",
+      "joinDate": "2024-01-15T00:00:00Z",
+      "lastLogin": "2024-01-26T10:30:00Z",
+      "totalSessions": 8,
+      "totalSpent": 1200000,
       "stats": {
-        "lessonsCompleted": 8,
-        "sessionsBooked": 3,
-        "videosUploaded": 5,
-        "totalTimeSpent": 120
+        "completedLessons": 12,
+        "totalLessons": 20,
+        "currentLevel": "Cơ bản",
+        "achievements": ["Người mới", "Học tập chăm chỉ"]
       }
     },
     {
-      "id": "usr_002", 
-      "name": "Trần Thị Bình",
-      "email": "tranthibinh@yahoo.com",
-      "phone": "+84 902 345 678",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Binh",
+      "id": "user-002",
+      "email": "tran.thi.b@email.com",
+      "name": "Trần Thị B",
+      "phone": "+84 901 234 568",
+      "avatar": "https://images.unsplash.com/photo-1531427186611-ad02f065fe8c?w=150&h=150&fit=crop&crop=face",
+      "role": "learner",
+      "status": "active",
+      "skillLevel": "intermediate",
+      "location": "Hà Nội",
+      "joinDate": "2024-01-10T00:00:00Z",
+      "lastLogin": "2024-01-25T14:20:00Z",
+      "totalSessions": 25,
+      "totalSpent": 3750000,
+      "stats": {
+        "completedLessons": 35,
+        "totalLessons": 45,
+        "currentLevel": "Trung cấp",
+        "achievements": ["Người mới", "Học tập chăm chỉ", "Tiến bộ vượt trội"]
+      }
+    },
+    {
+      "id": "user-003",
+      "email": "le.van.c@email.com",
+      "name": "Lê Văn C",
+      "phone": "+84 901 234 569",
+      "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
       "role": "coach",
       "status": "active",
-      "location": "Quận 3, TP.HCM",
-      "joinDate": "2024-01-10T10:15:00Z",
-      "lastLogin": "2024-01-20T16:45:00Z",
-      "skillLevel": "advanced",
-      "coachProfile": {
-        "isVerified": true,
-        "verifiedAt": "2024-01-12T09:00:00Z",
-        "certifications": ["PTR Certified", "USAPA Level 2"],
-        "specialties": ["Beginner Training", "Technique Analysis"],
-        "experience": 5,
-        "hourlyRate": 350000,
-        "rating": 4.8,
-        "totalSessions": 245,
-        "bio": "Huấn luyện viên pickleball với 5 năm kinh nghiệm. Chuyên hướng dẫn người mới bắt đầu."
-      },
-      "activityHistory": [
-        {
-          "date": "2024-01-20",
-          "action": "Hoàn thành session với học viên Nguyễn Văn An",
-          "type": "session_completed"
-        },
-        {
-          "date": "2024-01-19",
-          "action": "Nhận booking từ học viên Lê Thị Cẩm",
-          "type": "booking_received"
-        }
-      ],
+      "location": "Đà Nẵng",
+      "joinDate": "2024-01-05T00:00:00Z",
+      "lastLogin": "2024-01-26T08:45:00Z",
+      "totalSessions": 120,
+      "totalSpent": 0,
       "stats": {
-        "sessionsCompleted": 245,
-        "studentsCoached": 89,
-        "totalEarnings": 85750000,
-        "averageRating": 4.8
+        "completedLessons": 0,
+        "totalLessons": 0,
+        "currentLevel": "Huấn luyện viên",
+        "achievements": ["Chuyên gia", "Huấn luyện viên xuất sắc"]
       }
     },
     {
-      "id": "usr_003",
-      "name": "Lê Minh Châu",
-      "email": "leminhchau@hotmail.com", 
-      "phone": "+84 903 456 789",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Chau",
-      "role": "user",
-      "status": "banned",
-      "location": "Quận 7, TP.HCM",
-      "joinDate": "2024-01-12T14:20:00Z",
-      "lastLogin": "2024-01-18T11:30:00Z",
-      "skillLevel": "intermediate",
-      "banReason": "Vi phạm quy định trong session",
-      "bannedAt": "2024-01-19T10:00:00Z",
-      "bannedBy": "admin_001",
-      "skillAssessment": {
-        "completedAt": "2024-01-12T15:00:00Z",
-        "score": 78,
-        "level": "intermediate",
-        "strengths": ["Volley", "Court positioning"],
-        "weaknesses": ["Consistency", "Mental game"],
-        "recommendations": ["Luyện tập consistency", "Cải thiện tâm lý thi đấu"]
-      },
-      "activityHistory": [
-        {
-          "date": "2024-01-19",
-          "action": "Tài khoản bị khóa do vi phạm",
-          "type": "account_banned"
-        },
-        {
-          "date": "2024-01-18",
-          "action": "Báo cáo vi phạm từ Coach Mike Johnson",
-          "type": "violation_reported"
-        }
-      ],
+      "id": "user-004",
+      "email": "pham.thi.d@email.com",
+      "name": "Phạm Thị D",
+      "phone": "+84 901 234 570",
+      "avatar": "https://images.unsplash.com/photo-1494790108755-2616c6c4a09e?w=150&h=150&fit=crop&crop=face",
+      "role": "learner",
+      "status": "blocked",
+      "skillLevel": "beginner",
+      "location": "Hồ Chí Minh",
+      "joinDate": "2024-01-20T00:00:00Z",
+      "lastLogin": "2024-01-24T16:30:00Z",
+      "totalSessions": 3,
+      "totalSpent": 450000,
+      "blockReason": "Vi phạm quy định về thái độ trong buổi học",
+      "blockedAt": "2024-01-25T09:00:00Z",
+      "blockedBy": "admin-001",
       "stats": {
-        "lessonsCompleted": 15,
-        "sessionsBooked": 8,
-        "videosUploaded": 12,
-        "totalTimeSpent": 200
+        "completedLessons": 2,
+        "totalLessons": 10,
+        "currentLevel": "Cơ bản",
+        "achievements": ["Người mới"]
       }
     },
     {
-      "id": "usr_004",
-      "name": "Phạm Hoàng Duy",
-      "email": "phamhoangduy@gmail.com",
-      "phone": "+84 904 567 890",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Duy",
-      "role": "user",
-      "status": "pending_coach_approval",
-      "location": "Quận Bình Thạnh, TP.HCM",
-      "joinDate": "2024-01-18T09:45:00Z",
-      "lastLogin": "2024-01-20T13:15:00Z",
-      "skillLevel": "advanced",
-      "coachApplication": {
-        "submittedAt": "2024-01-19T10:30:00Z",
-        "status": "pending",
-        "documents": [
-          "PTR Certificate.pdf",
-          "Experience Letter.pdf",
-          "ID Copy.pdf"
-        ],
-        "requestedSpecialties": ["Advanced Strategy", "Competitive Play"],
-        "requestedRate": 400000,
-        "motivation": "Tôi muốn chia sẻ kinh nghiệm 7 năm chơi pickleball với cộng đồng."
-      },
-      "skillAssessment": {
-        "completedAt": "2024-01-18T10:30:00Z",
-        "score": 92,
-        "level": "advanced",
-        "strengths": ["All techniques", "Strategy", "Mental game"],
-        "weaknesses": ["Teaching skills"],
-        "recommendations": ["Phát triển kỹ năng giảng dạy"]
-      },
-      "activityHistory": [
-        {
-          "date": "2024-01-19",
-          "action": "Nộp đơn đăng ký làm coach",
-          "type": "coach_application_submitted"
-        },
-        {
-          "date": "2024-01-18",
-          "action": "Hoàn thành skill assessment",
-          "type": "assessment_completed"
-        }
-      ],
-      "stats": {
-        "lessonsCompleted": 25,
-        "sessionsBooked": 15,
-        "videosUploaded": 20,
-        "totalTimeSpent": 350
-      }
-    },
-    {
-      "id": "usr_005",
-      "name": "Võ Thị Linh",
-      "email": "vothilinh@outlook.com",
-      "phone": "+84 905 678 901",
-      "avatar": "https://api.dicebear.com/7.x/avataaars/svg?seed=Linh",
-      "role": "admin",
+      "id": "user-005",
+      "email": "hoang.van.e@email.com",
+      "name": "Hoàng Văn E",
+      "phone": "+84 901 234 571",
+      "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+      "role": "learner",
       "status": "active",
-      "location": "Quận 2, TP.HCM",
-      "joinDate": "2023-12-01T08:00:00Z",
-      "lastLogin": "2024-01-20T17:00:00Z",
-      "adminProfile": {
-        "permissions": ["user_management", "coach_verification", "content_management", "analytics"],
-        "departement": "Platform Management"
-      },
-      "activityHistory": [
-        {
-          "date": "2024-01-20",
-          "action": "Duyệt coach application của Phạm Hoàng Duy",
-          "type": "admin_action"
-        },
-        {
-          "date": "2024-01-19",
-          "action": "Khóa tài khoản Lê Minh Châu",
-          "type": "admin_action"
-        }
-      ],
+      "skillLevel": "advanced",
+      "location": "Cần Thơ",
+      "joinDate": "2023-12-01T00:00:00Z",
+      "lastLogin": "2024-01-26T12:15:00Z",
+      "totalSessions": 45,
+      "totalSpent": 6750000,
       "stats": {
-        "usersManaged": 156,
-        "coachesApproved": 23,
-        "contentApproved": 89,
-        "totalActions": 445
+        "completedLessons": 60,
+        "totalLessons": 65,
+        "currentLevel": "Nâng cao",
+        "achievements": ["Người mới", "Học tập chăm chỉ", "Tiến bộ vượt trội", "Chuyên gia"]
+      }
+    },
+    {
+      "id": "user-006",
+      "email": "vu.thi.f@email.com",
+      "name": "Vũ Thị F",
+      "phone": "+84 901 234 572",
+      "avatar": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
+      "role": "learner",
+      "status": "pending",
+      "skillLevel": "beginner",
+      "location": "Hải Phòng",
+      "joinDate": "2024-01-25T00:00:00Z",
+      "totalSessions": 0,
+      "totalSpent": 0,
+      "stats": {
+        "completedLessons": 0,
+        "totalLessons": 0,
+        "currentLevel": "Chưa bắt đầu",
+        "achievements": []
+      }
+    },
+    {
+      "id": "user-007",
+      "email": "dao.van.g@email.com",
+      "name": "Đào Văn G",
+      "phone": "+84 901 234 573",
+      "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+      "role": "coach",
+      "status": "pending",
+      "location": "Nha Trang",
+      "joinDate": "2024-01-24T00:00:00Z",
+      "totalSessions": 0,
+      "totalSpent": 0,
+      "stats": {
+        "completedLessons": 0,
+        "totalLessons": 0,
+        "currentLevel": "Chờ duyệt",
+        "achievements": []
+      }
+    },
+    {
+      "id": "user-008",
+      "email": "bui.thi.h@email.com",
+      "name": "Bùi Thị H",
+      "phone": "+84 901 234 574",
+      "avatar": "https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?w=150&h=150&fit=crop&crop=face",
+      "role": "learner",
+      "status": "active",
+      "skillLevel": "intermediate",
+      "location": "Vũng Tàu",
+      "joinDate": "2024-01-12T00:00:00Z",
+      "lastLogin": "2024-01-26T09:30:00Z",
+      "totalSessions": 18,
+      "totalSpent": 2700000,
+      "stats": {
+        "completedLessons": 28,
+        "totalLessons": 35,
+        "currentLevel": "Trung cấp",
+        "achievements": ["Người mới", "Học tập chăm chỉ", "Tiến bộ vượt trội"]
       }
     }
   ],
-  "filters": {
-    "roles": [
-      { "value": "all", "label": "Tất cả vai trò" },
-      { "value": "user", "label": "Học viên" },
-      { "value": "coach", "label": "Huấn luyện viên" },
-      { "value": "admin", "label": "Quản trị viên" }
-    ],
-    "status": [
-      { "value": "all", "label": "Tất cả trạng thái" },
-      { "value": "active", "label": "Hoạt động" },
-      { "value": "banned", "label": "Đã khóa" },
-      { "value": "pending_coach_approval", "label": "Chờ duyệt coach" }
-    ],
-    "skillLevels": [
-      { "value": "all", "label": "Tất cả trình độ" },
-      { "value": "beginner", "label": "Mới bắt đầu" },
-      { "value": "intermediate", "label": "Trung bình" },
-      { "value": "advanced", "label": "Nâng cao" }
-    ]
-  },
-  "stats": {
-    "total": 156,
-    "active": 142,
-    "banned": 8,
-    "pendingApproval": 6,
-    "users": 98,
-    "coaches": 45,
-    "admins": 13
-  }
+  "blockReasons": [
+    "Vi phạm quy định về thái độ trong buổi học",
+    "Sử dụng ngôn từ không phù hợp",
+    "Không tham gia buổi học mà không thông báo",
+    "Thanh toán không đúng hạn",
+    "Vi phạm quy định cộng đồng",
+    "Spam hoặc quảng cáo không phù hợp",
+    "Tạo nhiều tài khoản giả mạo",
+    "Khác (tự nhập lý do)"
+  ]
 }

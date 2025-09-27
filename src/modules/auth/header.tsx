@@ -48,16 +48,19 @@ const Header = () => {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200" style={{ boxShadow: 'none' }}>
+    <header
+      className="bg-white border-b border-gray-200"
+      style={{ boxShadow: 'none', borderRight: 'none' }}
+    >
       <div className="px-6 py-0">
-        <div className="flex justify-between items-center h-16">
+        <div className="flex justify-between items-center h-12">
           {/* Left side - Title only */}
           <div className="flex items-center">
-            <h1 className="text-xl font-semibold text-gray-800 mb-0">Admin Dashboard</h1>
+            <h1 className="text-lg font-semibold text-gray-800 mb-0">Admin Dashboard</h1>
           </div>
 
           {/* Right side - User actions */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
             {/* Language selector */}
             <Dropdown
               menu={{
@@ -71,7 +74,7 @@ const Header = () => {
                 type="text"
                 icon={<GlobalOutlined />}
                 className="text-gray-600 hover:text-gray-900 border-0"
-                size="middle"
+                size="small"
               >
                 {currentLanguage === 'vi' ? 'VN' : 'EN'}
               </Button>
@@ -83,16 +86,24 @@ const Header = () => {
               icon={isDarkMode ? <SunOutlined /> : <MoonOutlined />}
               onClick={handleToggleTheme}
               className="text-gray-600 hover:text-gray-900 border-0"
-              size="middle"
+              size="small"
             />
 
-            {/* Settings */}
+            {/* Settings - Main settings button */}
             <Button
               type="text"
               icon={<SettingOutlined />}
               onClick={handleSettings}
               className="text-gray-600 hover:text-gray-900 border-0"
-              size="middle"
+              size="small"
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
             />
           </div>
         </div>

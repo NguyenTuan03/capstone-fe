@@ -25,6 +25,7 @@ const eslintConfig = [
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       'no-unused-expressions': 'off',
+      'import/no-anonymous-default-export': 'off',
     },
   },
 ];

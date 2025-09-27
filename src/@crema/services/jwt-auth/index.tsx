@@ -169,6 +169,7 @@ export const setLogoutHandler = (fn: () => void) => {
 const refreshAuthToken = async (): Promise<string> => {
   const refreshToken = getRefreshToken();
   if (!refreshToken) {
+    console.warn('No refresh token available, user needs to login again');
     throw new Error('No refresh token available');
   }
 
@@ -224,6 +225,13 @@ jwtAxios.interceptors.response.use(
           return jwtAxios(originalRequest);
         })
         .catch((err) => Promise.reject(err));
+    }
+
+    // Check if refresh token exists before attempting refresh
+    const refreshToken = getRefreshToken();
+    if (!refreshToken) {
+      handleLogout();
+      return Promise.reject(error);
     }
 
     // Attempt to refresh the token

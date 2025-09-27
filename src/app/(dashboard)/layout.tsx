@@ -2,15 +2,20 @@
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Layout, Menu, Breadcrumb } from 'antd';
+import { Layout, Menu } from 'antd';
 import {
   DashboardOutlined,
-  TeamOutlined,
   UserOutlined,
+  TeamOutlined,
   BookOutlined,
-  DollarOutlined,
-  BarChartOutlined,
+  TrophyOutlined,
+  SafetyCertificateOutlined,
+  StarOutlined,
   CalendarOutlined,
+  CheckCircleOutlined,
+  BarChartOutlined,
+  LeftOutlined,
+  RightOutlined,
 } from '@ant-design/icons';
 import type { MenuProps } from 'antd';
 
@@ -32,14 +37,29 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       },
       { key: '/users', icon: <UserOutlined />, label: <IntlMessages id="menu.users" /> },
       { key: '/coaches', icon: <TeamOutlined />, label: <IntlMessages id="menu.coaches" /> },
-      { key: '/sessions', icon: <CalendarOutlined />, label: <IntlMessages id="menu.sessions" /> },
-      { key: '/content', icon: <BookOutlined />, label: <IntlMessages id="menu.content" /> },
+      { key: '/curriculum', icon: <BookOutlined />, label: <IntlMessages id="menu.curriculum" /> },
       {
-        key: '/analytics',
-        icon: <BarChartOutlined />,
-        label: <IntlMessages id="menu.analytics" />,
+        key: '/achievements',
+        icon: <TrophyOutlined />,
+        label: <IntlMessages id="menu.achievements" />,
       },
-      { key: '/settings', icon: <DollarOutlined />, label: <IntlMessages id="menu.settings" /> },
+      {
+        key: '/certificates',
+        icon: <SafetyCertificateOutlined />,
+        label: <IntlMessages id="menu.certificates" />,
+      },
+      { key: '/quality', icon: <StarOutlined />, label: <IntlMessages id="menu.quality" /> },
+      { key: '/sessions', icon: <CalendarOutlined />, label: <IntlMessages id="menu.sessions" /> },
+      {
+        key: '/course-verification',
+        icon: <CheckCircleOutlined />,
+        label: <IntlMessages id="menu.courseVerification" />,
+      },
+      {
+        key: '/statistics',
+        icon: <BarChartOutlined />,
+        label: <IntlMessages id="menu.statistics" />,
+      },
     ],
     [],
   );
@@ -47,6 +67,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const savedOpenKeys =
     typeof window !== 'undefined' ? localStorage.getItem('admin_open_keys') || '[]' : '[]';
   const [openKeys, setOpenKeys] = useState<string[]>(JSON.parse(savedOpenKeys));
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     try {
@@ -67,11 +88,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       dashboard: 'breadcrumb.dashboard',
       users: 'breadcrumb.users',
       coaches: 'breadcrumb.coaches',
+      curriculum: 'breadcrumb.curriculum',
+      achievements: 'breadcrumb.achievements',
+      certificates: 'breadcrumb.certificates',
+      quality: 'breadcrumb.quality',
       sessions: 'breadcrumb.sessions',
-      content: 'breadcrumb.content',
-      analytics: 'breadcrumb.analytics',
-      settings: 'breadcrumb.settings',
-      transactions: 'breadcrumb.transactions',
+      'course-verification': 'breadcrumb.courseVerification',
+      statistics: 'breadcrumb.statistics',
     };
     return titleIds[segment] ? <IntlMessages id={titleIds[segment]} /> : segment;
   };
@@ -79,21 +102,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <Layout className="min-h-screen" style={{ minHeight: '100vh' }}>
       <Sider
-        collapsible
+        collapsed={collapsed}
         defaultCollapsed={false}
         width={240}
+        collapsedWidth={80}
         className="!bg-white border-r border-gray-200"
-        style={{ minHeight: '100vh' }}
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          position: 'fixed',
+          left: 0,
+          top: 0,
+          zIndex: 100,
+        }}
+        trigger={null}
       >
-        <div className="h-16 flex items-center justify-center border-b border-gray-200">
+        <div className="h-12 flex items-center justify-center border-b border-gray-200">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-lg">PL</span>
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+              <span className="text-white font-bold text-sm">PL</span>
             </div>
-            <div className="flex flex-col">
-              <span className="text-base font-bold text-gray-800">PICKLE-LEARN</span>
-              <span className="text-xs text-gray-500">Admin Portal</span>
-            </div>
+            {!collapsed && (
+              <div className="flex flex-col">
+                <span className="text-sm font-bold text-gray-800">PICKLE-LEARN</span>
+                <span className="text-xs text-gray-500">Admin Portal</span>
+              </div>
+            )}
           </div>
         </div>
         <Menu
@@ -104,35 +139,88 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           items={items}
           onClick={handleMenuClick}
           className="!border-r-0"
+          style={{ flex: 1 }}
         />
-      </Sider>
-      <Layout style={{ minHeight: '100vh' }}>
-        <Header />
-        <Content
-          className="py-4"
+
+        {/* Custom Collapse Button */}
+        <div
+          className="h-12 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors duration-200"
+          onClick={() => setCollapsed(!collapsed)}
           style={{
-            minHeight: 'calc(100vh - 64px)',
-            backgroundColor: '#f5f5f5',
-            marginLeft: '0',
-            paddingLeft: '24px',
-            paddingRight: '24px',
+            backgroundColor: 'transparent',
           }}
         >
-          <div className="mb-4">
-            <Breadcrumb>
-              <Breadcrumb.Item key="home">
-                <IntlMessages id="breadcrumb.admin" />
-              </Breadcrumb.Item>
-              {segments.map((seg, idx) => (
-                <Breadcrumb.Item key={`${seg}-${idx}`}>{getPageTitle(seg)}</Breadcrumb.Item>
-              ))}
-            </Breadcrumb>
-          </div>
+          {collapsed ? (
+            <RightOutlined
+              style={{
+                fontSize: '14px',
+                color: '#666',
+                transition: 'all 0.2s ease',
+              }}
+            />
+          ) : (
+            <LeftOutlined
+              style={{
+                fontSize: '14px',
+                color: '#666',
+                transition: 'all 0.2s ease',
+              }}
+            />
+          )}
+        </div>
+      </Sider>
+      <Layout
+        style={{
+          minHeight: '100vh',
+          marginLeft: collapsed ? '80px' : '240px',
+          transition: 'margin-left 0.2s ease',
+        }}
+      >
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            right: 0,
+            left: collapsed ? '80px' : '240px',
+            zIndex: 99,
+            transition: 'left 0.2s ease',
+            borderLeft: 'none',
+            borderRight: 'none',
+          }}
+        >
+          <Header />
+        </div>
+        <Content
+          style={{
+            height: 'calc(100vh - 48px)',
+            backgroundColor: '#f5f5f5',
+            marginTop: '48px',
+            padding: '24px',
+            overflow: 'hidden',
+          }}
+        >
           <div
-            className="bg-white rounded-lg shadow p-6"
-            style={{ minHeight: 'calc(100vh - 140px)' }}
+            className="bg-white rounded-lg shadow"
+            style={{
+              height: 'calc(100vh - 96px)',
+              borderRadius: '8px',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
           >
-            {children}
+            <div
+              style={{
+                flex: 1,
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                padding: '24px',
+                width: '100%',
+                boxSizing: 'border-box',
+              }}
+            >
+              {children}
+            </div>
           </div>
         </Content>
       </Layout>
@@ -141,7 +229,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 }
 
 /*
-// ORIGINAL AUTH LOGIC (commented out for UI development)
+// AUTHENTICATION DISABLED FOR UI DEVELOPMENT
+// TO ENABLE: Uncomment the auth logic below and comment out current layout
 
 'use client';
 

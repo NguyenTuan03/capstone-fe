@@ -1,326 +1,238 @@
-import { GetCoachesParams, GetCoachesResponse, CoachDetail, CoachApiResponse, CoachListStats } from '@/types/coach';
-import coachesData from '@/data/coaches.json';
+import {
+  Coach,
+  CoachStats,
+  GetCoachesParams,
+  GetCoachesResponse,
+  CoachReview,
+  CoachQuality,
+  SuspendCoachRequest,
+  ApiResponse,
+} from '@/types/coach';
+import coachData from '@/data/coaches.json';
 
 // Simulate API delay
-const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+const simulateDelay = (ms: number = 100) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export class CoachApiService {
-  private static coaches: CoachDetail[] = coachesData.coaches as CoachDetail[];
-  private static stats: CoachListStats = coachesData.stats as CoachListStats;
+  /**
+   * Get coaches with pagination and filters
+   */
+  static async getCoaches(params: GetCoachesParams): Promise<GetCoachesResponse> {
+    await simulateDelay();
 
-  // Get all coaches with pagination and filters
-  static async getCoaches(params: GetCoachesParams = {}): Promise<GetCoachesResponse> {
-    await delay(800);
-
-    const {
-      page = 1,
-      limit = 10,
-      search = '',
-      status = 'all',
-      specialty = 'all',
-      rating = 'all'
-    } = params;
-
-    let filteredCoaches = [...this.coaches];
+    let filteredCoaches = [...coachData.coaches] as Coach[];
 
     // Apply search filter
-    if (search) {
-      const searchLower = search.toLowerCase();
-      filteredCoaches = filteredCoaches.filter(coach =>
-        coach.name.toLowerCase().includes(searchLower) ||
-        coach.email.toLowerCase().includes(searchLower) ||
-        coach.profile?.specialties.some(s => s.toLowerCase().includes(searchLower))
+    if (params.search) {
+      const searchTerm = params.search.toLowerCase();
+      filteredCoaches = filteredCoaches.filter(
+        (coach) =>
+          coach.name.toLowerCase().includes(searchTerm) ||
+          coach.email.toLowerCase().includes(searchTerm) ||
+          coach.specialties.some((s) => s.toLowerCase().includes(searchTerm)),
       );
     }
 
     // Apply status filter
-    if (status !== 'all') {
-      filteredCoaches = filteredCoaches.filter(coach => coach.status === status);
+    if (params.status && params.status !== 'all') {
+      filteredCoaches = filteredCoaches.filter((coach) => coach.status === params.status);
     }
 
     // Apply specialty filter
-    if (specialty !== 'all') {
-      filteredCoaches = filteredCoaches.filter(coach => 
-        coach.profile?.specialties.includes(specialty)
+    if (params.specialty && params.specialty !== 'all') {
+      filteredCoaches = filteredCoaches.filter((coach) =>
+        coach.specialties.includes(params.specialty!),
       );
     }
 
     // Apply rating filter
-    if (rating !== 'all') {
-      const minRating = parseInt(rating);
-      filteredCoaches = filteredCoaches.filter(coach => 
-        coach.profile?.rating && coach.profile.rating >= minRating
-      );
+    if (params.minRating) {
+      filteredCoaches = filteredCoaches.filter((coach) => coach.rating >= params.minRating!);
     }
 
-    // Apply pagination
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
+    // Calculate pagination
+    const total = filteredCoaches.length;
+    const startIndex = (params.page - 1) * params.limit;
+    const endIndex = startIndex + params.limit;
     const paginatedCoaches = filteredCoaches.slice(startIndex, endIndex);
 
     return {
       coaches: paginatedCoaches,
-      total: filteredCoaches.length,
-      page,
-      limit,
-      totalPages: Math.ceil(filteredCoaches.length / limit)
+      total,
+      page: params.page,
+      limit: params.limit,
     };
   }
 
-  // Get coach by ID
-  static async getCoachById(id: string): Promise<CoachDetail | null> {
-    await delay(500);
-    
-    const coach = this.coaches.find(c => c.id === id);
-    return coach || null;
+  /**
+   * Get coach by ID
+   */
+  static async getCoachById(coachId: string): Promise<Coach | null> {
+    await simulateDelay();
+
+    const coach = coachData.coaches.find((c) => c.id === coachId);
+    return (coach as Coach) || null;
   }
 
-  // Get all coaches data (for admin overview)
-  static async getAllCoachesData(): Promise<CoachApiResponse> {
-    await delay(600);
-    
+  /**
+   * Get coach statistics
+   */
+  static async getCoachStats(): Promise<CoachStats> {
+    await simulateDelay();
+
+    const coaches = coachData.coaches as Coach[];
+    const activeCoaches = coaches.filter((c) => c.status === 'active');
+
     return {
-      coaches: this.coaches,
-      stats: this.stats,
-      filters: coachesData.filters as any
+      total: coaches.length,
+      active: activeCoaches.length,
+      suspended: coaches.filter((c) => c.status === 'suspended').length,
+      pending: coaches.filter((c) => c.status === 'pending').length,
+      avgRating:
+        activeCoaches.length > 0
+          ? activeCoaches.reduce((sum, c) => sum + c.rating, 0) / activeCoaches.length
+          : 0,
+      totalSessions: coaches.reduce((sum, c) => sum + c.totalSessions, 0),
     };
   }
 
-  // Approve coach application
-  static async approveCoach(coachId: string, adminId: string): Promise<CoachDetail> {
-    await delay(1000);
-    
-    const coachIndex = this.coaches.findIndex(c => c.id === coachId);
-    if (coachIndex === -1) {
-      throw new Error('Coach not found');
-    }
+  /**
+   * Get coach qualities for quality management
+   */
+  static async getCoachQualities(): Promise<CoachQuality[]> {
+    await simulateDelay();
 
-    const coach = this.coaches[coachIndex];
-    if (coach.status !== 'pending') {
-      throw new Error('Coach is not in pending status');
-    }
-
-    // Update coach status
-    this.coaches[coachIndex] = {
-      ...coach,
-      status: 'approved',
-      applicationStatus: 'approved',
-      approvedAt: new Date().toISOString(),
-      approvedBy: adminId,
-      isVerified: true,
-      // Move application data to profile
-      profile: coach.application ? {
-        bio: coach.application.requestedProfile.bio,
-        experience: coach.application.requestedProfile.experience,
-        hourlyRate: coach.application.requestedProfile.hourlyRate,
-        rating: 0,
-        totalSessions: 0,
-        totalStudents: 0,
-        totalEarnings: 0,
-        specialties: coach.application.requestedProfile.specialties,
-        certifications: [],
-        teachingMethods: coach.application.requestedProfile.teachingMethods,
-      } : undefined
-    };
-
-    // Update stats
-    this.stats.approved += 1;
-    this.stats.pending -= 1;
-
-    return this.coaches[coachIndex];
+    return coachData.coachQualities as CoachQuality[];
   }
 
-  // Reject coach application
-  static async rejectCoach(coachId: string, reason: string, adminId: string): Promise<CoachDetail> {
-    await delay(800);
-    
-    const coachIndex = this.coaches.findIndex(c => c.id === coachId);
-    if (coachIndex === -1) {
-      throw new Error('Coach not found');
-    }
+  /**
+   * Get reviews for a specific coach
+   */
+  static async getCoachReviews(coachId: string): Promise<CoachReview[]> {
+    await simulateDelay();
 
-    this.coaches[coachIndex] = {
-      ...this.coaches[coachIndex],
-      status: 'rejected',
-      applicationStatus: 'rejected',
-      rejectedAt: new Date().toISOString(),
-      rejectedBy: adminId,
-      rejectReason: reason
-    };
-
-    // Update stats
-    this.stats.rejected += 1;
-    this.stats.pending -= 1;
-
-    return this.coaches[coachIndex];
+    const reviews = coachData.coachReviews.filter((r) => r.coachId === coachId) as CoachReview[];
+    return reviews.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+    );
   }
 
-  // Suspend coach
-  static async suspendCoach(coachId: string, reason: string, adminId: string): Promise<CoachDetail> {
-    await delay(800);
-    
-    const coachIndex = this.coaches.findIndex(c => c.id === coachId);
-    if (coachIndex === -1) {
-      throw new Error('Coach not found');
-    }
+  /**
+   * Get all reviews with coach info
+   */
+  static async getAllReviews(): Promise<(CoachReview & { coachName: string })[]> {
+    await simulateDelay();
 
-    this.coaches[coachIndex] = {
-      ...this.coaches[coachIndex],
-      status: 'suspended',
-      suspendedAt: new Date().toISOString(),
-      suspendedBy: adminId,
-      suspendReason: reason
-    };
+    const reviews = coachData.coachReviews as CoachReview[];
+    const coaches = coachData.coaches as Coach[];
 
-    // Update stats
-    this.stats.suspended += 1;
-    this.stats.approved -= 1;
-
-    return this.coaches[coachIndex];
+    return reviews
+      .map((review) => ({
+        ...review,
+        coachName: coaches.find((c) => c.id === review.coachId)?.name || 'Unknown Coach',
+      }))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
   }
 
-  // Unsuspend coach (reactivate)
-  static async unsuspendCoach(coachId: string): Promise<CoachDetail> {
-    await delay(600);
-    
-    const coachIndex = this.coaches.findIndex(c => c.id === coachId);
-    if (coachIndex === -1) {
-      throw new Error('Coach not found');
-    }
+  /**
+   * Suspend coach
+   */
+  static async suspendCoach(request: SuspendCoachRequest): Promise<ApiResponse> {
+    await simulateDelay();
 
-    this.coaches[coachIndex] = {
-      ...this.coaches[coachIndex],
-      status: 'approved',
-      suspendedAt: undefined,
-      suspendedBy: undefined,
-      suspendReason: undefined
-    };
+    try {
+      console.log('Suspending coach:', request);
 
-    // Update stats
-    this.stats.approved += 1;
-    this.stats.suspended -= 1;
-
-    return this.coaches[coachIndex];
-  }
-
-  // Delete coach (soft delete)
-  static async deleteCoach(coachId: string): Promise<void> {
-    await delay(600);
-    
-    const coachIndex = this.coaches.findIndex(c => c.id === coachId);
-    if (coachIndex === -1) {
-      throw new Error('Coach not found');
-    }
-
-    const coach = this.coaches[coachIndex];
-    
-    // Remove from list (soft delete)
-    this.coaches.splice(coachIndex, 1);
-    
-    // Update stats
-    this.stats.total -= 1;
-    if (coach.status === 'approved') this.stats.approved -= 1;
-    else if (coach.status === 'pending') this.stats.pending -= 1;
-    else if (coach.status === 'suspended') this.stats.suspended -= 1;
-    else if (coach.status === 'rejected') this.stats.rejected -= 1;
-  }
-
-  // Update coach profile
-  static async updateCoach(coachId: string, updateData: Partial<CoachDetail>): Promise<CoachDetail> {
-    await delay(900);
-    
-    const coachIndex = this.coaches.findIndex(c => c.id === coachId);
-    if (coachIndex === -1) {
-      throw new Error('Coach not found');
-    }
-
-    this.coaches[coachIndex] = {
-      ...this.coaches[coachIndex],
-      ...updateData,
-      id: coachId // Ensure ID doesn't change
-    };
-
-    return this.coaches[coachIndex];
-  }
-
-  // Get coach feedbacks
-  static async getCoachFeedbacks(coachId: string, page: number = 1, limit: number = 10) {
-    await delay(500);
-    
-    const coach = this.coaches.find(c => c.id === coachId);
-    if (!coach || !coach.recentFeedbacks) {
       return {
-        feedbacks: [],
-        total: 0,
-        page,
-        limit,
-        totalPages: 0
+        success: true,
+        message: 'Đã đình chỉ huấn luyện viên thành công',
+        data: {
+          coachId: request.coachId,
+          suspendedAt: new Date().toISOString(),
+          reason: request.reason,
+          evidence: request.evidence,
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Không thể đình chỉ huấn luyện viên',
       };
     }
-
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    const paginatedFeedbacks = coach.recentFeedbacks.slice(startIndex, endIndex);
-
-    return {
-      feedbacks: paginatedFeedbacks,
-      total: coach.recentFeedbacks.length,
-      page,
-      limit,
-      totalPages: Math.ceil(coach.recentFeedbacks.length / limit)
-    };
   }
 
-  // Get coach statistics
-  static async getCoachStats(): Promise<CoachListStats> {
-    await delay(400);
-    
-    // Recalculate stats from current coaches
-    const stats: CoachListStats = {
-      total: this.coaches.length,
-      approved: this.coaches.filter(c => c.status === 'approved').length,
-      pending: this.coaches.filter(c => c.status === 'pending').length,
-      suspended: this.coaches.filter(c => c.status === 'suspended').length,
-      rejected: this.coaches.filter(c => c.status === 'rejected').length,
-      averageRating: this.calculateAverageRating(),
-      totalSessions: this.coaches.reduce((sum, c) => sum + (c.profile?.totalSessions || 0), 0),
-      totalEarnings: this.coaches.reduce((sum, c) => sum + (c.profile?.totalEarnings || 0), 0)
-    };
-    
-    return stats;
-  }
+  /**
+   * Restore suspended coach
+   */
+  static async restoreCoach(
+    coachId: string,
+    adminId: string,
+    notes?: string,
+  ): Promise<ApiResponse> {
+    await simulateDelay();
 
-  // Calculate average rating
-  private static calculateAverageRating(): number {
-    const approvedCoaches = this.coaches.filter(c => c.status === 'approved' && c.profile?.rating);
-    if (approvedCoaches.length === 0) return 0;
-    
-    const totalRating = approvedCoaches.reduce((sum, c) => sum + (c.profile?.rating || 0), 0);
-    return parseFloat((totalRating / approvedCoaches.length).toFixed(1));
-  }
+    try {
+      console.log('Restoring coach:', { coachId, adminId, notes });
 
-  // Get pending applications
-  static async getPendingApplications(): Promise<CoachDetail[]> {
-    await delay(400);
-    return this.coaches.filter(c => c.status === 'pending');
-  }
-
-  // Verify coach certification
-  static async verifyCertification(coachId: string, certificationIndex: number): Promise<CoachDetail> {
-    await delay(600);
-    
-    const coachIndex = this.coaches.findIndex(c => c.id === coachId);
-    if (coachIndex === -1) {
-      throw new Error('Coach not found');
+      return {
+        success: true,
+        message: 'Đã khôi phục huấn luyện viên thành công',
+        data: {
+          coachId,
+          restoredAt: new Date().toISOString(),
+          notes,
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Không thể khôi phục huấn luyện viên',
+      };
     }
+  }
 
-    const coach = this.coaches[coachIndex];
-    if (!coach.profile?.certifications || !coach.profile.certifications[certificationIndex]) {
-      throw new Error('Certification not found');
+  /**
+   * Get suspend reason suggestions
+   */
+  static async getSuspendReasons(): Promise<string[]> {
+    await simulateDelay(200);
+
+    return coachData.suspendReasons;
+  }
+
+  /**
+   * Update certificate status
+   */
+  static async updateCertificateStatus(
+    coachId: string,
+    certId: string,
+    status: 'verified' | 'rejected',
+    adminId: string,
+    notes?: string,
+  ): Promise<ApiResponse> {
+    await simulateDelay();
+
+    try {
+      console.log('Updating certificate:', { coachId, certId, status, adminId, notes });
+
+      return {
+        success: true,
+        message:
+          status === 'verified' ? 'Đã xác minh chứng chỉ thành công' : 'Đã từ chối chứng chỉ',
+        data: {
+          coachId,
+          certId,
+          status,
+          verifiedBy: adminId,
+          verifiedAt: new Date().toISOString(),
+          notes,
+        },
+      };
+    } catch (error) {
+      return {
+        success: false,
+        message: 'Không thể cập nhật trạng thái chứng chỉ',
+      };
     }
-
-    coach.profile.certifications[certificationIndex].verified = true;
-    
-    return this.coaches[coachIndex];
   }
 }

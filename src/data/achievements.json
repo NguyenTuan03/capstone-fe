@@ -1,0 +1,557 @@
+{
+  "achievements": [
+    {
+      "id": "achievement-001",
+      "name": "Bước đầu tiên",
+      "description": "Hoàn thành bài học đầu tiên của bạn",
+      "icon": "🎯",
+      "category": "learning",
+      "rarity": "common",
+      "criteria": {
+        "type": "lesson_count",
+        "target": 1,
+        "condition": "complete_first_lesson"
+      },
+      "rewards": {
+        "points": 50,
+        "badge": "first-step-badge",
+        "title": "Người học mới",
+        "description": "Chào mừng bạn đến với hành trình học Pickleball!",
+        "specialPerks": ["Unlock profile badge"]
+      },
+      "status": "active",
+      "unlockedCount": 12450,
+      "totalUsers": 15420,
+      "unlockRate": 80.7,
+      "createdAt": "2024-01-10T09:00:00Z",
+      "updatedAt": "2024-01-15T14:30:00Z",
+      "createdBy": "admin-001",
+      "updatedBy": "admin-001"
+    },
+    {
+      "id": "achievement-002",
+      "name": "Học giả tri thức",
+      "description": "Hoàn thành 10 bài học",
+      "icon": "📚",
+      "category": "learning",
+      "rarity": "common",
+      "criteria": {
+        "type": "lesson_count",
+        "target": 10,
+        "condition": "complete_lessons"
+      },
+      "rewards": {
+        "points": 200,
+        "badge": "knowledge-seeker-badge",
+        "title": "Học giả",
+        "description": "Bạn đã chứng minh khát khao học hỏi của mình!",
+        "specialPerks": ["Unlock advanced lessons preview"]
+      },
+      "status": "active",
+      "unlockedCount": 8920,
+      "totalUsers": 15420,
+      "unlockRate": 57.8,
+      "createdAt": "2024-01-10T09:15:00Z",
+      "updatedAt": "2024-01-20T10:45:00Z",
+      "createdBy": "admin-001",
+      "updatedBy": "admin-002"
+    },
+    {
+      "id": "achievement-003",
+      "name": "Thạc sĩ Pickleball",
+      "description": "Hoàn thành toàn bộ một chương",
+      "icon": "🎓",
+      "category": "learning",
+      "rarity": "rare",
+      "criteria": {
+        "type": "chapter_complete",
+        "target": 1,
+        "condition": "complete_full_chapter"
+      },
+      "rewards": {
+        "points": 500,
+        "badge": "master-student-badge",
+        "title": "Thạc sĩ",
+        "description": "Bạn đã thành thạo một lĩnh vực trong Pickleball!",
+        "specialPerks": ["Unlock certificate", "Priority booking"]
+      },
+      "status": "active",
+      "unlockedCount": 3420,
+      "totalUsers": 15420,
+      "unlockRate": 22.2,
+      "createdAt": "2024-01-12T11:00:00Z",
+      "updatedAt": "2024-02-01T16:20:00Z",
+      "createdBy": "admin-002",
+      "updatedBy": "admin-002"
+    },
+    {
+      "id": "achievement-004",
+      "name": "Nhà vô địch Quiz",
+      "description": "Đạt 100% trong 5 quiz liên tiếp",
+      "icon": "🏆",
+      "category": "skill",
+      "rarity": "epic",
+      "criteria": {
+        "type": "perfect_score",
+        "target": 5,
+        "condition": "consecutive_perfect_scores"
+      },
+      "rewards": {
+        "points": 1000,
+        "badge": "quiz-champion-badge",
+        "title": "Nhà vô địch",
+        "description": "Kiến thức của bạn thật đáng kinh ngạc!",
+        "specialPerks": ["Golden badge", "Leaderboard highlight", "Free premium month"]
+      },
+      "status": "active",
+      "unlockedCount": 890,
+      "totalUsers": 15420,
+      "unlockRate": 5.8,
+      "createdAt": "2024-01-15T14:00:00Z",
+      "updatedAt": "2024-02-10T09:30:00Z",
+      "createdBy": "admin-001",
+      "updatedBy": "admin-001"
+    },
+    {
+      "id": "achievement-005",
+      "name": "Chuyên gia Forehand",
+      "description": "Hoàn thành module kỹ thuật Forehand",
+      "icon": "🎾",
+      "category": "skill",
+      "rarity": "rare",
+      "criteria": {
+        "type": "chapter_complete",
+        "target": 1,
+        "condition": "complete_forehand_module"
+      },
+      "rewards": {
+        "points": 750,
+        "badge": "forehand-master-badge",
+        "title": "Chuyên gia Forehand",
+        "description": "Bạn đã thành thạo kỹ thuật Forehand!",
+        "specialPerks": ["Unlock advanced techniques", "Coach recommendation boost"]
+      },
+      "status": "active",
+      "unlockedCount": 2180,
+      "totalUsers": 15420,
+      "unlockRate": 14.1,
+      "createdAt": "2024-01-18T10:30:00Z",
+      "updatedAt": "2024-02-05T15:45:00Z",
+      "createdBy": "admin-003",
+      "updatedBy": "admin-001"
+    },
+    {
+      "id": "achievement-006",
+      "name": "Chim sớm",
+      "description": "Học trước 8h sáng trong 7 ngày liên tiếp",
+      "icon": "🌅",
+      "category": "time",
+      "rarity": "rare",
+      "criteria": {
+        "type": "streak_days",
+        "target": 7,
+        "condition": "study_before_8am",
+        "timeframe": 7
+      },
+      "rewards": {
+        "points": 600,
+        "badge": "early-bird-badge",
+        "title": "Chim sớm",
+        "description": "Sự chăm chỉ của bạn thật đáng ngưỡng mộ!",
+        "specialPerks": ["Morning session discount", "Priority scheduling"]
+      },
+      "status": "active",
+      "unlockedCount": 1580,
+      "totalUsers": 15420,
+      "unlockRate": 10.2,
+      "createdAt": "2024-01-20T08:00:00Z",
+      "updatedAt": "2024-02-12T12:00:00Z",
+      "createdBy": "admin-002",
+      "updatedBy": "admin-003"
+    },
+    {
+      "id": "achievement-007",
+      "name": "Học sinh kiên trì",
+      "description": "Học 30 ngày liên tiếp",
+      "icon": "🔥",
+      "category": "time",
+      "rarity": "epic",
+      "criteria": {
+        "type": "streak_days",
+        "target": 30,
+        "condition": "daily_study_streak",
+        "timeframe": 30
+      },
+      "rewards": {
+        "points": 1500,
+        "badge": "persistent-learner-badge",
+        "title": "Học sinh kiên trì",
+        "description": "Sự kiên trì của bạn là nguồn cảm hứng cho mọi người!",
+        "specialPerks": ["Streak protection", "VIP status", "Custom profile theme"]
+      },
+      "status": "active",
+      "unlockedCount": 420,
+      "totalUsers": 15420,
+      "unlockRate": 2.7,
+      "createdAt": "2024-01-25T16:00:00Z",
+      "updatedAt": "2024-02-15T11:30:00Z",
+      "createdBy": "admin-001",
+      "updatedBy": "admin-002"
+    },
+    {
+      "id": "achievement-008",
+      "name": "Người đồng đội",
+      "description": "Tham gia 20 session nhóm",
+      "icon": "👥",
+      "category": "social",
+      "rarity": "common",
+      "criteria": {
+        "type": "session_count",
+        "target": 20,
+        "condition": "group_sessions"
+      },
+      "rewards": {
+        "points": 400,
+        "badge": "team-player-badge",
+        "title": "Người đồng đội",
+        "description": "Bạn là một thành viên tuyệt vời của cộng đồng!",
+        "specialPerks": ["Group session discount", "Social features unlock"]
+      },
+      "status": "active",
+      "unlockedCount": 5680,
+      "totalUsers": 15420,
+      "unlockRate": 36.8,
+      "createdAt": "2024-02-01T09:00:00Z",
+      "updatedAt": "2024-02-18T14:15:00Z",
+      "createdBy": "admin-003",
+      "updatedBy": "admin-001"
+    },
+    {
+      "id": "achievement-009",
+      "name": "Ngôi sao cộng đồng",
+      "description": "Nhận 100 likes từ cộng đồng",
+      "icon": "⭐",
+      "category": "social",
+      "rarity": "epic",
+      "criteria": {
+        "type": "social_interaction",
+        "target": 100,
+        "condition": "community_likes"
+      },
+      "rewards": {
+        "points": 1200,
+        "badge": "community-star-badge",
+        "title": "Ngôi sao cộng đồng",
+        "description": "Bạn là nguồn cảm hứng cho toàn bộ cộng đồng!",
+        "specialPerks": ["Featured profile", "Community moderator badge", "Special events access"]
+      },
+      "status": "active",
+      "unlockedCount": 280,
+      "totalUsers": 15420,
+      "unlockRate": 1.8,
+      "createdAt": "2024-02-05T13:30:00Z",
+      "updatedAt": "2024-02-20T10:45:00Z",
+      "createdBy": "admin-002",
+      "updatedBy": "admin-003"
+    },
+    {
+      "id": "achievement-010",
+      "name": "Huyền thoại Pickleball",
+      "description": "Hoàn thành tất cả chương và đạt 95% điểm trung bình",
+      "icon": "👑",
+      "category": "milestone",
+      "rarity": "legendary",
+      "criteria": {
+        "type": "custom",
+        "target": 95,
+        "condition": "complete_all_chapters_with_high_score",
+        "additionalRules": [
+          {
+            "field": "chapters_completed",
+            "operator": "equals",
+            "value": "all",
+            "description": "Hoàn thành tất cả chương"
+          },
+          {
+            "field": "average_score",
+            "operator": "greater_than",
+            "value": 95,
+            "description": "Điểm trung bình >= 95%"
+          }
+        ]
+      },
+      "rewards": {
+        "points": 5000,
+        "badge": "pickleball-legend-badge",
+        "title": "Huyền thoại Pickleball",
+        "description": "Bạn đã đạt đến đỉnh cao của nghệ thuật Pickleball!",
+        "specialPerks": [
+          "Legendary crown badge",
+          "Hall of Fame entry",
+          "Lifetime premium access",
+          "Personal coach session",
+          "Custom achievement creation"
+        ]
+      },
+      "status": "active",
+      "unlockedCount": 45,
+      "totalUsers": 15420,
+      "unlockRate": 0.3,
+      "createdAt": "2024-02-10T15:00:00Z",
+      "updatedAt": "2024-02-25T09:20:00Z",
+      "createdBy": "admin-001",
+      "updatedBy": "admin-001"
+    }
+  ],
+  "userProgress": [
+    {
+      "userId": "user-001",
+      "userName": "Nguyễn Văn An",
+      "userAvatar": "https://i.pravatar.cc/150?img=1",
+      "achievementId": "achievement-002",
+      "progress": 80,
+      "currentValue": 8,
+      "targetValue": 10,
+      "unlockedAt": null,
+      "isUnlocked": false,
+      "lastUpdated": "2024-02-28T14:30:00Z"
+    },
+    {
+      "userId": "user-002",
+      "userName": "Trần Thị Bình",
+      "userAvatar": "https://i.pravatar.cc/150?img=2",
+      "achievementId": "achievement-003",
+      "progress": 100,
+      "currentValue": 1,
+      "targetValue": 1,
+      "unlockedAt": "2024-02-25T16:45:00Z",
+      "isUnlocked": true,
+      "lastUpdated": "2024-02-25T16:45:00Z"
+    },
+    {
+      "userId": "user-003",
+      "userName": "Lê Hoàng Cường",
+      "userAvatar": "https://i.pravatar.cc/150?img=3",
+      "achievementId": "achievement-007",
+      "progress": 60,
+      "currentValue": 18,
+      "targetValue": 30,
+      "unlockedAt": null,
+      "isUnlocked": false,
+      "lastUpdated": "2024-02-28T08:15:00Z"
+    }
+  ],
+  "recentUnlocks": [
+    {
+      "id": "unlock-001",
+      "userId": "user-004",
+      "userName": "Phạm Thị Dung",
+      "userAvatar": "https://i.pravatar.cc/150?img=4",
+      "achievementId": "achievement-001",
+      "achievementName": "Bước đầu tiên",
+      "achievementIcon": "🎯",
+      "achievementRarity": "common",
+      "unlockedAt": "2024-02-28T10:30:00Z"
+    },
+    {
+      "id": "unlock-002",
+      "userId": "user-005",
+      "userName": "Võ Minh Em",
+      "userAvatar": "https://i.pravatar.cc/150?img=5",
+      "achievementId": "achievement-008",
+      "achievementName": "Người đồng đội",
+      "achievementIcon": "👥",
+      "achievementRarity": "common",
+      "unlockedAt": "2024-02-28T09:15:00Z"
+    },
+    {
+      "id": "unlock-003",
+      "userId": "user-006",
+      "userName": "Đặng Thành Phong",
+      "userAvatar": "https://i.pravatar.cc/150?img=6",
+      "achievementId": "achievement-004",
+      "achievementName": "Nhà vô địch Quiz",
+      "achievementIcon": "🏆",
+      "achievementRarity": "epic",
+      "unlockedAt": "2024-02-27T20:45:00Z"
+    },
+    {
+      "id": "unlock-004",
+      "userId": "user-007",
+      "userName": "Bùi Thị Giang",
+      "userAvatar": "https://i.pravatar.cc/150?img=7",
+      "achievementId": "achievement-006",
+      "achievementName": "Chim sớm",
+      "achievementIcon": "🌅",
+      "achievementRarity": "rare",
+      "unlockedAt": "2024-02-27T18:20:00Z"
+    }
+  ],
+  "templates": [
+    {
+      "id": "template-001",
+      "name": "Hoàn thành bài học",
+      "description": "Đạt achievement khi hoàn thành X bài học",
+      "category": "learning",
+      "criteria": {
+        "type": "lesson_count",
+        "target": 5,
+        "condition": "complete_lessons"
+      },
+      "rewards": {
+        "points": 100,
+        "badge": "lesson-completion-badge",
+        "description": "Chúc mừng bạn đã hoàn thành các bài học!"
+      },
+      "isPopular": true
+    },
+    {
+      "id": "template-002",
+      "name": "Chuỗi ngày học tập",
+      "description": "Học liên tiếp trong X ngày",
+      "category": "time",
+      "criteria": {
+        "type": "streak_days",
+        "target": 7,
+        "condition": "daily_study_streak",
+        "timeframe": 7
+      },
+      "rewards": {
+        "points": 300,
+        "badge": "streak-badge",
+        "description": "Sự kiên trì của bạn thật đáng ngưỡng mộ!"
+      },
+      "isPopular": true
+    },
+    {
+      "id": "template-003",
+      "name": "Điểm số cao",
+      "description": "Đạt điểm cao trong quiz",
+      "category": "skill",
+      "criteria": {
+        "type": "quiz_score",
+        "target": 90,
+        "condition": "high_score"
+      },
+      "rewards": {
+        "points": 200,
+        "badge": "high-score-badge",
+        "description": "Kiến thức của bạn thật ấn tượng!"
+      },
+      "isPopular": false
+    }
+  ],
+  "badgeAssets": [
+    {
+      "id": "badge-001",
+      "name": "Golden Star",
+      "url": "/badges/golden-star.png",
+      "category": "stars",
+      "rarity": "legendary",
+      "isDefault": false,
+      "uploadedAt": "2024-01-10T10:00:00Z"
+    },
+    {
+      "id": "badge-002",
+      "name": "Silver Trophy",
+      "url": "/badges/silver-trophy.png",
+      "category": "trophies",
+      "rarity": "epic",
+      "isDefault": false,
+      "uploadedAt": "2024-01-12T14:30:00Z"
+    },
+    {
+      "id": "badge-003",
+      "name": "Bronze Medal",
+      "url": "/badges/bronze-medal.png",
+      "category": "medals",
+      "rarity": "rare",
+      "isDefault": true,
+      "uploadedAt": "2024-01-15T09:15:00Z"
+    }
+  ],
+  "activities": [
+    {
+      "id": "activity-001",
+      "type": "created",
+      "achievementId": "achievement-010",
+      "achievementName": "Huyền thoại Pickleball",
+      "details": {
+        "createdBy": "admin-001",
+        "rarity": "legendary",
+        "category": "milestone"
+      },
+      "timestamp": "2024-02-10T15:00:00Z"
+    },
+    {
+      "id": "activity-002",
+      "type": "unlocked",
+      "achievementId": "achievement-004",
+      "achievementName": "Nhà vô địch Quiz",
+      "userId": "user-006",
+      "userName": "Đặng Thành Phong",
+      "details": {
+        "rarity": "epic",
+        "pointsEarned": 1000
+      },
+      "timestamp": "2024-02-27T20:45:00Z"
+    },
+    {
+      "id": "activity-003",
+      "type": "updated",
+      "achievementId": "achievement-002",
+      "achievementName": "Học giả tri thức",
+      "details": {
+        "updatedBy": "admin-002",
+        "changes": ["description", "rewards.points"]
+      },
+      "timestamp": "2024-01-20T10:45:00Z"
+    }
+  ],
+  "filterOptions": {
+    "categories": [
+      { "value": "all", "label": "Tất cả danh mục", "color": "#666" },
+      { "value": "learning", "label": "Học tập", "color": "#1890ff" },
+      { "value": "skill", "label": "Kỹ năng", "color": "#52c41a" },
+      { "value": "time", "label": "Thời gian", "color": "#faad14" },
+      { "value": "social", "label": "Xã hội", "color": "#722ed1" },
+      { "value": "milestone", "label": "Cột mốc", "color": "#eb2f96" },
+      { "value": "special", "label": "Đặc biệt", "color": "#13c2c2" }
+    ],
+    "rarities": [
+      { "value": "all", "label": "Tất cả độ hiếm", "color": "#666" },
+      { "value": "common", "label": "Thường", "color": "#8c8c8c" },
+      { "value": "rare", "label": "Hiếm", "color": "#1890ff" },
+      { "value": "epic", "label": "Sử thi", "color": "#722ed1" },
+      { "value": "legendary", "label": "Huyền thoại", "color": "#faad14" }
+    ],
+    "criteriaTypes": [
+      { "value": "lesson_count", "label": "Số bài học", "description": "Hoàn thành X bài học" },
+      { "value": "quiz_score", "label": "Điểm quiz", "description": "Đạt điểm X trong quiz" },
+      { "value": "streak_days", "label": "Chuỗi ngày", "description": "Học X ngày liên tiếp" },
+      { "value": "session_count", "label": "Số session", "description": "Tham gia X sessions" },
+      {
+        "value": "chapter_complete",
+        "label": "Hoàn thành chương",
+        "description": "Hoàn thành X chương"
+      },
+      {
+        "value": "perfect_score",
+        "label": "Điểm tuyệt đối",
+        "description": "Đạt 100% trong X quiz"
+      },
+      { "value": "time_spent", "label": "Thời gian học", "description": "Học tổng cộng X giờ" },
+      {
+        "value": "social_interaction",
+        "label": "Tương tác xã hội",
+        "description": "Tương tác X lần"
+      }
+    ],
+    "statuses": [
+      { "value": "all", "label": "Tất cả trạng thái" },
+      { "value": "active", "label": "Hoạt động" },
+      { "value": "inactive", "label": "Không hoạt động" },
+      { "value": "archived", "label": "Đã lưu trữ" }
+    ]
+  }
+}

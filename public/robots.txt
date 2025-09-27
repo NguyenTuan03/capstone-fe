@@ -1,0 +1,13 @@
+# Robots.txt for PICKLE-LEARN Admin Portal
+
+# Block all web crawlers from admin portal
+User-agent: *
+Disallow: /
+
+# Allow access to essential assets
+Allow: /favicon.ico
+Allow: /assets/
+Allow: /_next/static/
+
+# Sitemap location (if needed for internal documentation)
+# Sitemap: https://yourdomain.com/sitemap.xml

@@ -1,154 +1,135 @@
+// Coach Management Types
+
 export interface Coach {
   id: string;
-  userId: string;
-  name: string;
   email: string;
-  phone: string;
+  name: string;
+  phone?: string;
   avatar?: string;
-  status: 'approved' | 'pending' | 'suspended' | 'rejected';
-  applicationStatus: 'approved' | 'pending' | 'rejected';
-  approvedAt?: string;
-  approvedBy?: string;
-  appliedAt?: string;
-  rejectedAt?: string;
-  rejectedBy?: string;
-  rejectReason?: string;
-  suspendedAt?: string;
-  suspendedBy?: string;
-  suspendReason?: string;
-  isVerified: boolean;
-  location: string;
+  status: 'active' | 'suspended' | 'pending' | 'rejected';
+  location?: string;
   joinDate: string;
   lastActive?: string;
-}
 
-export interface CoachCertification {
-  name: string;
-  issuer: string;
-  issuedDate: string;
-  expiryDate: string;
-  documentUrl: string;
-  verified: boolean;
-}
-
-export interface CoachProfile {
-  bio: string;
-  experience: number;
-  hourlyRate: number;
-  rating: number;
+  // Coach specific info
+  experience: number; // years
+  rating: number; // 1-5 stars
   totalSessions: number;
   totalStudents: number;
-  totalEarnings: number;
+  hourlyRate: number;
   specialties: string[];
-  certifications: CoachCertification[];
-  teachingMethods: string[];
-  availability?: {
-    [key: string]: string[];
-  };
+  bio: string;
+
+  // Certificates
+  certificates: Certificate[];
+
+  // Suspension info
+  suspendReason?: string;
+  suspendedAt?: string;
+  suspendedBy?: string;
+  suspendEvidence?: string[]; // video/image URLs
 }
 
-export interface CoachApplication {
-  motivation: string;
-  documents: ApplicationDocument[];
-  requestedProfile: {
-    bio: string;
-    hourlyRate: number;
-    specialties: string[];
-    experience: number;
-    teachingMethods: string[];
-  };
-}
-
-export interface ApplicationDocument {
-  type: string;
+export interface Certificate {
+  id: string;
   name: string;
-  url: string;
-  uploadedAt: string;
-  verified: boolean;
+  issuer: string;
+  issueDate: string;
+  expiryDate?: string;
+  certificateUrl?: string;
+  status: 'verified' | 'pending' | 'expired' | 'rejected';
+  verifiedBy?: string;
+  verifiedAt?: string;
+  notes?: string;
 }
 
 export interface CoachStats {
-  thisMonth: {
-    sessionsCompleted: number;
-    newStudents: number;
-    earnings: number;
-    averageRating: number;
-  };
-  lastMonth: {
-    sessionsCompleted: number;
-    newStudents: number;
-    earnings: number;
-    averageRating: number;
-  };
-}
-
-export interface CoachFeedback {
-  id: string;
-  studentId: string;
-  studentName: string;
-  sessionId: string;
-  sessionDate: string;
-  rating: number;
-  comment: string;
-  aspectRatings: {
-    expertise: number;
-    communication: number;
-    punctuality: number;
-    patience: number;
-  };
-  createdAt: string;
-  reported?: boolean;
-  reportReason?: string;
-}
-
-export interface CoachDetail extends Coach {
-  profile?: CoachProfile;
-  application?: CoachApplication;
-  stats?: CoachStats;
-  recentFeedbacks?: CoachFeedback[];
-}
-
-export interface CoachListStats {
   total: number;
-  approved: number;
-  pending: number;
+  active: number;
   suspended: number;
-  rejected: number;
-  averageRating: number;
+  pending: number;
+  avgRating: number;
   totalSessions: number;
-  totalEarnings: number;
-}
-
-export interface FilterOption {
-  value: string;
-  label: string;
-}
-
-export interface CoachFilters {
-  status: FilterOption[];
-  specialties: FilterOption[];
-  rating: FilterOption[];
 }
 
 export interface GetCoachesParams {
-  page?: number;
-  limit?: number;
+  page: number;
+  limit: number;
   search?: string;
   status?: string;
   specialty?: string;
-  rating?: string;
+  minRating?: number;
 }
 
 export interface GetCoachesResponse {
-  coaches: CoachDetail[];
+  coaches: Coach[];
   total: number;
   page: number;
   limit: number;
-  totalPages: number;
 }
 
-export interface CoachApiResponse {
-  coaches: CoachDetail[];
-  stats: CoachListStats;
-  filters: CoachFilters;
+// Quality Management Types
+export interface CoachReview {
+  id: string;
+  coachId: string;
+  studentId: string;
+  studentName: string;
+  studentAvatar?: string;
+  sessionId: string;
+  rating: number; // 1-5 stars
+  comment: string;
+  createdAt: string;
+
+  // Video evidence for online sessions
+  sessionVideo?: string;
+  reviewVideo?: string;
+
+  // Admin review
+  adminReviewed: boolean;
+  adminNotes?: string;
+  isReported: boolean;
+  reportReason?: string;
+}
+
+export interface CoachQuality {
+  id: string;
+  email: string;
+  name: string;
+  avatar?: string;
+  status: 'active' | 'suspended';
+
+  // Quality metrics
+  rating: number;
+  totalReviews: number;
+  recentReviews: CoachReview[];
+
+  // Performance metrics
+  sessionCompletionRate: number; // %
+  studentRetentionRate: number; // %
+  responseTime: number; // average hours
+
+  // Flags
+  hasComplaints: boolean;
+  complaintsCount: number;
+  lastComplaintDate?: string;
+
+  // Suspension info
+  suspendReason?: string;
+  suspendedAt?: string;
+  suspendedBy?: string;
+  suspendEvidence?: string[];
+}
+
+export interface SuspendCoachRequest {
+  coachId: string;
+  reason: string;
+  evidence?: string[]; // URLs to uploaded files
+  adminId: string;
+  notes?: string;
+}
+
+export interface ApiResponse<T = any> {
+  success: boolean;
+  message: string;
+  data?: T;
 }

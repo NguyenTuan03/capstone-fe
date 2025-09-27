@@ -1,25 +1,21 @@
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import AppAuthProvider from '@/@crema/core/AppAuthProvider';
 import AppContextProvider from '@/@crema/context/AppContextProvider';
-import { buildMetadata } from '@/@crema/helper/seo';
 import { ConfigProvider } from 'antd';
 import viVN from 'antd/locale/vi_VN';
 import AppLocaleProvider from '@/@crema/context/AppLocaleProvider';
 import AppQueryProvider from '@/@crema/context/AppQueryProvider';
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+// import AppAuthGuard from '@/@crema/components/AppAuthGuard'; // DISABLED FOR UI DEVELOPMENT
+
+const inter = Inter({
+  variable: '--font-inter',
   subsets: ['latin'],
 });
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const jetbrainsMono = JetBrains_Mono({
+  variable: '--font-jetbrains-mono',
   subsets: ['latin'],
-});
-
-export const metadata = buildMetadata({
-  title: 'Pickle Ball Management System',
-  description: 'Hệ thống quản lý pickle ball',
 });
 
 export default function RootLayout({
@@ -31,13 +27,16 @@ export default function RootLayout({
     <html lang="vi" data-google-analytics-opt-out="" cz-shortcut-listen="true">
       <body
         cz-shortcut-listen="true"
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >
         <AppQueryProvider>
           <ConfigProvider locale={viVN}>
             <AppLocaleProvider>
               <AppContextProvider>
-                <AppAuthProvider>{children}</AppAuthProvider>
+                <AppAuthProvider>
+                  {children}
+                  {/* <AppAuthGuard>{children}</AppAuthGuard> DISABLED FOR UI DEVELOPMENT */}
+                </AppAuthProvider>
               </AppContextProvider>
             </AppLocaleProvider>
           </ConfigProvider>
