@@ -183,7 +183,6 @@ const CertificatesPageClient: React.FC = () => {
     {
       title: <IntlMessages id="certificate.table.applicant" />,
       key: 'applicant',
-      flex: 1,
       render: (_, application) => (
         <Space>
           <Avatar src={application.applicant.avatar} icon={<UserOutlined />} size="default" />

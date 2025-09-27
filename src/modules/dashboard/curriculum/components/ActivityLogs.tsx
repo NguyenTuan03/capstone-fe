@@ -276,7 +276,7 @@ const ActivityLogs: React.FC = () => {
                     {log.action} - {log.entityName}
                   </div>
                   <div style={{ fontSize: '11px', color: '#666', marginBottom: '2px' }}>
-                    <Tag size="small" color={getEntityTypeColor(log.entityType)}>
+                    <Tag color={getEntityTypeColor(log.entityType)}>
                       {getEntityTypeName(log.entityType)}
                     </Tag>
                     bởi {log.userName}

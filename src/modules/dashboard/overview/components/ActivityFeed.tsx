@@ -121,7 +121,6 @@ const ActivityFeed: React.FC = () => {
                               ? 'orange'
                               : 'blue'
                         }
-                        size="small"
                       >
                         {alert.priority}
                       </Tag>
@@ -203,7 +202,6 @@ const ActivityFeed: React.FC = () => {
                                 ? 'warning'
                                 : 'error'
                           }
-                          size="small"
                         >
                           {activity.status}
                         </Tag>

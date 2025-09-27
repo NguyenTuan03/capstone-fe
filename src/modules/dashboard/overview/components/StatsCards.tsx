@@ -110,9 +110,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
               prefix={<TeamOutlined style={{ color: '#52c41a' }} />}
               suffix={
                 <div style={{ fontSize: '12px', marginTop: '4px' }}>
-                  <Tag color="orange" size="small">
-                    {stats.coaches.pending} chờ duyệt
-                  </Tag>
+                  <Tag color="orange">{stats.coaches.pending} chờ duyệt</Tag>
                 </div>
               }
             />

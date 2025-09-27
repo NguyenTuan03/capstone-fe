@@ -33,7 +33,7 @@ export interface StatValue {
 // User Analytics
 export interface UserAnalytics {
   userGrowth: UserGrowthData;
-  userDistribution: UserDistributionData;
+  userDistribution: any; // UserDistributionData;
   deviceUsage: DeviceUsageData;
   userEngagement: UserEngagementData;
 }
@@ -117,7 +117,7 @@ export interface SessionActivityData {
   totalSessions: number;
   avgDuration: number;
   completionRate: number;
-  busyTimes: BusyTimeData[];
+  busyTimes: any[]; // BusyTimeData[];
 }
 
 export interface HeatmapData {

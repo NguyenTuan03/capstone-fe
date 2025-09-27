@@ -325,12 +325,4 @@ export interface DashboardPreferences {
 }
 
 // Export main types
-export type {
-  DashboardStats as default,
-  ActivityFeedItem,
-  SystemAlert,
-  QuickAction,
-  PendingApproval,
-  RecentReport,
-  ChartConfig,
-};
+export type { DashboardStats as default };

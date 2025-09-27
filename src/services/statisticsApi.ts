@@ -13,7 +13,7 @@ import statisticsData from '@/data/statistics.json';
 const simulateDelay = (ms: number = 100) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Mock data
-const allStatistics = statisticsData as StatisticsData;
+const allStatistics = statisticsData as any as StatisticsData;
 
 export class StatisticsApiService {
   /**
@@ -52,7 +52,7 @@ export class StatisticsApiService {
 
       // Add geographic data if requested
       if (params?.includeGeographic) {
-        filteredData.geographicData = await this.getGeographicData();
+        filteredData.geographicData = (await this.getGeographicData()) as any;
       }
 
       return {

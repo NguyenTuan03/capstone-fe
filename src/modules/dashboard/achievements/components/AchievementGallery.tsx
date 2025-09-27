@@ -352,7 +352,7 @@ const AchievementGallery: React.FC<AchievementGalleryProps> = ({
                           <Tag color={categoryBadge.color} style={{ fontSize: '10px' }}>
                             {categoryBadge.text}
                           </Tag>
-                          <Tag size="small" color="gold" style={{ fontSize: '10px' }}>
+                          <Tag color="gold" style={{ fontSize: '10px' }}>
                             {AchievementApiService.formatPoints(achievement.rewards.points)} pts
                           </Tag>
                         </div>

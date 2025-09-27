@@ -42,8 +42,8 @@ interface SessionModalsProps {
   refundForm: any;
   suspendForm: any;
   warnForm: any;
-  getStatusTag: (status: Session['status']) => JSX.Element;
-  getPaymentTag: (paymentStatus: Session['paymentStatus']) => JSX.Element;
+  getStatusTag: (status: Session['status']) => React.ReactElement;
+  getPaymentTag: (paymentStatus: Session['paymentStatus']) => React.ReactElement;
   formatCurrency: (amount: number) => string;
   formatDateTime: (dateTime: string) => string;
   formatDuration: (minutes: number) => string;
@@ -203,7 +203,6 @@ const SessionModals: React.FC<SessionModalsProps> = ({
                             message="Giải pháp"
                             description={report.resolution}
                             type="success"
-                            size="small"
                             style={{ marginTop: 8 }}
                           />
                         )}
@@ -217,11 +216,7 @@ const SessionModals: React.FC<SessionModalsProps> = ({
                             <Text strong>Bằng chứng:</Text>
                             {report.evidence.map((url, i) => (
                               <div key={i}>
-                                <Button
-                                  type="link"
-                                  size="small"
-                                  onClick={() => window.open(url, '_blank')}
-                                >
+                                <Button type="link" onClick={() => window.open(url, '_blank')}>
                                   Xem bằng chứng {i + 1}
                                 </Button>
                               </div>
@@ -295,7 +290,7 @@ const SessionModals: React.FC<SessionModalsProps> = ({
             <InputNumber
               style={{ width: '100%' }}
               formatter={(value) => `${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              parser={(value) => value!.replace(/\$\s?|(,*)/g, '')}
+              parser={(value) => parseFloat(value?.replace(/\$\s?|(,*)/g, '') || '0')}
               addonAfter="VND"
               min={0}
               max={selectedSession?.totalAmount || 0}

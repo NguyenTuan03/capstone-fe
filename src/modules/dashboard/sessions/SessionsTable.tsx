@@ -56,8 +56,8 @@ interface SessionsTableProps {
   recordingFilter: string;
   dateRange: any;
   pagination: any;
-  getStatusTag: (status: Session['status']) => JSX.Element;
-  getPaymentTag: (paymentStatus: Session['paymentStatus']) => JSX.Element;
+  getStatusTag: (status: Session['status']) => React.ReactElement;
+  getPaymentTag: (paymentStatus: Session['paymentStatus']) => React.ReactElement;
   formatCurrency: (amount: number) => string;
   formatDateTime: (dateTime: string) => string;
   formatDuration: (minutes: number) => string;
@@ -165,7 +165,7 @@ const SessionsTable: React.FC<SessionsTableProps> = ({
             {formatDuration(session.duration)}
           </div>
           <div style={{ fontSize: '11px', color: '#666' }}>
-            <Tag size="small" color={session.type === 'online' ? 'blue' : 'green'}>
+            <Tag color={session.type === 'online' ? 'blue' : 'green'}>
               <IntlMessages id={`session.type.${session.type}`} />
             </Tag>
           </div>

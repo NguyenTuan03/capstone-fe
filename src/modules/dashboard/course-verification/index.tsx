@@ -199,7 +199,7 @@ const CourseVerificationPageClient: React.FC = () => {
                 : course.description}
             </div>
             <Space size={4}>
-              <Tag size="small">{course.category}</Tag>
+              <Tag>{course.category}</Tag>
               {getLevelTag(course.level)}
             </Space>
           </div>

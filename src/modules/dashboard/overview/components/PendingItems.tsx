@@ -120,7 +120,6 @@ const PendingItems: React.FC = () => {
                               ? 'orange'
                               : 'blue'
                         }
-                        size="small"
                       >
                         {approval.priority}
                       </Tag>
@@ -131,11 +130,7 @@ const PendingItems: React.FC = () => {
                       <Text style={{ fontSize: '12px' }}>{approval.description}</Text>
                       <br />
                       <Space size="small" style={{ marginTop: '4px' }}>
-                        <Avatar
-                          src={approval.submittedBy.avatar}
-                          icon={<UserOutlined />}
-                          size="small"
-                        />
+                        <Avatar src={approval.submittedBy.avatar} icon={<UserOutlined />} />
                         <Text style={{ fontSize: '11px' }}>{approval.submittedBy.name}</Text>
                         <Text type="secondary" style={{ fontSize: '11px' }}>
                           • {DashboardApiService.getTimeAgo(approval.submittedAt)}
@@ -199,7 +194,6 @@ const PendingItems: React.FC = () => {
                                 ? 'blue'
                                 : 'default'
                         }
-                        size="small"
                       >
                         {report.severity}
                       </Tag>
@@ -211,7 +205,6 @@ const PendingItems: React.FC = () => {
                               ? 'orange'
                               : 'green'
                         }
-                        size="small"
                       >
                         {report.status}
                       </Tag>
@@ -222,11 +215,7 @@ const PendingItems: React.FC = () => {
                       <Text style={{ fontSize: '12px' }}>{report.description}</Text>
                       <br />
                       <Space size="small" style={{ marginTop: '4px' }}>
-                        <Avatar
-                          src={report.reportedBy.avatar}
-                          icon={<UserOutlined />}
-                          size="small"
-                        />
+                        <Avatar src={report.reportedBy.avatar} icon={<UserOutlined />} />
                         <Text style={{ fontSize: '11px' }}>{report.reportedBy.name}</Text>
                         <Text type="secondary" style={{ fontSize: '11px' }}>
                           • {DashboardApiService.getTimeAgo(report.reportedAt)}

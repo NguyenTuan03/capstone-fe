@@ -301,7 +301,6 @@ export default function UsersPageClient() {
     {
       title: <IntlMessages id="user.table.info" />,
       key: 'userInfo',
-      flex: 1,
       render: (_, record) => (
         <div className="flex items-center space-x-3">
           <Avatar src={record.avatar} className="bg-blue-500" size="default">

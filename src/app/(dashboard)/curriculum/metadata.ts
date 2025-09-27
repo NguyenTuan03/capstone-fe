@@ -3,7 +3,7 @@ import { buildMetadata } from '@/@crema/helper/seo';
 
 export async function generateMetadata(): Promise<Metadata> {
   return buildMetadata({
-    titleKey: 'curriculum.management.title',
+    title: 'Quản lý chương trình giảng dạy',
     descriptionKey: 'curriculum.management.subtitle',
     keywords: [
       'quản lý chương trình',

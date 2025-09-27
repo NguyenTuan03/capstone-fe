@@ -16,7 +16,6 @@ import {
   Modal,
   Form,
   InputNumber,
-  TextArea,
   Upload,
   message,
   Row,
@@ -67,7 +66,7 @@ const { Option } = Select;
 const { Text, Title } = Typography;
 const { TabPane } = Tabs;
 
-const SessionsPageClient: React.FC = () => {
+const SessionsPageClient = () => {
   // States
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(false);
