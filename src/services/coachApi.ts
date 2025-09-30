@@ -153,7 +153,7 @@ export class CoachApiService {
           evidence: request.evidence,
         },
       };
-    } catch (error) {
+    } catch {
       return {
         success: false,
         message: 'Không thể đình chỉ huấn luyện viên',
@@ -183,7 +183,7 @@ export class CoachApiService {
           notes,
         },
       };
-    } catch (error) {
+    } catch {
       return {
         success: false,
         message: 'Không thể khôi phục huấn luyện viên',
@@ -198,6 +198,82 @@ export class CoachApiService {
     await simulateDelay(200);
 
     return coachData.suspendReasons;
+  }
+
+  /**
+   * Approve coach application
+   */
+  static async approveApplication(
+    applicationId: string,
+  ): Promise<{ success: boolean; message: string }> {
+    await simulateDelay(1000);
+
+    try {
+      // Simulate API call to approve application
+      console.log('Approving application:', applicationId);
+      return {
+        success: true,
+        message: 'Đơn xin đã được phê duyệt thành công',
+      };
+    } catch {
+      return {
+        success: false,
+        message: 'Không thể phê duyệt đơn xin',
+      };
+    }
+  }
+
+  /**
+   * Reject coach application
+   */
+  static async rejectApplication(
+    applicationId: string,
+    data: { reason: string; notes?: string; adminId: string },
+  ): Promise<{ success: boolean; message: string }> {
+    await simulateDelay(1000);
+
+    try {
+      // Simulate API call to reject application
+      console.log('Rejecting application:', applicationId, 'with reason:', data.reason);
+      return {
+        success: true,
+        message: 'Đơn xin đã được từ chối',
+      };
+    } catch {
+      return {
+        success: false,
+        message: 'Không thể từ chối đơn xin',
+      };
+    }
+  }
+
+  /**
+   * Request supplement information
+   */
+  static async requestSupplement(
+    applicationId: string,
+    data: { requirements: string; notes?: string; adminId: string },
+  ): Promise<{ success: boolean; message: string }> {
+    await simulateDelay(1000);
+
+    try {
+      // Simulate API call to request supplement
+      console.log(
+        'Requesting supplement for application:',
+        applicationId,
+        'with requirements:',
+        data.requirements,
+      );
+      return {
+        success: true,
+        message: 'Yêu cầu bổ sung đã được gửi',
+      };
+    } catch {
+      return {
+        success: false,
+        message: 'Không thể gửi yêu cầu bổ sung',
+      };
+    }
   }
 
   /**
@@ -228,7 +304,7 @@ export class CoachApiService {
           notes,
         },
       };
-    } catch (error) {
+    } catch {
       return {
         success: false,
         message: 'Không thể cập nhật trạng thái chứng chỉ',

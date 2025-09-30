@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Card,
   Table,
@@ -18,7 +18,6 @@ import {
   message,
   Descriptions,
   Dropdown,
-  Tooltip,
   Badge,
 } from 'antd';
 import {
@@ -34,7 +33,6 @@ import {
   TeamOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  ExclamationCircleOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import type { MenuProps } from 'antd';
@@ -68,7 +66,7 @@ export default function UsersPageClient() {
   const [stats, setStats] = useState<UserListStats | null>(null);
 
   // Load users data
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
       const params: GetUsersParams = {
@@ -87,26 +85,26 @@ export default function UsersPageClient() {
       // Load stats
       const statsData = await UserApiService.getUserStats();
       setStats(statsData);
-    } catch (error) {
+    } catch {
       message.error('Không thể tải danh sách người dùng');
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, pageSize, searchText, roleFilter, statusFilter, skillFilter]);
 
   // Load block reasons
   const loadBlockReasons = async () => {
     try {
       const reasons = await UserApiService.getBlockReasons();
       setBlockReasons(reasons);
-    } catch (error) {
-      console.error('Failed to load block reasons:', error);
+    } catch {
+      console.error('Failed to load block reasons');
     }
   };
 
   useEffect(() => {
     loadUsers();
-  }, [currentPage, pageSize, searchText, roleFilter, statusFilter, skillFilter]);
+  }, [loadUsers]);
 
   useEffect(() => {
     loadBlockReasons();
@@ -164,7 +162,7 @@ export default function UsersPageClient() {
         setSelectedUser(user);
         setIsDetailModalVisible(true);
       }
-    } catch (error) {
+    } catch {
       message.error('Không thể tải thông tin người dùng');
     }
   };
@@ -209,7 +207,7 @@ export default function UsersPageClient() {
           message.success('Đã khóa tài khoản thành công');
           setIsBlockModalVisible(false);
           loadUsers();
-        } catch (error) {
+        } catch {
           message.error('Không thể khóa tài khoản');
         }
       },
@@ -221,7 +219,7 @@ export default function UsersPageClient() {
       await UserApiService.unblockUser(userId, 'current_admin');
       message.success('Đã mở khóa tài khoản thành công');
       loadUsers();
-    } catch (error) {
+    } catch {
       message.error('Không thể mở khóa tài khoản');
     }
   };
@@ -245,7 +243,7 @@ export default function UsersPageClient() {
           await UserApiService.deleteUser(userId);
           message.success('Đã xóa người dùng thành công');
           loadUsers();
-        } catch (error) {
+        } catch {
           message.error('Không thể xóa người dùng');
         }
       },
@@ -301,15 +299,18 @@ export default function UsersPageClient() {
     {
       title: <IntlMessages id="user.table.info" />,
       key: 'userInfo',
+      width: 280,
       render: (_, record) => (
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2">
           <Avatar src={record.avatar} className="bg-blue-500" size="default">
             {record.name.charAt(0).toUpperCase()}
           </Avatar>
-          <div className="flex-1">
-            <div className="flex items-center space-x-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center space-x-1">
               <Text className="font-medium">{record.name}</Text>
-              {record.role === 'admin' && <CheckCircleOutlined className="text-purple-500" />}
+              {record.role === 'admin' && (
+                <CheckCircleOutlined className="text-purple-500 text-xs" />
+              )}
             </div>
             <Text className="text-sm text-gray-500">{record.email}</Text>
           </div>
@@ -319,7 +320,7 @@ export default function UsersPageClient() {
     {
       title: <IntlMessages id="user.table.role" />,
       key: 'role',
-      width: 100,
+      width: 120,
       render: (_, record) => (
         <Tag color={getRoleColor(record.role)}>
           <IntlMessages id={`user.role.${record.role}`} />
@@ -329,7 +330,7 @@ export default function UsersPageClient() {
     {
       title: <IntlMessages id="user.table.status" />,
       key: 'status',
-      width: 120,
+      width: 140,
       render: (_, record) => (
         <Badge
           status={getStatusColor(record.status) as any}
@@ -340,7 +341,7 @@ export default function UsersPageClient() {
     {
       title: 'Tham gia',
       key: 'joinDate',
-      width: 100,
+      width: 120,
       render: (_, record) => <Text className="text-sm">{formatDate(record.joinDate)}</Text>,
     },
     {
@@ -353,7 +354,8 @@ export default function UsersPageClient() {
     {
       title: <IntlMessages id="user.table.actions" />,
       key: 'actions',
-      width: 80,
+      width: 100,
+      align: 'center',
       render: (_, record) => (
         <Dropdown
           menu={{ items: getActionMenu(record) }}
@@ -562,6 +564,7 @@ export default function UsersPageClient() {
           dataSource={users}
           rowKey="id"
           loading={loading}
+          scroll={{ x: 900 }}
           pagination={{
             current: currentPage,
             pageSize: pageSize,
@@ -577,7 +580,6 @@ export default function UsersPageClient() {
               }
             },
           }}
-          scroll={{ x: 1200 }}
         />
       </Card>
 

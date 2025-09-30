@@ -1,14 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Card,
   Table,
   Button,
   Input,
   Select,
-  DatePicker,
-  Space,
   Tag,
   Avatar,
   Dropdown,
@@ -18,25 +16,26 @@ import {
   Statistic,
   Badge,
   Typography,
-  Progress,
+  Modal,
+  Form,
 } from 'antd';
 
 import {
   SearchOutlined,
   FilterOutlined,
-  ExportOutlined,
   EyeOutlined,
   CheckOutlined,
   CloseOutlined,
-  ExclamationCircleOutlined,
-  FileTextOutlined,
+  QuestionCircleOutlined,
   UserOutlined,
-  CalendarOutlined,
   MoreOutlined,
+  FileTextOutlined,
+  CalendarOutlined,
+  ExclamationCircleOutlined,
 } from '@ant-design/icons';
 
 import { ColumnsType } from 'antd/es/table';
-import dayjs, { Dayjs } from 'dayjs';
+import { Dayjs } from 'dayjs';
 import IntlMessages from '@/@crema/helper/IntlMessages';
 import { CertificateVerificationApiService } from '@/services/certificateVerificationApi';
 import {
@@ -46,7 +45,6 @@ import {
   FilterOptions,
 } from '@/types/certificate-verification';
 
-const { RangePicker } = DatePicker;
 const { Option } = Select;
 const { Text, Title } = Typography;
 
@@ -65,6 +63,14 @@ const CertificatesPageClient: React.FC = () => {
   const [experienceFilter, setExperienceFilter] = useState<string>('all');
   const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
 
+  // Modals and forms
+  const [selectedApplication, setSelectedApplication] = useState<CoachApplication | null>(null);
+  const [detailModalVisible, setDetailModalVisible] = useState(false);
+  const [rejectModalVisible, setRejectModalVisible] = useState(false);
+  const [supplementModalVisible, setSupplementModalVisible] = useState(false);
+  const [rejectForm] = Form.useForm();
+  const [supplementForm] = Form.useForm();
+
   // Pagination
   const [pagination, setPagination] = useState({
     current: 1,
@@ -73,7 +79,7 @@ const CertificatesPageClient: React.FC = () => {
   });
 
   // Load data
-  const loadApplications = async () => {
+  const loadApplications = useCallback(async () => {
     setLoading(true);
     try {
       const params: GetApplicationsParams = {
@@ -96,26 +102,34 @@ const CertificatesPageClient: React.FC = () => {
         ...prev,
         total: response.total,
       }));
-    } catch (error) {
+    } catch {
       message.error('Không thể tải danh sách đơn đăng ký');
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    pagination.current,
+    pagination.pageSize,
+    searchText,
+    statusFilter,
+    priorityFilter,
+    specialtyFilter,
+    experienceFilter,
+  ]);
 
   // Load initial data
   useEffect(() => {
     loadApplications();
     loadFilterData();
-  }, [pagination.current, pagination.pageSize]);
+  }, [loadApplications]);
 
   // Load filter data
   const loadFilterData = async () => {
     try {
       const filterOptionsData = await CertificateVerificationApiService.getFilterOptions();
       setFilterOptions(filterOptionsData);
-    } catch (error) {
-      console.error('Failed to load filter data:', error);
+    } catch {
+      console.error('Failed to load filter data');
     }
   };
 
@@ -137,28 +151,79 @@ const CertificatesPageClient: React.FC = () => {
     );
   };
 
-  const getPriorityTag = (priority: CoachApplication['priority']) => {
-    const priorityConfig = {
-      low: { color: 'default', text: 'certificate.priority.low' },
-      medium: { color: 'blue', text: 'certificate.priority.medium' },
-      high: { color: 'orange', text: 'certificate.priority.high' },
-      urgent: { color: 'red', text: 'certificate.priority.urgent' },
-    };
-
-    const config = priorityConfig[priority];
-    return (
-      <Tag color={config.color}>
-        <IntlMessages id={config.text} />
-      </Tag>
-    );
-  };
-
-  const formatCurrency = (amount: number) => {
-    return CertificateVerificationApiService.formatCurrency(amount);
-  };
-
   const formatDate = (dateString: string) => {
     return CertificateVerificationApiService.formatDate(dateString);
+  };
+
+  // Action handlers
+  const handleViewDetail = (application: CoachApplication) => {
+    setSelectedApplication(application);
+    setDetailModalVisible(true);
+  };
+
+  const handleApprove = async (applicationId: string) => {
+    Modal.confirm({
+      title: 'Xác nhận phê duyệt',
+      content: 'Bạn có chắc chắn muốn phê duyệt đơn xin này?',
+      okText: 'Phê duyệt',
+      okType: 'primary',
+      cancelText: 'Hủy',
+      onOk: async () => {
+        try {
+          await CoachApiService.approveApplication(applicationId);
+          message.success('Đã phê duyệt đơn xin thành công');
+          loadApplications();
+        } catch {
+          message.error('Không thể phê duyệt đơn xin');
+        }
+      },
+    });
+  };
+
+  const handleReject = (application: CoachApplication) => {
+    setSelectedApplication(application);
+    setRejectModalVisible(true);
+    rejectForm.resetFields();
+  };
+
+  const handleSupplement = (application: CoachApplication) => {
+    setSelectedApplication(application);
+    setSupplementModalVisible(true);
+    supplementForm.resetFields();
+  };
+
+  const submitReject = async (values: { reason: string; notes?: string }) => {
+    if (!selectedApplication) return;
+
+    try {
+      await CoachApiService.rejectApplication(selectedApplication.id, {
+        reason: values.reason,
+        notes: values.notes,
+        adminId: 'current_admin',
+      });
+      message.success('Đã từ chối đơn xin thành công');
+      setRejectModalVisible(false);
+      loadApplications();
+    } catch {
+      message.error('Không thể từ chối đơn xin');
+    }
+  };
+
+  const submitSupplement = async (values: { requirements: string; notes?: string }) => {
+    if (!selectedApplication) return;
+
+    try {
+      await CoachApiService.requestSupplement(selectedApplication.id, {
+        requirements: values.requirements,
+        notes: values.notes,
+        adminId: 'current_admin',
+      });
+      message.success('Đã yêu cầu bổ sung thành công');
+      setSupplementModalVisible(false);
+      loadApplications();
+    } catch {
+      message.error('Không thể yêu cầu bổ sung');
+    }
   };
 
   // Handlers
@@ -183,20 +248,21 @@ const CertificatesPageClient: React.FC = () => {
     {
       title: <IntlMessages id="certificate.table.applicant" />,
       key: 'applicant',
+      width: 280,
       render: (_, application) => (
-        <Space>
+        <div className="flex items-center space-x-2">
           <Avatar src={application.applicant.avatar} icon={<UserOutlined />} size="default" />
-          <div>
-            <div style={{ fontWeight: 500, fontSize: '14px' }}>{application.applicant.name}</div>
-            <div style={{ fontSize: '12px', color: '#666' }}>{application.applicant.email}</div>
+          <div className="flex-1 min-w-0">
+            <div className="font-medium">{application.applicant.name}</div>
+            <div className="text-sm text-gray-500">{application.applicant.email}</div>
           </div>
-        </Space>
+        </div>
       ),
     },
     {
       title: 'Kinh nghiệm',
       key: 'experience',
-      width: 80,
+      width: 100,
       align: 'center',
       render: (_, application) => (
         <Text className="font-medium">{application.professionalInfo.yearsOfExperience} năm</Text>
@@ -207,70 +273,75 @@ const CertificatesPageClient: React.FC = () => {
       key: 'specialties',
       width: 120,
       render: (_, application) => (
-        <div>
-          <Tag>{application.professionalInfo.specialties[0]}</Tag>
-          {application.professionalInfo.specialties.length > 1 && (
-            <Tag color="blue">+{application.professionalInfo.specialties.length - 1}</Tag>
-          )}
-        </div>
+        <Tag color="blue">{application.professionalInfo.specialties[0]}</Tag>
+      ),
+    },
+    {
+      title: 'Chứng chỉ',
+      key: 'certificates',
+      width: 80,
+      align: 'center',
+      render: (_, application) => (
+        <Text className="font-medium">{application.certificates?.length || 0}</Text>
       ),
     },
     {
       title: <IntlMessages id="certificate.table.status" />,
       dataIndex: 'status',
       key: 'status',
-      width: 120,
+      width: 140,
       render: (status: CoachApplication['status']) => getStatusTag(status),
     },
     {
       title: 'Ngày nộp',
       dataIndex: 'submittedAt',
       key: 'submittedAt',
-      width: 100,
+      width: 120,
       render: (date: string) => <Text className="text-sm">{formatDate(date)}</Text>,
     },
     {
       title: <IntlMessages id="certificate.table.actions" />,
       key: 'actions',
-      width: 120,
+      width: 100,
+      align: 'center',
       render: (_, application) => {
         const menuItems = [
           {
             key: 'view',
-            label: <IntlMessages id="certificate.actions.view" />,
+            label: 'Xem chi tiết',
             icon: <EyeOutlined />,
-            onClick: () => console.log('View', application.id),
+            onClick: () => handleViewDetail(application),
           },
           {
             type: 'divider' as const,
           },
           {
             key: 'approve',
-            label: <IntlMessages id="certificate.actions.approve" />,
+            label: 'Phê duyệt',
             icon: <CheckOutlined />,
-            onClick: () => console.log('Approve', application.id),
+            onClick: () => handleApprove(application.id),
             disabled: application.status === 'approved',
           },
           {
             key: 'reject',
-            label: <IntlMessages id="certificate.actions.reject" />,
+            label: 'Từ chối',
             icon: <CloseOutlined />,
-            onClick: () => console.log('Reject', application.id),
+            onClick: () => handleReject(application),
             disabled: application.status === 'rejected',
             danger: true,
           },
           {
-            key: 'request-info',
-            label: <IntlMessages id="certificate.actions.requestInfo" />,
-            icon: <ExclamationCircleOutlined />,
-            onClick: () => console.log('Request info', application.id),
+            key: 'supplement',
+            label: 'Yêu cầu bổ sung',
+            icon: <QuestionCircleOutlined />,
+            onClick: () => handleSupplement(application),
             disabled: application.status === 'approved' || application.status === 'rejected',
           },
         ];
 
         return (
           <Dropdown menu={{ items: menuItems }} trigger={['click']} placement="bottomRight">
-            <Button type="text" icon={<MoreOutlined />} size="small" />
+            <Button type="text" icon={<MoreOutlined />} />
           </Dropdown>
         );
       },
@@ -425,25 +496,9 @@ const CertificatesPageClient: React.FC = () => {
           </Col>
         </Row>
         <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
-          <Col xs={24} sm={12} md={6}>
-            <RangePicker
-              value={dateRange}
-              onChange={(dates) => setDateRange(dates as [Dayjs, Dayjs] | null)}
-              style={{ width: '100%' }}
-              placeholder={['Từ ngày', 'Đến ngày']}
-            />
-          </Col>
           <Col xs={24} sm={12} md={4}>
             <Button icon={<FilterOutlined />} onClick={handleClearFilters}>
               <IntlMessages id="certificate.filter.clear" />
-            </Button>
-          </Col>
-          <Col xs={24} sm={12} md={4}>
-            <Button
-              icon={<ExportOutlined />}
-              onClick={() => message.info('Tính năng export đang phát triển')}
-            >
-              <IntlMessages id="certificate.filter.export" />
             </Button>
           </Col>
         </Row>
@@ -456,6 +511,7 @@ const CertificatesPageClient: React.FC = () => {
           dataSource={applications}
           rowKey="id"
           loading={loading}
+          scroll={{ x: 980 }}
           pagination={{
             current: pagination.current,
             pageSize: pagination.pageSize,
@@ -471,10 +527,145 @@ const CertificatesPageClient: React.FC = () => {
               }));
             },
           }}
-          scroll={{ x: 1200 }}
           size="middle"
         />
       </Card>
+
+      {/* Detail Modal */}
+      <Modal
+        title="Chi tiết đơn xin"
+        open={detailModalVisible}
+        onCancel={() => setDetailModalVisible(false)}
+        footer={[
+          <Button key="close" onClick={() => setDetailModalVisible(false)}>
+            Đóng
+          </Button>,
+        ]}
+        width={800}
+      >
+        {selectedApplication && (
+          <div>
+            <Row gutter={[16, 16]}>
+              <Col span={24}>
+                <Title level={4}>Thông tin ứng viên</Title>
+                <div className="flex items-center space-x-3 mb-4">
+                  <Avatar
+                    src={selectedApplication.applicant.avatar}
+                    icon={<UserOutlined />}
+                    size={64}
+                  />
+                  <div>
+                    <Text className="text-lg font-semibold">
+                      {selectedApplication.applicant.name}
+                    </Text>
+                    <br />
+                    <Text type="secondary">{selectedApplication.applicant.email}</Text>
+                    <br />
+                    <Text type="secondary">{selectedApplication.applicant.phone}</Text>
+                  </div>
+                </div>
+              </Col>
+
+              <Col span={12}>
+                <Text strong>Kinh nghiệm:</Text>
+                <br />
+                <Text>{selectedApplication.professionalInfo.yearsOfExperience} năm</Text>
+              </Col>
+
+              <Col span={12}>
+                <Text strong>Chuyên môn:</Text>
+                <br />
+                <div>
+                  {selectedApplication.professionalInfo.specialties.map((specialty, index) => (
+                    <Tag key={index} color="blue" style={{ marginBottom: 4 }}>
+                      {specialty}
+                    </Tag>
+                  ))}
+                </div>
+              </Col>
+
+              <Col span={24}>
+                <Text strong>Mô tả kinh nghiệm:</Text>
+                <br />
+                <Text>{selectedApplication.professionalInfo.description}</Text>
+              </Col>
+
+              <Col span={12}>
+                <Text strong>Số chứng chỉ:</Text>
+                <br />
+                <Text>{selectedApplication.certificates?.length || 0}</Text>
+              </Col>
+
+              <Col span={12}>
+                <Text strong>Trạng thái:</Text>
+                <br />
+                {getStatusTag(selectedApplication.status)}
+              </Col>
+
+              <Col span={12}>
+                <Text strong>Ngày nộp:</Text>
+                <br />
+                <Text>{formatDate(selectedApplication.submittedAt)}</Text>
+              </Col>
+
+              <Col span={12}>
+                <Text strong>Cập nhật lần cuối:</Text>
+                <br />
+                <Text>{formatDate(selectedApplication.updatedAt)}</Text>
+              </Col>
+            </Row>
+          </div>
+        )}
+      </Modal>
+
+      {/* Reject Modal */}
+      <Modal
+        title="Từ chối đơn xin"
+        open={rejectModalVisible}
+        onCancel={() => setRejectModalVisible(false)}
+        onOk={() => rejectForm.submit()}
+        okText="Từ chối"
+        okType="danger"
+        cancelText="Hủy"
+      >
+        <Form form={rejectForm} layout="vertical" onFinish={submitReject}>
+          <Form.Item
+            name="reason"
+            label="Lý do từ chối"
+            rules={[{ required: true, message: 'Vui lòng nhập lý do từ chối' }]}
+          >
+            <Input.TextArea rows={4} placeholder="Nhập lý do từ chối đơn xin này..." />
+          </Form.Item>
+
+          <Form.Item name="notes" label="Ghi chú thêm (tùy chọn)">
+            <Input.TextArea rows={3} placeholder="Thêm ghi chú nếu cần..." />
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* Supplement Request Modal */}
+      <Modal
+        title="Yêu cầu bổ sung thông tin"
+        open={supplementModalVisible}
+        onCancel={() => setSupplementModalVisible(false)}
+        onOk={() => supplementForm.submit()}
+        okText="Gửi yêu cầu"
+        cancelText="Hủy"
+      >
+        <Form form={supplementForm} layout="vertical" onFinish={submitSupplement}>
+          <Form.Item
+            name="requirements"
+            label="Yêu cầu bổ sung"
+            rules={[{ required: true, message: 'Vui lòng nhập yêu cầu bổ sung' }]}
+          >
+            <Input.TextArea rows={4} placeholder="Mô tả những thông tin cần bổ sung..." />
+          </Form.Item>
+
+          <Form.Item name="notes" label="Ghi chú thêm (tùy chọn)">
+            <Input.TextArea rows={3} placeholder="Thêm ghi chú hướng dẫn nếu cần..." />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };

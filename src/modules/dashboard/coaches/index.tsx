@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Card,
   Table,
@@ -21,7 +21,6 @@ import {
   Badge,
   Rate,
   List,
-  Divider,
 } from 'antd';
 import {
   UserOutlined,
@@ -35,10 +34,7 @@ import {
   TrophyOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  ExclamationCircleOutlined,
   StopOutlined,
-  PlayCircleOutlined,
-  FileTextOutlined,
   CalendarOutlined,
   LinkOutlined,
 } from '@ant-design/icons';
@@ -71,7 +67,7 @@ export default function CoachesPageClient() {
   const [stats, setStats] = useState<CoachStats | null>(null);
 
   // Load coaches data
-  const loadCoaches = async () => {
+  const loadCoaches = useCallback(async () => {
     setLoading(true);
     try {
       const params: GetCoachesParams = {
@@ -90,16 +86,16 @@ export default function CoachesPageClient() {
       // Load stats
       const statsData = await CoachApiService.getCoachStats();
       setStats(statsData);
-    } catch (error) {
+    } catch {
       message.error('Không thể tải danh sách huấn luyện viên');
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, pageSize, searchText, statusFilter, specialtyFilter, ratingFilter]);
 
   useEffect(() => {
     loadCoaches();
-  }, [currentPage, pageSize, searchText, statusFilter, specialtyFilter, ratingFilter]);
+  }, [loadCoaches]);
 
   // Helper functions
   const getStatusColor = (status: string) => {
@@ -157,7 +153,7 @@ export default function CoachesPageClient() {
         setSelectedCoach(coach);
         setIsDetailModalVisible(true);
       }
-    } catch (error) {
+    } catch {
       message.error('Không thể tải thông tin huấn luyện viên');
     }
   };
@@ -169,7 +165,7 @@ export default function CoachesPageClient() {
         setSelectedCoach(coach);
         setIsCertificateModalVisible(true);
       }
-    } catch (error) {
+    } catch {
       message.error('Không thể tải thông tin chứng chỉ');
     }
   };
@@ -199,7 +195,7 @@ export default function CoachesPageClient() {
           setSelectedCoach(updatedCoach);
         }
       }
-    } catch (error) {
+    } catch {
       message.error('Không thể cập nhật trạng thái chứng chỉ');
     }
   };
@@ -225,17 +221,18 @@ export default function CoachesPageClient() {
     {
       title: <IntlMessages id="coach.table.info" />,
       key: 'coachInfo',
+      width: 280,
       render: (_, record) => (
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2">
           <Avatar src={record.avatar} className="bg-blue-500" size="default">
             {record.name.charAt(0).toUpperCase()}
           </Avatar>
-          <div className="flex-1">
-            <div className="flex items-center space-x-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center space-x-1">
               <Text className="font-medium">{record.name}</Text>
               {record.rating >= 4.5 && (
                 <Tooltip title="Huấn luyện viên xuất sắc">
-                  <TrophyOutlined className="text-yellow-500" />
+                  <TrophyOutlined className="text-yellow-500 text-xs" />
                 </Tooltip>
               )}
             </div>
@@ -247,7 +244,7 @@ export default function CoachesPageClient() {
     {
       title: 'Chuyên môn',
       key: 'specialties',
-      width: 120,
+      width: 160,
       render: (_, record) => (
         <div>
           <Tag color="blue">{record.specialties[0]}</Tag>
@@ -260,7 +257,7 @@ export default function CoachesPageClient() {
     {
       title: 'Đánh giá',
       key: 'rating',
-      width: 100,
+      width: 120,
       align: 'center',
       render: (_, record) => (
         <div className="text-center">
@@ -272,7 +269,7 @@ export default function CoachesPageClient() {
     {
       title: 'Trạng thái',
       key: 'status',
-      width: 120,
+      width: 140,
       render: (_, record) => (
         <Badge
           status={getStatusColor(record.status) as any}
@@ -290,7 +287,8 @@ export default function CoachesPageClient() {
     {
       title: <IntlMessages id="coach.table.actions" />,
       key: 'actions',
-      width: 80,
+      width: 100,
+      align: 'center',
       render: (_, record) => (
         <Dropdown
           menu={{ items: getActionMenu(record) }}
@@ -494,6 +492,7 @@ export default function CoachesPageClient() {
           dataSource={coaches}
           rowKey="id"
           loading={loading}
+          scroll={{ x: 1000 }}
           pagination={{
             current: currentPage,
             pageSize: pageSize,
@@ -509,7 +508,6 @@ export default function CoachesPageClient() {
               }
             },
           }}
-          scroll={{ x: 1200 }}
         />
       </Card>
 
