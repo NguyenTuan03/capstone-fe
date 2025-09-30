@@ -13,9 +13,9 @@ import {
   DatePicker,
   message,
   Spin,
+  Badge,
   Switch,
   Tooltip,
-  Badge,
 } from 'antd';
 
 import {
@@ -28,8 +28,6 @@ import {
   ReloadOutlined,
   SettingOutlined,
   FullscreenOutlined,
-  EyeOutlined,
-  EyeInvisibleOutlined,
   ThunderboltOutlined,
 } from '@ant-design/icons';
 
@@ -37,10 +35,9 @@ import IntlMessages from '@/@crema/helper/IntlMessages';
 import StatisticsApiService from '@/services/statisticsApi';
 import { StatisticsData, GetStatisticsParams } from '@/types/statistics';
 
-// Import 3D Components
-import Canvas3D from './components/Canvas3D';
-import UserGrowthChart3D from './components/UserGrowthChart3D';
-import UserDistributionChart3D from './components/UserDistributionChart3D';
+// Import Chart Components
+import UserGrowthChart from './components/UserGrowthChart';
+import UserDistributionChart from './components/UserDistributionChart';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
@@ -54,10 +51,7 @@ const StatisticsPage: React.FC = () => {
   const [lastUpdated, setLastUpdated] = useState<string>('');
 
   // 3D Settings
-  const [show3D, setShow3D] = useState(true);
-  const [showGrid, setShowGrid] = useState(true);
-  const [showStats, setShowStats] = useState(false);
-  const [animationsEnabled, setAnimationsEnabled] = useState(true);
+  // Chart display states (simplified from 3D version)
 
   // Filters
   const [filters, setFilters] = useState<GetStatisticsParams>({
@@ -177,25 +171,6 @@ const StatisticsPage: React.FC = () => {
           </Col>
           <Col>
             <Space>
-              <Tooltip title="Bật/tắt 3D">
-                <Switch
-                  checkedChildren={<EyeOutlined />}
-                  unCheckedChildren={<EyeInvisibleOutlined />}
-                  checked={show3D}
-                  onChange={setShow3D}
-                />
-              </Tooltip>
-              <Tooltip title="Hiện lưới 3D">
-                <Switch size="small" checked={showGrid} onChange={setShowGrid} disabled={!show3D} />
-              </Tooltip>
-              <Tooltip title="Performance stats">
-                <Switch
-                  size="small"
-                  checked={showStats}
-                  onChange={setShowStats}
-                  disabled={!show3D}
-                />
-              </Tooltip>
               <Button icon={<ReloadOutlined />} onClick={handleRefresh} loading={refreshing}>
                 Làm mới
               </Button>
@@ -369,63 +344,24 @@ const StatisticsPage: React.FC = () => {
         </Row>
       </Card>
 
-      {/* 3D Charts Section */}
-      {show3D && (
-        <Row gutter={[24, 24]} style={{ marginBottom: 24 }}>
-          {/* User Growth 3D Bar Chart */}
-          <Col xs={24} lg={14}>
-            <Canvas3D
-              title="📈 Tăng trưởng người dùng 3D"
-              description="Biểu đồ cột 3D hiển thị tăng trưởng theo tháng - Hover để xem chi tiết"
-              height={500}
-              showGrid={showGrid}
-              showStats={showStats}
-              config={{
-                camera: { position: [10, 8, 10], fov: 60 } as any,
-                animations: { enabled: animationsEnabled, duration: 1000 } as any,
-                interactions: { hover: true, rotate: true, zoom: true } as any,
-              }}
-            >
-              <UserGrowthChart3D
-                data={statistics.userAnalytics.userGrowth.monthly}
-                animated={animationsEnabled}
-                interactive={true}
-                colors={{
-                  learners: '#1890ff',
-                  coaches: '#52c41a',
-                  admins: '#faad14',
-                }}
-              />
-            </Canvas3D>
-          </Col>
+      {/* Charts Section */}
+      <Row gutter={[24, 24]} style={{ marginBottom: 24 }}>
+        {/* User Growth Chart */}
+        <Col xs={24} lg={14}>
+          <UserGrowthChart
+            data={statistics.userAnalytics.userGrowth.monthly}
+            title="📈 Tăng trưởng người dùng theo tháng"
+          />
+        </Col>
 
-          {/* User Distribution 3D Donut */}
-          <Col xs={24} lg={10}>
-            <Canvas3D
-              title="🍩 Phân bố thiết bị 3D"
-              description="Biểu đồ donut 3D hiển thị phân bố người dùng theo thiết bị"
-              height={500}
-              showGrid={showGrid}
-              showStats={showStats}
-              config={{
-                camera: { position: [0, 8, 12], fov: 50 } as any,
-                animations: { enabled: animationsEnabled, duration: 1500 } as any,
-                interactions: { hover: true, rotate: true, zoom: true } as any,
-              }}
-            >
-              <UserDistributionChart3D
-                data={statistics.userAnalytics.deviceUsage.devices}
-                animated={animationsEnabled}
-                interactive={true}
-                innerRadius={1.5}
-                outerRadius={3.5}
-                height={1.2}
-                explodeDistance={0.3}
-              />
-            </Canvas3D>
-          </Col>
-        </Row>
-      )}
+        {/* User Distribution Chart */}
+        <Col xs={24} lg={10}>
+          <UserDistributionChart
+            data={statistics.userAnalytics.deviceUsage.devices}
+            title="🍩 Phân bố thiết bị người dùng"
+          />
+        </Col>
+      </Row>
 
       {/* Additional Stats Row */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
@@ -469,13 +405,10 @@ const StatisticsPage: React.FC = () => {
           <Col>
             <Space>
               <Text type="secondary" style={{ fontSize: '12px' }}>
-                🎮 3D Engine: Three.js + React Three Fiber
+                📊 Charts: Interactive 2D Visualization
               </Text>
               <Text type="secondary" style={{ fontSize: '12px' }}>
-                ⚡ Render Mode: {animationsEnabled ? 'Animated' : 'Static'}
-              </Text>
-              <Text type="secondary" style={{ fontSize: '12px' }}>
-                📊 Data Points: {statistics.userAnalytics.userGrowth.monthly.length * 3} bars
+                📈 Data Points: {statistics.userAnalytics.userGrowth.monthly.length} months
               </Text>
             </Space>
           </Col>
@@ -490,9 +423,9 @@ const StatisticsPage: React.FC = () => {
               </Button>
               <Switch
                 size="small"
-                checked={animationsEnabled}
-                onChange={setAnimationsEnabled}
-                checkedChildren="Animated"
+                checked={true}
+                disabled={true}
+                checkedChildren="Interactive"
                 unCheckedChildren="Static"
               />
             </Space>

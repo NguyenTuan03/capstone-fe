@@ -38,6 +38,7 @@ import { ColumnsType } from 'antd/es/table';
 import { Dayjs } from 'dayjs';
 import IntlMessages from '@/@crema/helper/IntlMessages';
 import { CertificateVerificationApiService } from '@/services/certificateVerificationApi';
+import { CoachApiService } from '@/services/coachApi';
 import {
   CoachApplication,
   ApplicationStats,
@@ -587,7 +588,7 @@ const CertificatesPageClient: React.FC = () => {
               <Col span={24}>
                 <Text strong>Mô tả kinh nghiệm:</Text>
                 <br />
-                <Text>{selectedApplication.professionalInfo.description}</Text>
+                <Text>{selectedApplication.professionalInfo.bio}</Text>
               </Col>
 
               <Col span={12}>
