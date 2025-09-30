@@ -123,9 +123,9 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
           isAuthenticated: false,
         });
 
-        if (!isPublicRoute) {
-          router.push('/signin');
-        }
+        // if (!isPublicRoute) {
+        //   router.push('/signin'); // DISABLED FOR UI DEVELOPMENT
+        // }
         return;
       }
 
@@ -134,54 +134,36 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
       setAuthToken(token, remember);
 
       try {
-        const { data } = await jwtAxios.get('auth/current-user', {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          withCredentials: false,
-          withXSRFToken: false,
-        });
+        // Simple check - if token exists and user saved, restore session
+        const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
 
-        // If no user data returned, clean up and redirect
-        if (!data || !data?.metadata?.user) {
-          cleanupAuthState();
-          if (!isPublicRoute) {
-            router.push('/signin');
-          }
-          return;
-        }
+        if (savedUser && token.startsWith('admin-token-')) {
+          const user: UserType = JSON.parse(savedUser);
 
-        // Check if user is Admin
-        const isAdmin = data?.metadata?.user?.role?.name === RoleEnum.ADMIN;
+          // Update auth state
+          setJWTAuthData({
+            user,
+            isLoading: false,
+            isAuthenticated: true,
+          });
 
-        // Show notification for non-Admin users
-        if (!isAdmin) {
-          message.warning(t['common.adminOnly'] as string);
-        }
-
-        // Update auth state with user data
-        setJWTAuthData({
-          user: data?.metadata?.user,
-          isLoading: false,
-          isAuthenticated: isAdmin,
-        });
-
-        // If on signin page and authenticated, redirect to dashboard
-        if (pathname === '/signin') {
-          if (isAdmin) {
+          // If on signin page, redirect to dashboard
+          if (pathname === '/signin' || pathname === '/') {
             router.push('/dashboard');
-          } else {
-            router.push('/');
           }
+        } else {
+          // No valid session
+          cleanupAuthState();
+          // if (!isPublicRoute) {
+          //   router.push('/signin'); // DISABLED FOR UI DEVELOPMENT
+          // }
         }
       } catch (error) {
         console.error('Auth error:', error);
         cleanupAuthState();
-
-        if (!isPublicRoute) {
-          router.push('/signin');
-        }
+        // if (!isPublicRoute) {
+        //   router.push('/signin'); // DISABLED FOR UI DEVELOPMENT
+        // }
       }
     };
 
@@ -221,56 +203,66 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
   };
 
   /**
-   * Handles user sign-in
-   * 1. Makes login request to API
-   * 2. Stores received tokens
-   * 3. Updates authentication state
-   * 4. Loads user permissions
+   * Simple fake login - just check admin/admin1 and go to dashboard
    */
   const signInUser = async ({ email, password, remember }: SignInProps) => {
     removeAllXSRFTokens();
-    try {
-      const { data } = await jwtAxios.post('auth/login', {
-        email,
-        password,
-      });
-      const { metadata } = data;
-      // Store authentication tokens
-      setAuthToken(metadata.accessToken, remember);
-      setRefreshToken(metadata.refresh_token, remember);
-      const isAdmin = metadata.user.role.name === RoleEnum.ADMIN;
 
-      if (!isAdmin) {
-        message.warning(t['common.adminOnly'] as string);
-      }
+    // Set loading state
+    setJWTAuthData((prev) => ({ ...prev, isLoading: true }));
 
-      // Update authentication state
+    // Simple fake delay
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // Simple check
+    if (email.toLowerCase().trim() === 'admin' && password === 'admin1') {
+      // Create simple user
+      const fakeUser: UserType = {
+        id: 'admin-001',
+        email: 'admin',
+        name: 'Admin User',
+        role: 'admin',
+        avatar:
+          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+        phone: '+84 901 234 567',
+        location: 'Hồ Chí Minh',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      // Store simple token
+      const simpleToken = `admin-token-${Date.now()}`;
+      setAuthToken(simpleToken, remember);
+
+      // Update auth state
       setJWTAuthData({
-        user: metadata.user,
-        isAuthenticated: isAdmin,
+        user: fakeUser,
+        isAuthenticated: true,
         isLoading: false,
       });
 
-      // Persist user per remember option
+      // Save user data
       try {
         if (remember) {
-          localStorage.setItem('user', JSON.stringify(metadata.user));
-          sessionStorage.removeItem('user');
+          localStorage.setItem('user', JSON.stringify(fakeUser));
+          localStorage.setItem(REMEMBER_ME_KEY, 'true');
         } else {
-          sessionStorage.setItem('user', JSON.stringify(metadata.user));
-          localStorage.removeItem('user');
+          sessionStorage.setItem('user', JSON.stringify(fakeUser));
         }
-      } catch {}
-
-      // Redirect to dashboard after successful login
-      if (isAdmin) {
-        router.push('/dashboard');
-      } else {
-        router.push('/');
+      } catch (error) {
+        console.error('Error saving user:', error);
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      cleanupAuthState();
+
+      message.success('Đăng nhập thành công!');
+      router.push('/dashboard');
+    } else {
+      // Wrong credentials
+      message.error('Sai tài khoản hoặc mật khẩu!');
+      setJWTAuthData({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
     }
   };
 
@@ -306,7 +298,7 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
       } catch {}
 
       // Redirect to signin page
-      router.push('/signin');
+      // router.push('/signin'); // DISABLED FOR UI DEVELOPMENT
     }
   };
 

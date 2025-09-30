@@ -1,0 +1,343 @@
+{
+  "coaches": [
+    {
+      "id": "coach-001",
+      "email": "nguyen.coach.a@email.com",
+      "name": "Nguyễn Thể Thao A",
+      "phone": "+84 901 111 111",
+      "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+      "status": "active",
+      "location": "Hồ Chí Minh",
+      "joinDate": "2023-06-15T00:00:00Z",
+      "lastActive": "2024-01-26T14:30:00Z",
+      "experience": 5,
+      "rating": 4.8,
+      "totalSessions": 156,
+      "totalStudents": 45,
+      "hourlyRate": 200000,
+      "specialties": ["Kỹ thuật cơ bản", "Chiến thuật nâng cao", "Huấn luyện trẻ em"],
+      "bio": "Có 5 năm kinh nghiệm huấn luyện pickleball, từng tham gia nhiều giải đấu quốc gia. Chuyên về kỹ thuật cơ bản và phát triển tài năng trẻ.",
+      "certificates": [
+        {
+          "id": "cert-001",
+          "name": "Chứng chỉ Huấn luyện viên Pickleball Cấp 1",
+          "issuer": "Liên đoàn Pickleball Việt Nam",
+          "issueDate": "2023-03-15T00:00:00Z",
+          "expiryDate": "2026-03-15T00:00:00Z",
+          "certificateUrl": "https://example.com/cert-001.pdf",
+          "status": "verified",
+          "verifiedBy": "admin-001",
+          "verifiedAt": "2023-06-20T00:00:00Z",
+          "notes": "Chứng chỉ hợp lệ, đã xác minh qua website chính thức"
+        },
+        {
+          "id": "cert-002",
+          "name": "Chứng chỉ An toàn Thể thao",
+          "issuer": "Tổng cục Thể dục Thể thao",
+          "issueDate": "2023-01-10T00:00:00Z",
+          "expiryDate": "2025-01-10T00:00:00Z",
+          "certificateUrl": "https://example.com/cert-002.pdf",
+          "status": "verified",
+          "verifiedBy": "admin-001",
+          "verifiedAt": "2023-06-20T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "coach-002",
+      "email": "tran.coach.b@email.com",
+      "name": "Trần Thị Bình",
+      "phone": "+84 901 222 222",
+      "avatar": "https://images.unsplash.com/photo-1494790108755-2616c6c4a09e?w=150&h=150&fit=crop&crop=face",
+      "status": "active",
+      "location": "Hà Nội",
+      "joinDate": "2023-08-20T00:00:00Z",
+      "lastActive": "2024-01-26T16:45:00Z",
+      "experience": 3,
+      "rating": 4.6,
+      "totalSessions": 89,
+      "totalStudents": 28,
+      "hourlyRate": 180000,
+      "specialties": ["Kỹ thuật cơ bản", "Thi đấu đôi"],
+      "bio": "Huấn luyện viên trẻ năng động với phong cách dạy thân thiện. Chuyên về kỹ thuật cơ bản và chiến thuật thi đấu đôi.",
+      "certificates": [
+        {
+          "id": "cert-003",
+          "name": "Chứng chỉ Huấn luyện viên Pickleball Cấp 1",
+          "issuer": "Liên đoàn Pickleball Việt Nam",
+          "issueDate": "2023-07-20T00:00:00Z",
+          "expiryDate": "2026-07-20T00:00:00Z",
+          "status": "verified",
+          "verifiedBy": "admin-001",
+          "verifiedAt": "2023-08-25T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "coach-003",
+      "email": "le.coach.c@email.com",
+      "name": "Lê Văn Cường",
+      "phone": "+84 901 333 333",
+      "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+      "status": "suspended",
+      "location": "Đà Nẵng",
+      "joinDate": "2023-04-10T00:00:00Z",
+      "lastActive": "2024-01-20T10:15:00Z",
+      "experience": 7,
+      "rating": 3.2,
+      "totalSessions": 203,
+      "totalStudents": 67,
+      "hourlyRate": 250000,
+      "specialties": ["Chiến thuật nâng cao", "Thi đấu chuyên nghiệp"],
+      "bio": "Cựu vận động viên pickleball quốc gia với nhiều năm kinh nghiệm thi đấu và huấn luyện.",
+      "suspendReason": "Nhiều khiếu nại về thái độ không chuyên nghiệp trong buổi học",
+      "suspendedAt": "2024-01-22T00:00:00Z",
+      "suspendedBy": "admin-001",
+      "suspendEvidence": [
+        "https://example.com/evidence-video-1.mp4",
+        "https://example.com/evidence-screenshot-1.jpg"
+      ],
+      "certificates": [
+        {
+          "id": "cert-004",
+          "name": "Chứng chỉ Huấn luyện viên Pickleball Cấp 2",
+          "issuer": "Liên đoàn Pickleball Việt Nam",
+          "issueDate": "2022-11-15T00:00:00Z",
+          "expiryDate": "2025-11-15T00:00:00Z",
+          "status": "verified",
+          "verifiedBy": "admin-001",
+          "verifiedAt": "2023-04-15T00:00:00Z"
+        },
+        {
+          "id": "cert-005",
+          "name": "Chứng chỉ Trọng tài Pickleball",
+          "issuer": "Liên đoàn Pickleball Châu Á",
+          "issueDate": "2022-08-10T00:00:00Z",
+          "expiryDate": "2025-08-10T00:00:00Z",
+          "status": "verified",
+          "verifiedBy": "admin-001",
+          "verifiedAt": "2023-04-15T00:00:00Z"
+        }
+      ]
+    },
+    {
+      "id": "coach-004",
+      "email": "pham.coach.d@email.com",
+      "name": "Phạm Thị Diệu",
+      "phone": "+84 901 444 444",
+      "avatar": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
+      "status": "pending",
+      "location": "Cần Thơ",
+      "joinDate": "2024-01-20T00:00:00Z",
+      "experience": 2,
+      "rating": 0,
+      "totalSessions": 0,
+      "totalStudents": 0,
+      "hourlyRate": 150000,
+      "specialties": ["Kỹ thuật cơ bản"],
+      "bio": "Huấn luyện viên mới với đam mê pickleball và mong muốn chia sẻ kiến thức với học viên.",
+      "certificates": [
+        {
+          "id": "cert-006",
+          "name": "Chứng chỉ Huấn luyện viên Pickleball Cấp 1",
+          "issuer": "Liên đoàn Pickleball Việt Nam",
+          "issueDate": "2024-01-15T00:00:00Z",
+          "expiryDate": "2027-01-15T00:00:00Z",
+          "status": "pending",
+          "notes": "Đang chờ xác minh từ tổ chức cấp chứng chỉ"
+        }
+      ]
+    },
+    {
+      "id": "coach-005",
+      "email": "hoang.coach.e@email.com",
+      "name": "Hoàng Văn Em",
+      "phone": "+84 901 555 555",
+      "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
+      "status": "active",
+      "location": "Hải Phòng",
+      "joinDate": "2023-09-05T00:00:00Z",
+      "lastActive": "2024-01-26T11:20:00Z",
+      "experience": 4,
+      "rating": 4.9,
+      "totalSessions": 124,
+      "totalStudents": 38,
+      "hourlyRate": 190000,
+      "specialties": ["Kỹ thuật cơ bản", "Chiến thuật nâng cao", "Phục hồi chấn thương"],
+      "bio": "Huấn luyện viên có nền tảng y học thể thao, chuyên về kỹ thuật an toàn và phục hồi chấn thương.",
+      "certificates": [
+        {
+          "id": "cert-007",
+          "name": "Chứng chỉ Huấn luyện viên Pickleball Cấp 1",
+          "issuer": "Liên đoàn Pickleball Việt Nam",
+          "issueDate": "2023-08-01T00:00:00Z",
+          "expiryDate": "2026-08-01T00:00:00Z",
+          "status": "verified",
+          "verifiedBy": "admin-001",
+          "verifiedAt": "2023-09-10T00:00:00Z"
+        },
+        {
+          "id": "cert-008",
+          "name": "Chứng chỉ Y học Thể thao",
+          "issuer": "Đại học Y Hà Nội",
+          "issueDate": "2022-12-20T00:00:00Z",
+          "status": "verified",
+          "verifiedBy": "admin-001",
+          "verifiedAt": "2023-09-10T00:00:00Z"
+        }
+      ]
+    }
+  ],
+  "coachReviews": [
+    {
+      "id": "review-001",
+      "coachId": "coach-001",
+      "studentId": "user-001",
+      "studentName": "Nguyễn Văn A",
+      "studentAvatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+      "sessionId": "session-001",
+      "rating": 5,
+      "comment": "Huấn luyện viên rất nhiệt tình và chuyên nghiệp. Kỹ thuật được cải thiện rõ rệt sau buổi học.",
+      "createdAt": "2024-01-25T10:30:00Z",
+      "sessionVideo": "https://example.com/session-001-video.mp4",
+      "adminReviewed": true,
+      "adminNotes": "Buổi học chất lượng cao, học viên hài lòng",
+      "isReported": false
+    },
+    {
+      "id": "review-002",
+      "coachId": "coach-001",
+      "studentId": "user-002",
+      "studentName": "Trần Thị B",
+      "studentAvatar": "https://images.unsplash.com/photo-1531427186611-ad02f065fe8c?w=150&h=150&fit=crop&crop=face",
+      "sessionId": "session-002",
+      "rating": 4,
+      "comment": "Buổi học hay, huấn luyện viên giải thích dễ hiểu. Tuy nhiên thời gian hơi ngắn.",
+      "createdAt": "2024-01-24T14:15:00Z",
+      "adminReviewed": false,
+      "isReported": false
+    },
+    {
+      "id": "review-003",
+      "coachId": "coach-003",
+      "studentId": "user-005",
+      "studentName": "Hoàng Văn E",
+      "studentAvatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+      "sessionId": "session-003",
+      "rating": 2,
+      "comment": "Huấn luyện viên có thái độ không tốt, thường xuyên đến muộn và không chuẩn bị bài giảng kỹ.",
+      "createdAt": "2024-01-20T16:45:00Z",
+      "sessionVideo": "https://example.com/session-003-video.mp4",
+      "reviewVideo": "https://example.com/review-003-video.mp4",
+      "adminReviewed": true,
+      "adminNotes": "Đã xem video, thái độ HLV không chuyên nghiệp",
+      "isReported": true,
+      "reportReason": "Thái độ không chuyên nghiệp, đến muộn"
+    },
+    {
+      "id": "review-004",
+      "coachId": "coach-002",
+      "studentId": "user-008",
+      "studentName": "Bùi Thị H",
+      "studentAvatar": "https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?w=150&h=150&fit=crop&crop=face",
+      "sessionId": "session-004",
+      "rating": 5,
+      "comment": "Cô giáo dạy rất tận tâm và kiên nhẫn. Em đã học được rất nhiều kỹ thuật mới.",
+      "createdAt": "2024-01-26T09:30:00Z",
+      "adminReviewed": false,
+      "isReported": false
+    },
+    {
+      "id": "review-005",
+      "coachId": "coach-005",
+      "studentId": "user-001",
+      "studentName": "Nguyễn Văn A",
+      "studentAvatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+      "sessionId": "session-005",
+      "rating": 5,
+      "comment": "Huấn luyện viên có kiến thức y học rất tốt, giúp em tránh được chấn thương và cải thiện kỹ thuật an toàn.",
+      "createdAt": "2024-01-25T15:20:00Z",
+      "sessionVideo": "https://example.com/session-005-video.mp4",
+      "adminReviewed": true,
+      "adminNotes": "Buổi học chất lượng cao với kiến thức chuyên môn tốt",
+      "isReported": false
+    }
+  ],
+  "coachQualities": [
+    {
+      "id": "coach-001",
+      "email": "nguyen.coach.a@email.com",
+      "name": "Nguyễn Thể Thao A",
+      "avatar": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
+      "status": "active",
+      "rating": 4.8,
+      "totalReviews": 45,
+      "sessionCompletionRate": 98,
+      "studentRetentionRate": 85,
+      "responseTime": 2.5,
+      "hasComplaints": false,
+      "complaintsCount": 0
+    },
+    {
+      "id": "coach-002",
+      "email": "tran.coach.b@email.com",
+      "name": "Trần Thị Bình",
+      "avatar": "https://images.unsplash.com/photo-1494790108755-2616c6c4a09e?w=150&h=150&fit=crop&crop=face",
+      "status": "active",
+      "rating": 4.6,
+      "totalReviews": 28,
+      "sessionCompletionRate": 96,
+      "studentRetentionRate": 78,
+      "responseTime": 3.2,
+      "hasComplaints": false,
+      "complaintsCount": 0
+    },
+    {
+      "id": "coach-003",
+      "email": "le.coach.c@email.com",
+      "name": "Lê Văn Cường",
+      "avatar": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
+      "status": "suspended",
+      "rating": 3.2,
+      "totalReviews": 67,
+      "sessionCompletionRate": 78,
+      "studentRetentionRate": 45,
+      "responseTime": 8.5,
+      "hasComplaints": true,
+      "complaintsCount": 8,
+      "lastComplaintDate": "2024-01-20T16:45:00Z",
+      "suspendReason": "Nhiều khiếu nại về thái độ không chuyên nghiệp trong buổi học",
+      "suspendedAt": "2024-01-22T00:00:00Z",
+      "suspendedBy": "admin-001",
+      "suspendEvidence": [
+        "https://example.com/evidence-video-1.mp4",
+        "https://example.com/evidence-screenshot-1.jpg"
+      ]
+    },
+    {
+      "id": "coach-005",
+      "email": "hoang.coach.e@email.com",
+      "name": "Hoàng Văn Em",
+      "avatar": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
+      "status": "active",
+      "rating": 4.9,
+      "totalReviews": 38,
+      "sessionCompletionRate": 99,
+      "studentRetentionRate": 92,
+      "responseTime": 1.8,
+      "hasComplaints": false,
+      "complaintsCount": 0
+    }
+  ],
+  "suspendReasons": [
+    "Thái độ không chuyên nghiệp với học viên",
+    "Thường xuyên đến muộn hoặc hủy buổi học",
+    "Không tuân thủ chương trình giảng dạy",
+    "Vi phạm quy định an toàn",
+    "Nhận phản hồi tiêu cực liên tục",
+    "Không phản hồi tin nhắn từ học viên",
+    "Sử dụng ngôn từ không phù hợp",
+    "Vi phạm quy định về trang phục",
+    "Khác (tự nhập lý do)"
+  ]
+}

@@ -1,0 +1,613 @@
+{
+  "stats": {
+    "users": {
+      "total": 15420,
+      "active": 12850,
+      "newThisMonth": 1250,
+      "growthRate": 18.5,
+      "activeRate": 83.3,
+      "topCountries": [
+        {
+          "country": "Việt Nam",
+          "countryCode": "VN",
+          "count": 12450,
+          "percentage": 80.7
+        },
+        {
+          "country": "Singapore",
+          "countryCode": "SG",
+          "count": 1580,
+          "percentage": 10.2
+        },
+        {
+          "country": "Malaysia",
+          "countryCode": "MY",
+          "count": 890,
+          "percentage": 5.8
+        },
+        {
+          "country": "Thailand",
+          "countryCode": "TH",
+          "count": 500,
+          "percentage": 3.3
+        }
+      ],
+      "ageDistribution": [
+        { "ageGroup": "18-25", "count": 4850, "percentage": 31.4 },
+        { "ageGroup": "26-35", "count": 5680, "percentage": 36.8 },
+        { "ageGroup": "36-45", "count": 3420, "percentage": 22.2 },
+        { "ageGroup": "46-55", "count": 1180, "percentage": 7.7 },
+        { "ageGroup": "55+", "count": 290, "percentage": 1.9 }
+      ],
+      "registrationTrend": [
+        { "date": "2024-01", "value": 980 },
+        { "date": "2024-02", "value": 1150 },
+        { "date": "2024-03", "value": 1320 },
+        { "date": "2024-04", "value": 1180 },
+        { "date": "2024-05", "value": 1450 },
+        { "date": "2024-06", "value": 1680 },
+        { "date": "2024-07", "value": 1520 },
+        { "date": "2024-08", "value": 1750 },
+        { "date": "2024-09", "value": 1890 },
+        { "date": "2024-10", "value": 1650 },
+        { "date": "2024-11", "value": 1950 },
+        { "date": "2024-12", "value": 1250 }
+      ]
+    },
+    "coaches": {
+      "total": 485,
+      "verified": 420,
+      "pending": 45,
+      "suspended": 20,
+      "averageRating": 4.6,
+      "totalSessions": 28450,
+      "topPerformers": [
+        {
+          "id": "coach-001",
+          "name": "Nguyễn Văn Minh",
+          "avatar": "https://i.pravatar.cc/150?img=1",
+          "rating": 4.9,
+          "sessionsCount": 1250,
+          "revenue": 125000000,
+          "specialization": "Kỹ thuật cơ bản"
+        },
+        {
+          "id": "coach-002",
+          "name": "Trần Thị Hoa",
+          "avatar": "https://i.pravatar.cc/150?img=2",
+          "rating": 4.8,
+          "sessionsCount": 980,
+          "revenue": 98000000,
+          "specialization": "Chiến thuật nâng cao"
+        },
+        {
+          "id": "coach-003",
+          "name": "Lê Hoàng Nam",
+          "avatar": "https://i.pravatar.cc/150?img=3",
+          "rating": 4.8,
+          "sessionsCount": 850,
+          "revenue": 85000000,
+          "specialization": "Thể lực & Dinh dưỡng"
+        },
+        {
+          "id": "coach-004",
+          "name": "Phạm Thị Lan",
+          "avatar": "https://i.pravatar.cc/150?img=4",
+          "rating": 4.7,
+          "sessionsCount": 720,
+          "revenue": 72000000,
+          "specialization": "Pickleball cho trẻ em"
+        }
+      ],
+      "verificationTrend": [
+        { "date": "2024-01", "value": 35 },
+        { "date": "2024-02", "value": 42 },
+        { "date": "2024-03", "value": 38 },
+        { "date": "2024-04", "value": 45 },
+        { "date": "2024-05", "value": 52 },
+        { "date": "2024-06", "value": 48 },
+        { "date": "2024-07", "value": 55 },
+        { "date": "2024-08", "value": 62 },
+        { "date": "2024-09", "value": 58 },
+        { "date": "2024-10", "value": 48 },
+        { "date": "2024-11", "value": 52 },
+        { "date": "2024-12", "value": 45 }
+      ],
+      "performanceMetrics": [
+        {
+          "metric": "Tỷ lệ hoàn thành session",
+          "value": 94.5,
+          "unit": "%",
+          "trend": "up",
+          "change": 2.3
+        },
+        {
+          "metric": "Đánh giá trung bình",
+          "value": 4.6,
+          "unit": "/5",
+          "trend": "up",
+          "change": 0.1
+        },
+        {
+          "metric": "Thời gian phản hồi",
+          "value": 15,
+          "unit": "phút",
+          "trend": "down",
+          "change": -5
+        }
+      ]
+    },
+    "sessions": {
+      "totalThisMonth": 8450,
+      "completedThisMonth": 7980,
+      "cancelledThisMonth": 470,
+      "completionRate": 94.4,
+      "averageDuration": 65,
+      "totalHours": 9125,
+      "sessionsByType": [
+        {
+          "type": "Online 1-1",
+          "count": 4850,
+          "percentage": 57.4,
+          "color": "#1890ff"
+        },
+        {
+          "type": "Online Group",
+          "count": 2180,
+          "percentage": 25.8,
+          "color": "#52c41a"
+        },
+        {
+          "type": "Offline 1-1",
+          "count": 980,
+          "percentage": 11.6,
+          "color": "#faad14"
+        },
+        {
+          "type": "Offline Group",
+          "count": 440,
+          "percentage": 5.2,
+          "color": "#722ed1"
+        }
+      ],
+      "dailyTrend": [
+        { "date": "2024-12-01", "value": 285 },
+        { "date": "2024-12-02", "value": 320 },
+        { "date": "2024-12-03", "value": 298 },
+        { "date": "2024-12-04", "value": 342 },
+        { "date": "2024-12-05", "value": 315 },
+        { "date": "2024-12-06", "value": 380 },
+        { "date": "2024-12-07", "value": 395 },
+        { "date": "2024-12-08", "value": 288 },
+        { "date": "2024-12-09", "value": 325 },
+        { "date": "2024-12-10", "value": 358 },
+        { "date": "2024-12-11", "value": 375 },
+        { "date": "2024-12-12", "value": 392 },
+        { "date": "2024-12-13", "value": 410 },
+        { "date": "2024-12-14", "value": 368 }
+      ],
+      "hourlyDistribution": [
+        { "hour": 6, "count": 45, "label": "06:00" },
+        { "hour": 7, "count": 120, "label": "07:00" },
+        { "hour": 8, "count": 280, "label": "08:00" },
+        { "hour": 9, "count": 420, "label": "09:00" },
+        { "hour": 10, "count": 380, "label": "10:00" },
+        { "hour": 11, "count": 325, "label": "11:00" },
+        { "hour": 12, "count": 180, "label": "12:00" },
+        { "hour": 13, "count": 150, "label": "13:00" },
+        { "hour": 14, "count": 280, "label": "14:00" },
+        { "hour": 15, "count": 350, "label": "15:00" },
+        { "hour": 16, "count": 420, "label": "16:00" },
+        { "hour": 17, "count": 480, "label": "17:00" },
+        { "hour": 18, "count": 520, "label": "18:00" },
+        { "hour": 19, "count": 580, "label": "19:00" },
+        { "hour": 20, "count": 450, "label": "20:00" },
+        { "hour": 21, "count": 280, "label": "21:00" },
+        { "hour": 22, "count": 120, "label": "22:00" }
+      ]
+    },
+    "revenue": {
+      "totalThisMonth": 2450000000,
+      "totalLastMonth": 2180000000,
+      "growthRate": 12.4,
+      "averagePerSession": 290000,
+      "totalRevenue": 18500000000,
+      "revenueBySource": [
+        {
+          "source": "Session 1-1",
+          "amount": 1470000000,
+          "percentage": 60.0,
+          "color": "#1890ff"
+        },
+        {
+          "source": "Session Group",
+          "amount": 735000000,
+          "percentage": 30.0,
+          "color": "#52c41a"
+        },
+        {
+          "source": "Course Purchase",
+          "amount": 147000000,
+          "percentage": 6.0,
+          "color": "#faad14"
+        },
+        {
+          "source": "Premium Subscription",
+          "amount": 98000000,
+          "percentage": 4.0,
+          "color": "#722ed1"
+        }
+      ],
+      "monthlyTrend": [
+        { "date": "2024-01", "value": 1850000000 },
+        { "date": "2024-02", "value": 1920000000 },
+        { "date": "2024-03", "value": 2100000000 },
+        { "date": "2024-04", "value": 1980000000 },
+        { "date": "2024-05", "value": 2250000000 },
+        { "date": "2024-06", "value": 2420000000 },
+        { "date": "2024-07", "value": 2380000000 },
+        { "date": "2024-08", "value": 2650000000 },
+        { "date": "2024-09", "value": 2580000000 },
+        { "date": "2024-10", "value": 2320000000 },
+        { "date": "2024-11", "value": 2180000000 },
+        { "date": "2024-12", "value": 2450000000 }
+      ],
+      "topPayingUsers": [
+        {
+          "id": "user-001",
+          "name": "Nguyễn Thành Đạt",
+          "avatar": "https://i.pravatar.cc/150?img=11",
+          "totalSpent": 15000000,
+          "sessionsCount": 52,
+          "joinDate": "2024-01-15"
+        },
+        {
+          "id": "user-002",
+          "name": "Trần Minh Châu",
+          "avatar": "https://i.pravatar.cc/150?img=12",
+          "totalSpent": 12500000,
+          "sessionsCount": 43,
+          "joinDate": "2024-02-20"
+        },
+        {
+          "id": "user-003",
+          "name": "Lê Thị Hương",
+          "avatar": "https://i.pravatar.cc/150?img=13",
+          "totalSpent": 11800000,
+          "sessionsCount": 41,
+          "joinDate": "2024-01-08"
+        }
+      ]
+    },
+    "content": {
+      "totalChapters": 12,
+      "totalLessons": 148,
+      "totalQuizzes": 325,
+      "averageCompletionRate": 78.5,
+      "mostPopularContent": [
+        {
+          "id": "lesson-001",
+          "title": "Giới thiệu về Pickleball",
+          "type": "lesson",
+          "views": 12450,
+          "completionRate": 92.3,
+          "rating": 4.8
+        },
+        {
+          "id": "chapter-002",
+          "title": "Kỹ thuật cơ bản",
+          "type": "chapter",
+          "views": 9850,
+          "completionRate": 85.6,
+          "rating": 4.7
+        },
+        {
+          "id": "quiz-015",
+          "title": "Luật chơi cơ bản",
+          "type": "quiz",
+          "views": 8920,
+          "completionRate": 76.4,
+          "rating": 4.5
+        }
+      ],
+      "contentEngagement": [
+        {
+          "contentId": "lesson-001",
+          "contentTitle": "Giới thiệu về Pickleball",
+          "views": 12450,
+          "timeSpent": 35,
+          "completions": 11490,
+          "rating": 4.8
+        },
+        {
+          "contentId": "lesson-003",
+          "contentTitle": "Kỹ thuật giao bóng",
+          "views": 9850,
+          "timeSpent": 42,
+          "completions": 8435,
+          "rating": 4.7
+        }
+      ]
+    },
+    "system": {
+      "pendingApprovals": 28,
+      "activeReports": 12,
+      "systemHealth": 99.2,
+      "uptime": 99.8,
+      "responseTime": 145,
+      "errorRate": 0.02
+    }
+  },
+  "activities": [
+    {
+      "id": "activity-001",
+      "type": "user_registration",
+      "title": "Người dùng mới đăng ký",
+      "description": "Nguyễn Văn An đã đăng ký tài khoản",
+      "user": {
+        "id": "user-new-001",
+        "name": "Nguyễn Văn An",
+        "avatar": "https://i.pravatar.cc/150?img=21"
+      },
+      "timestamp": "2024-12-14T10:30:00Z",
+      "priority": "low",
+      "status": "completed"
+    },
+    {
+      "id": "activity-002",
+      "type": "session_completed",
+      "title": "Session hoàn thành",
+      "description": "Session với coach Trần Thị Hoa đã hoàn thành",
+      "user": {
+        "id": "user-002",
+        "name": "Lê Minh Tuấn",
+        "avatar": "https://i.pravatar.cc/150?img=22"
+      },
+      "metadata": {
+        "sessionId": "session-12345",
+        "coachName": "Trần Thị Hoa",
+        "rating": 5
+      },
+      "timestamp": "2024-12-14T10:15:00Z",
+      "priority": "medium",
+      "status": "completed"
+    },
+    {
+      "id": "activity-003",
+      "type": "payment_received",
+      "title": "Thanh toán thành công",
+      "description": "Đã nhận thanh toán 500,000 VND từ Phạm Thị Mai",
+      "user": {
+        "id": "user-003",
+        "name": "Phạm Thị Mai",
+        "avatar": "https://i.pravatar.cc/150?img=23"
+      },
+      "metadata": {
+        "amount": 500000,
+        "currency": "VND",
+        "method": "momo"
+      },
+      "timestamp": "2024-12-14T09:45:00Z",
+      "priority": "medium",
+      "status": "completed"
+    },
+    {
+      "id": "activity-004",
+      "type": "coach_verified",
+      "title": "Coach được xác minh",
+      "description": "Huấn luyện viên Võ Thành Nam đã được xác minh",
+      "user": {
+        "id": "coach-new-001",
+        "name": "Võ Thành Nam",
+        "avatar": "https://i.pravatar.cc/150?img=24"
+      },
+      "timestamp": "2024-12-14T09:20:00Z",
+      "priority": "high",
+      "status": "completed"
+    },
+    {
+      "id": "activity-005",
+      "type": "report_submitted",
+      "title": "Báo cáo mới",
+      "description": "Người dùng báo cáo vấn đề với session",
+      "user": {
+        "id": "user-004",
+        "name": "Hoàng Thị Lan",
+        "avatar": "https://i.pravatar.cc/150?img=25"
+      },
+      "metadata": {
+        "reportType": "session_issue",
+        "sessionId": "session-67890"
+      },
+      "timestamp": "2024-12-14T08:50:00Z",
+      "priority": "high",
+      "status": "pending"
+    }
+  ],
+  "alerts": [
+    {
+      "id": "alert-001",
+      "type": "warning",
+      "title": "Có 28 đơn đăng ký coach chờ duyệt",
+      "message": "Có nhiều đơn đăng ký huấn luyện viên chờ xác minh. Vui lòng xem xét để đảm bảo chất lượng dịch vụ.",
+      "actionUrl": "/certificates",
+      "actionText": "Xem danh sách",
+      "timestamp": "2024-12-14T08:00:00Z",
+      "dismissed": false,
+      "priority": "medium"
+    },
+    {
+      "id": "alert-002",
+      "type": "error",
+      "title": "12 báo cáo cần xử lý khẩn cấp",
+      "message": "Có 12 báo cáo từ người dùng cần được xử lý trong vòng 24h.",
+      "actionUrl": "/sessions",
+      "actionText": "Xử lý ngay",
+      "timestamp": "2024-12-14T07:30:00Z",
+      "dismissed": false,
+      "priority": "high"
+    },
+    {
+      "id": "alert-003",
+      "type": "info",
+      "title": "Cập nhật hệ thống thành công",
+      "message": "Hệ thống đã được cập nhật lên phiên bản mới với nhiều tính năng cải tiến.",
+      "timestamp": "2024-12-14T06:00:00Z",
+      "dismissed": false,
+      "priority": "low"
+    }
+  ],
+  "quickActions": [
+    {
+      "id": "action-001",
+      "title": "Xác minh Coach",
+      "description": "Duyệt đơn đăng ký huấn luyện viên",
+      "icon": "UserAddOutlined",
+      "color": "#1890ff",
+      "url": "/certificates",
+      "count": 28,
+      "enabled": true
+    },
+    {
+      "id": "action-002",
+      "title": "Xử lý báo cáo",
+      "description": "Giải quyết các báo cáo từ người dùng",
+      "icon": "WarningOutlined",
+      "color": "#ff4d4f",
+      "url": "/sessions",
+      "count": 12,
+      "enabled": true
+    },
+    {
+      "id": "action-003",
+      "title": "Duyệt khóa học",
+      "description": "Phê duyệt khóa học mới",
+      "icon": "BookOutlined",
+      "color": "#52c41a",
+      "url": "/course-verification",
+      "count": 8,
+      "enabled": true
+    },
+    {
+      "id": "action-004",
+      "title": "Quản lý User",
+      "description": "Xem và quản lý người dùng",
+      "icon": "TeamOutlined",
+      "color": "#722ed1",
+      "url": "/users",
+      "enabled": true
+    },
+    {
+      "id": "action-005",
+      "title": "Thống kê chi tiết",
+      "description": "Xem báo cáo và phân tích",
+      "icon": "BarChartOutlined",
+      "color": "#faad14",
+      "url": "/analytics",
+      "enabled": true
+    },
+    {
+      "id": "action-006",
+      "title": "Cài đặt hệ thống",
+      "description": "Cấu hình và thiết lập",
+      "icon": "SettingOutlined",
+      "color": "#13c2c2",
+      "url": "/settings",
+      "enabled": true
+    }
+  ],
+  "pendingApprovals": [
+    {
+      "id": "approval-001",
+      "type": "coach_verification",
+      "title": "Xác minh huấn luyện viên",
+      "description": "Nguyễn Văn Minh - Chuyên gia Pickleball 5 năm kinh nghiệm",
+      "submittedBy": {
+        "id": "coach-pending-001",
+        "name": "Nguyễn Văn Minh",
+        "avatar": "https://i.pravatar.cc/150?img=31"
+      },
+      "submittedAt": "2024-12-13T15:30:00Z",
+      "priority": "high",
+      "estimatedTime": 15,
+      "actionUrl": "/certificates/coach-pending-001"
+    },
+    {
+      "id": "approval-002",
+      "type": "course_approval",
+      "title": "Duyệt khóa học",
+      "description": "Khóa học 'Pickleball cho người mới bắt đầu' - 8 buổi học",
+      "submittedBy": {
+        "id": "coach-002",
+        "name": "Trần Thị Hoa",
+        "avatar": "https://i.pravatar.cc/150?img=32"
+      },
+      "submittedAt": "2024-12-13T14:20:00Z",
+      "priority": "medium",
+      "estimatedTime": 10,
+      "actionUrl": "/course-verification/course-new-001"
+    },
+    {
+      "id": "approval-003",
+      "type": "certificate_review",
+      "title": "Xem xét chứng chỉ",
+      "description": "Chứng chỉ huấn luyện viên quốc tế của Lê Hoàng Nam",
+      "submittedBy": {
+        "id": "coach-pending-002",
+        "name": "Lê Hoàng Nam",
+        "avatar": "https://i.pravatar.cc/150?img=33"
+      },
+      "submittedAt": "2024-12-13T13:45:00Z",
+      "priority": "medium",
+      "estimatedTime": 20,
+      "actionUrl": "/certificates/coach-pending-002"
+    }
+  ],
+  "recentReports": [
+    {
+      "id": "report-001",
+      "type": "session_issue",
+      "title": "Vấn đề kỹ thuật trong session",
+      "description": "Kết nối video bị gián đoạn nhiều lần trong buổi học",
+      "reportedBy": {
+        "id": "user-005",
+        "name": "Phạm Minh Đức",
+        "avatar": "https://i.pravatar.cc/150?img=41"
+      },
+      "reportedAt": "2024-12-14T09:15:00Z",
+      "severity": "medium",
+      "status": "new",
+      "actionUrl": "/sessions/report-001"
+    },
+    {
+      "id": "report-002",
+      "type": "coach_report",
+      "title": "Báo cáo về huấn luyện viên",
+      "description": "Coach đến trễ 15 phút và không thông báo trước",
+      "reportedBy": {
+        "id": "user-006",
+        "name": "Nguyễn Thị Lan",
+        "avatar": "https://i.pravatar.cc/150?img=42"
+      },
+      "reportedAt": "2024-12-14T08:30:00Z",
+      "severity": "high",
+      "status": "investigating",
+      "actionUrl": "/sessions/report-002"
+    },
+    {
+      "id": "report-003",
+      "type": "payment_dispute",
+      "title": "Tranh chấp thanh toán",
+      "description": "Yêu cầu hoàn tiền do session bị hủy bất ngờ",
+      "reportedBy": {
+        "id": "user-007",
+        "name": "Trần Văn Hùng",
+        "avatar": "https://i.pravatar.cc/150?img=43"
+      },
+      "reportedAt": "2024-12-13T16:45:00Z",
+      "severity": "high",
+      "status": "new",
+      "actionUrl": "/sessions/report-003"
+    }
+  ]
+}
