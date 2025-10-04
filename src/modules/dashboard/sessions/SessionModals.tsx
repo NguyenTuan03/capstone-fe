@@ -24,7 +24,6 @@ import {
 
 import { PlayCircleOutlined, UploadOutlined, EnvironmentOutlined } from '@ant-design/icons';
 
-import IntlMessages from '@/@crema/helper/IntlMessages';
 import { Session } from '@/types/session';
 
 const { TextArea } = Input;
@@ -85,7 +84,7 @@ const SessionModals: React.FC<SessionModalsProps> = ({
     <>
       {/* Session Detail Modal */}
       <Modal
-        title={<IntlMessages id="session.detail.title" />}
+        title="Chi tiết buổi học"
         open={detailModalVisible}
         onCancel={() => setDetailModalVisible(false)}
         footer={null}
@@ -94,7 +93,7 @@ const SessionModals: React.FC<SessionModalsProps> = ({
       >
         {selectedSession && (
           <Tabs defaultActiveKey="basic">
-            <TabPane tab={<IntlMessages id="session.detail.basic" />} key="basic">
+            <TabPane tab="Thông tin cơ bản" key="basic">
               <Descriptions column={2} bordered size="small">
                 <Descriptions.Item label="ID" span={2}>
                   <Text code>{selectedSession.id}</Text>
@@ -119,7 +118,7 @@ const SessionModals: React.FC<SessionModalsProps> = ({
                 </Descriptions.Item>
                 <Descriptions.Item label="Hình thức">
                   <Tag color={selectedSession.type === 'online' ? 'blue' : 'green'}>
-                    <IntlMessages id={`session.type.${selectedSession.type}`} />
+                    {selectedSession.type === 'online' ? 'Trực tuyến' : 'Trực tiếp'}
                   </Tag>
                 </Descriptions.Item>
                 <Descriptions.Item label="Trạng thái">
@@ -145,7 +144,7 @@ const SessionModals: React.FC<SessionModalsProps> = ({
 
               {selectedSession.progressNotes && (
                 <Alert
-                  message={<IntlMessages id="session.detail.progress" />}
+                  message="Tiến độ buổi học"
                   description={selectedSession.progressNotes}
                   type="info"
                   style={{ marginTop: 16 }}
@@ -154,15 +153,13 @@ const SessionModals: React.FC<SessionModalsProps> = ({
             </TabPane>
 
             {selectedSession.hasRecording && (
-              <TabPane tab={<IntlMessages id="session.detail.recording.title" />} key="recording">
+              <TabPane tab="Video ghi hình" key="recording">
                 <div style={{ textAlign: 'center', padding: '40px 0' }}>
                   <PlayCircleOutlined
                     style={{ fontSize: 64, color: '#1890ff', marginBottom: 16 }}
                   />
                   <div style={{ marginBottom: 16 }}>
-                    <Text strong>
-                      <IntlMessages id="session.detail.recording.duration" />:{' '}
-                    </Text>
+                    <Text strong>Thời lượng: </Text>
                     <Text>{formatDuration(selectedSession.recordingDuration || 0)}</Text>
                   </div>
                   <Button
@@ -171,14 +168,14 @@ const SessionModals: React.FC<SessionModalsProps> = ({
                     icon={<PlayCircleOutlined />}
                     onClick={() => window.open(selectedSession.recordingUrl, '_blank')}
                   >
-                    <IntlMessages id="session.detail.recording.watchVideo" />
+                    Xem video
                   </Button>
                 </div>
               </TabPane>
             )}
 
             {selectedSession.reports.length > 0 && (
-              <TabPane tab={<IntlMessages id="session.detail.reports.title" />} key="reports">
+              <TabPane tab="Báo cáo" key="reports">
                 {selectedSession.reports.map((report) => (
                   <Card key={report.id} size="small" style={{ marginBottom: 16 }}>
                     <Row gutter={16}>
@@ -230,11 +227,11 @@ const SessionModals: React.FC<SessionModalsProps> = ({
               </TabPane>
             )}
 
-            <TabPane tab={<IntlMessages id="session.detail.feedback" />} key="feedback">
+            <TabPane tab="Phản hồi" key="feedback">
               <Row gutter={16}>
                 {selectedSession.learnerFeedback && (
                   <Col span={12}>
-                    <Card title={<IntlMessages id="session.detail.fromLearner" />} size="small">
+                    <Card title="Từ học viên" size="small">
                       <div style={{ marginBottom: 8 }}>
                         <Rate disabled value={selectedSession.learnerFeedback.rating} />
                         <Text style={{ marginLeft: 8 }}>
@@ -250,7 +247,7 @@ const SessionModals: React.FC<SessionModalsProps> = ({
                 )}
                 {selectedSession.coachFeedback && (
                   <Col span={12}>
-                    <Card title={<IntlMessages id="session.detail.fromCoach" />} size="small">
+                    <Card title="Từ huấn luyện viên" size="small">
                       <div style={{ marginBottom: 8 }}>
                         <Rate disabled value={selectedSession.coachFeedback.rating} />
                         <Text style={{ marginLeft: 8 }}>
@@ -272,7 +269,7 @@ const SessionModals: React.FC<SessionModalsProps> = ({
 
       {/* Refund Modal */}
       <Modal
-        title={<IntlMessages id="session.admin.refund.title" />}
+        title="Hoàn tiền buổi học"
         open={refundModalVisible}
         onCancel={() => {
           setRefundModalVisible(false);
@@ -284,7 +281,7 @@ const SessionModals: React.FC<SessionModalsProps> = ({
         <Form form={refundForm} onFinish={handleProcessRefund} layout="vertical">
           <Form.Item
             name="amount"
-            label={<IntlMessages id="session.admin.refund.amount.label" />}
+            label="Số tiền hoàn"
             rules={[{ required: true, message: 'Vui lòng nhập số tiền hoàn' }]}
           >
             <InputNumber
@@ -299,7 +296,7 @@ const SessionModals: React.FC<SessionModalsProps> = ({
 
           <Form.Item
             name="reason"
-            label={<IntlMessages id="session.admin.refund.reason.label" />}
+            label="Lý do hoàn tiền"
             rules={[{ required: true, message: 'Vui lòng chọn lý do hoàn tiền' }]}
           >
             <Select placeholder="Chọn lý do hoàn tiền...">
@@ -311,7 +308,7 @@ const SessionModals: React.FC<SessionModalsProps> = ({
             </Select>
           </Form.Item>
 
-          <Form.Item name="notes" label={<IntlMessages id="session.admin.refund.notes.label" />}>
+          <Form.Item name="notes" label="Ghi chú">
             <TextArea
               rows={3}
               placeholder="Ghi chú chi tiết về việc hoàn tiền..."
@@ -324,7 +321,7 @@ const SessionModals: React.FC<SessionModalsProps> = ({
 
       {/* Suspend Modal */}
       <Modal
-        title={<IntlMessages id="session.admin.suspend.title" />}
+        title="Tạm ngưng tài khoản"
         open={suspendModalVisible}
         onCancel={() => {
           setSuspendModalVisible(false);
@@ -335,10 +332,7 @@ const SessionModals: React.FC<SessionModalsProps> = ({
         width={600}
       >
         <Form form={suspendForm} onFinish={handleProcessSuspend} layout="vertical">
-          <Form.Item
-            name="userType"
-            label={<IntlMessages id="session.admin.suspend.userType.label" />}
-          >
+          <Form.Item name="userType" label={'Loại người dùng'}>
             <Select disabled>
               <Option value="coach">Huấn luyện viên</Option>
               <Option value="learner">Học viên</Option>
@@ -347,7 +341,7 @@ const SessionModals: React.FC<SessionModalsProps> = ({
 
           <Form.Item
             name="duration"
-            label={<IntlMessages id="session.admin.suspend.duration.label" />}
+            label={'Thời gian tạm ngưng'}
             rules={[{ required: true, message: 'Vui lòng chọn thời gian khóa' }]}
           >
             <Select>
@@ -356,15 +350,13 @@ const SessionModals: React.FC<SessionModalsProps> = ({
               <Option value={7}>7 ngày</Option>
               <Option value={14}>14 ngày</Option>
               <Option value={30}>30 ngày</Option>
-              <Option value={-1}>
-                <IntlMessages id="session.admin.suspend.duration.permanent" />
-              </Option>
+              <Option value={-1}>Vĩnh viễn</Option>
             </Select>
           </Form.Item>
 
           <Form.Item
             name="reason"
-            label={<IntlMessages id="session.admin.suspend.reason.label" />}
+            label={'Lý do tạm ngưng'}
             rules={[{ required: true, message: 'Vui lòng nhập lý do tạm khóa' }]}
           >
             <TextArea
@@ -375,10 +367,7 @@ const SessionModals: React.FC<SessionModalsProps> = ({
             />
           </Form.Item>
 
-          <Form.Item
-            name="evidence"
-            label={<IntlMessages id="session.admin.suspend.evidence.label" />}
-          >
+          <Form.Item name="evidence" label={'Bằng chứng'}>
             <Upload listType="picture" multiple beforeUpload={() => false} maxCount={5}>
               <Button icon={<UploadOutlined />}>Tải lên bằng chứng</Button>
             </Upload>
@@ -397,7 +386,7 @@ const SessionModals: React.FC<SessionModalsProps> = ({
 
       {/* Warn Modal */}
       <Modal
-        title={<IntlMessages id="session.admin.warn.title" />}
+        title={'Cảnh báo người dùng'}
         open={warnModalVisible}
         onCancel={() => {
           setWarnModalVisible(false);
@@ -407,10 +396,7 @@ const SessionModals: React.FC<SessionModalsProps> = ({
         confirmLoading={loading}
       >
         <Form form={warnForm} onFinish={handleProcessWarn} layout="vertical">
-          <Form.Item
-            name="userType"
-            label={<IntlMessages id="session.admin.suspend.userType.label" />}
-          >
+          <Form.Item name="userType" label={'Loại người dùng'}>
             <Select disabled>
               <Option value="coach">Huấn luyện viên</Option>
               <Option value="learner">Học viên</Option>
@@ -419,19 +405,13 @@ const SessionModals: React.FC<SessionModalsProps> = ({
 
           <Form.Item
             name="severity"
-            label={<IntlMessages id="session.admin.warn.severity.label" />}
+            label={'Mức độ nghiêm trọng'}
             rules={[{ required: true, message: 'Vui lòng chọn mức độ nghiêm trọng' }]}
           >
             <Select>
-              <Option value="low">
-                <IntlMessages id="session.admin.warn.severity.low" />
-              </Option>
-              <Option value="medium">
-                <IntlMessages id="session.admin.warn.severity.medium" />
-              </Option>
-              <Option value="high">
-                <IntlMessages id="session.admin.warn.severity.high" />
-              </Option>
+              <Option value="low">Nhẹ</Option>
+              <Option value="medium">Trung bình</Option>
+              <Option value="high">Nghiêm trọng</Option>
             </Select>
           </Form.Item>
 

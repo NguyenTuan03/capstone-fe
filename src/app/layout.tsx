@@ -1,5 +1,6 @@
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
+import '../styles/vietnamese-classes.css';
 import AppAuthProvider from '@/@crema/core/AppAuthProvider';
 import AppContextProvider from '@/@crema/context/AppContextProvider';
 import { ConfigProvider } from 'antd';

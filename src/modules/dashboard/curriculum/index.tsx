@@ -27,7 +27,6 @@ import {
   ExportOutlined,
 } from '@ant-design/icons';
 
-import IntlMessages from '@/@crema/helper/IntlMessages';
 import { CurriculumApiService } from '@/services/curriculumApi';
 import { CurriculumStats, CurriculumFilterOptions } from '@/types/curriculum';
 
@@ -106,11 +105,9 @@ const CurriculumPageClient: React.FC = () => {
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <Title level={3} style={{ margin: 0 }}>
-          <IntlMessages id="curriculum.management.title" />
+          Quản lý giáo trình
         </Title>
-        <Text type="secondary">
-          <IntlMessages id="curriculum.management.subtitle" />
-        </Text>
+        <Text type="secondary">Quản lý nội dung giáo trình và bài học</Text>
       </div>
 
       {/* Stats Cards */}
@@ -119,7 +116,7 @@ const CurriculumPageClient: React.FC = () => {
           <Col xs={24} sm={12} md={4}>
             <Card size="small">
               <Statistic
-                title={<IntlMessages id="curriculum.stats.totalChapters" />}
+                title="Tổng chương"
                 value={stats.totalChapters}
                 prefix={<BookOutlined style={{ color: '#1890ff' }} />}
               />
@@ -128,7 +125,7 @@ const CurriculumPageClient: React.FC = () => {
           <Col xs={24} sm={12} md={4}>
             <Card size="small">
               <Statistic
-                title={<IntlMessages id="curriculum.stats.totalLessons" />}
+                title="Tổng bài học"
                 value={stats.totalLessons}
                 prefix={<FileTextOutlined style={{ color: '#52c41a' }} />}
               />
@@ -137,7 +134,7 @@ const CurriculumPageClient: React.FC = () => {
           <Col xs={24} sm={12} md={4}>
             <Card size="small">
               <Statistic
-                title={<IntlMessages id="curriculum.stats.totalQuizzes" />}
+                title="Tổng bài kiểm tra"
                 value={stats.totalQuizzes}
                 prefix={<QuestionCircleOutlined style={{ color: '#faad14' }} />}
               />
@@ -146,7 +143,7 @@ const CurriculumPageClient: React.FC = () => {
           <Col xs={24} sm={12} md={4}>
             <Card size="small">
               <Statistic
-                title={<IntlMessages id="curriculum.stats.totalDuration" />}
+                title="Tổng thời lượng"
                 value={CurriculumApiService.formatDuration(stats.totalDuration)}
                 prefix={<VideoCameraOutlined style={{ color: '#722ed1' }} />}
               />
@@ -155,7 +152,7 @@ const CurriculumPageClient: React.FC = () => {
           <Col xs={24} sm={12} md={4}>
             <Card size="small">
               <Statistic
-                title={<IntlMessages id="curriculum.stats.avgLessons" />}
+                title="TB bài học/chương"
                 value={stats.avgLessonsPerChapter}
                 precision={1}
                 prefix={<BookOutlined style={{ color: '#eb2f96' }} />}
@@ -165,7 +162,7 @@ const CurriculumPageClient: React.FC = () => {
           <Col xs={24} sm={12} md={4}>
             <Card size="small">
               <Statistic
-                title={<IntlMessages id="curriculum.stats.avgQuizzes" />}
+                title="TB bài kiểm tra/chương"
                 value={stats.avgQuizzesPerLesson}
                 precision={1}
                 prefix={<QuestionCircleOutlined style={{ color: '#13c2c2' }} />}
@@ -182,7 +179,7 @@ const CurriculumPageClient: React.FC = () => {
             tab={
               <span>
                 <BookOutlined />
-                <IntlMessages id="curriculum.tabs.chapters" />
+                Chương
               </span>
             }
             key="chapters"
@@ -202,7 +199,7 @@ const CurriculumPageClient: React.FC = () => {
             tab={
               <span>
                 <FileTextOutlined />
-                <IntlMessages id="curriculum.tabs.lessons" />
+                Bài học
               </span>
             }
             key="lessons"
@@ -226,7 +223,7 @@ const CurriculumPageClient: React.FC = () => {
             tab={
               <span>
                 <VideoCameraOutlined />
-                <IntlMessages id="curriculum.tabs.content" />
+                Nội dung
               </span>
             }
             key="content"
@@ -238,7 +235,7 @@ const CurriculumPageClient: React.FC = () => {
             tab={
               <span>
                 <QuestionCircleOutlined />
-                <IntlMessages id="curriculum.tabs.quizzes" />
+                Bài kiểm tra
               </span>
             }
             key="quizzes"
@@ -260,7 +257,7 @@ const CurriculumPageClient: React.FC = () => {
             tab={
               <span>
                 <HistoryOutlined />
-                <IntlMessages id="curriculum.tabs.logs" />
+                Lịch sử thay đổi
               </span>
             }
             key="logs"

@@ -43,7 +43,6 @@ import type { MenuProps } from 'antd';
 
 import { CoachApiService } from '@/services/coachApi';
 import { Coach, GetCoachesParams, CoachStats, Certificate } from '@/types/coach';
-import IntlMessages from '@/@crema/helper/IntlMessages';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -205,13 +204,13 @@ export default function CoachesPageClient() {
     {
       key: 'view',
       icon: <EyeOutlined />,
-      label: <IntlMessages id="coach.actions.view" />,
+      label: 'Xem chi tiết',
       onClick: () => handleViewCoach(coach.id),
     },
     {
       key: 'certificates',
       icon: <SafetyCertificateOutlined />,
-      label: <IntlMessages id="coach.actions.certificates" />,
+      label: 'Quản lý chứng chỉ',
       onClick: () => handleViewCertificates(coach.id),
     },
   ];
@@ -219,7 +218,7 @@ export default function CoachesPageClient() {
   // Table columns
   const columns: ColumnsType<Coach> = [
     {
-      title: <IntlMessages id="coach.table.info" />,
+      title: 'Thông tin huấn luyện viên',
       key: 'coachInfo',
       width: 280,
       render: (_, record) => (
@@ -273,7 +272,13 @@ export default function CoachesPageClient() {
       render: (_, record) => (
         <Badge
           status={getStatusColor(record.status) as any}
-          text={<IntlMessages id={`coach.status.${record.status}`} />}
+          text={
+            record.status === 'active'
+              ? 'Đang hoạt động'
+              : record.status === 'suspended'
+                ? 'Bị tạm ngưng'
+                : 'Chờ duyệt'
+          }
         />
       ),
     },
@@ -285,7 +290,7 @@ export default function CoachesPageClient() {
       render: (_, record) => <Text className="font-medium">{record.totalSessions}</Text>,
     },
     {
-      title: <IntlMessages id="coach.table.actions" />,
+      title: 'Thao tác',
       key: 'actions',
       width: 100,
       align: 'center',
@@ -306,17 +311,13 @@ export default function CoachesPageClient() {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <Title level={2}>
-            <IntlMessages id="coach.management.title" />
-          </Title>
+          <Title level={2}>Quản lý huấn luyện viên</Title>
           <Text className="text-gray-600">
-            <IntlMessages id="coach.management.subtitle" />
+            Quản lý thông tin và trạng thái của tất cả huấn luyện viên
           </Text>
         </div>
         <Space>
-          <Button icon={<ExportOutlined />}>
-            <IntlMessages id="coach.export" />
-          </Button>
+          <Button icon={<ExportOutlined />}>Xuất dữ liệu</Button>
         </Space>
       </div>
 
@@ -327,54 +328,42 @@ export default function CoachesPageClient() {
             <Card className="text-center">
               <UserOutlined className="text-3xl text-blue-500 mb-2" />
               <div className="text-2xl font-bold">{stats.total}</div>
-              <Text className="text-gray-600">
-                <IntlMessages id="coach.stats.total" />
-              </Text>
+              <Text className="text-gray-600">Tổng số huấn luyện viên</Text>
             </Card>
           </Col>
           <Col xs={24} sm={8} md={4}>
             <Card className="text-center">
               <CheckCircleOutlined className="text-3xl text-green-500 mb-2" />
               <div className="text-2xl font-bold">{stats.active}</div>
-              <Text className="text-gray-600">
-                <IntlMessages id="coach.stats.active" />
-              </Text>
+              <Text className="text-gray-600">Đang hoạt động</Text>
             </Card>
           </Col>
           <Col xs={24} sm={8} md={4}>
             <Card className="text-center">
               <StopOutlined className="text-3xl text-red-500 mb-2" />
               <div className="text-2xl font-bold">{stats.suspended}</div>
-              <Text className="text-gray-600">
-                <IntlMessages id="coach.stats.suspended" />
-              </Text>
+              <Text className="text-gray-600">Bị tạm ngưng</Text>
             </Card>
           </Col>
           <Col xs={24} sm={8} md={4}>
             <Card className="text-center">
               <ClockCircleOutlined className="text-3xl text-orange-500 mb-2" />
               <div className="text-2xl font-bold">{stats.pending}</div>
-              <Text className="text-gray-600">
-                <IntlMessages id="coach.stats.pending" />
-              </Text>
+              <Text className="text-gray-600">Chờ duyệt</Text>
             </Card>
           </Col>
           <Col xs={24} sm={8} md={4}>
             <Card className="text-center">
               <StarOutlined className="text-3xl text-yellow-500 mb-2" />
               <div className="text-2xl font-bold">{stats.avgRating.toFixed(1)}</div>
-              <Text className="text-gray-600">
-                <IntlMessages id="coach.stats.avgRating" />
-              </Text>
+              <Text className="text-gray-600">Đánh giá trung bình</Text>
             </Card>
           </Col>
           <Col xs={24} sm={8} md={4}>
             <Card className="text-center">
               <TrophyOutlined className="text-3xl text-purple-500 mb-2" />
               <div className="text-2xl font-bold">{stats.totalSessions}</div>
-              <Text className="text-gray-600">
-                <IntlMessages id="coach.stats.totalSessions" />
-              </Text>
+              <Text className="text-gray-600">Tổng buổi học</Text>
             </Card>
           </Col>
         </Row>
@@ -415,18 +404,10 @@ export default function CoachesPageClient() {
               className="w-40"
               placeholder="Trạng thái"
             >
-              <Option value="all">
-                <IntlMessages id="coach.status.all" />
-              </Option>
-              <Option value="active">
-                <IntlMessages id="coach.status.active" />
-              </Option>
-              <Option value="suspended">
-                <IntlMessages id="coach.status.suspended" />
-              </Option>
-              <Option value="pending">
-                <IntlMessages id="coach.status.pending" />
-              </Option>
+              <Option value="all">Tất cả trạng thái</Option>
+              <Option value="active">Đang hoạt động</Option>
+              <Option value="suspended">Bị tạm ngưng</Option>
+              <Option value="pending">Chờ duyệt</Option>
             </Select>
 
             <Select
@@ -438,21 +419,11 @@ export default function CoachesPageClient() {
               className="w-50"
               placeholder="Chuyên môn"
             >
-              <Option value="all">
-                <IntlMessages id="coach.specialty.all" />
-              </Option>
-              <Option value="Kỹ thuật cơ bản">
-                <IntlMessages id="coach.specialty.basic" />
-              </Option>
-              <Option value="Chiến thuật nâng cao">
-                <IntlMessages id="coach.specialty.advanced" />
-              </Option>
-              <Option value="Huấn luyện trẻ em">
-                <IntlMessages id="coach.specialty.kids" />
-              </Option>
-              <Option value="Thi đấu đôi">
-                <IntlMessages id="coach.specialty.doubles" />
-              </Option>
+              <Option value="all">Tất cả chuyên môn</Option>
+              <Option value="Kỹ thuật cơ bản">Cơ bản</Option>
+              <Option value="Chiến thuật nâng cao">Nâng cao</Option>
+              <Option value="Huấn luyện trẻ em">Trẻ em</Option>
+              <Option value="Thi đấu đôi">Thi đấu đôi</Option>
             </Select>
 
             <Select
@@ -479,7 +450,7 @@ export default function CoachesPageClient() {
                 setCurrentPage(1);
               }}
             >
-              <IntlMessages id="coach.filter.clear" />
+              Xóa bộ lọc
             </Button>
           </div>
         </div>
@@ -513,7 +484,7 @@ export default function CoachesPageClient() {
 
       {/* Coach Detail Modal */}
       <Modal
-        title={<IntlMessages id="coach.detail.title" />}
+        title="Chi tiết huấn luyện viên"
         open={isDetailModalVisible}
         onCancel={() => setIsDetailModalVisible(false)}
         footer={null}
@@ -543,13 +514,19 @@ export default function CoachesPageClient() {
                 <Space>
                   <Badge
                     status={getStatusColor(selectedCoach.status) as any}
-                    text={<IntlMessages id={`coach.status.${selectedCoach.status}`} />}
+                    text={
+                      selectedCoach.status === 'active'
+                        ? 'Đang hoạt động'
+                        : selectedCoach.status === 'suspended'
+                          ? 'Bị tạm ngưng'
+                          : 'Chờ duyệt'
+                    }
                   />
                 </Space>
               </div>
             </div>
 
-            <Descriptions title={<IntlMessages id="coach.detail.basicInfo" />} column={2}>
+            <Descriptions title="Thông tin cơ bản" column={2}>
               <Descriptions.Item label="Email">{selectedCoach.email}</Descriptions.Item>
               <Descriptions.Item label="Số điện thoại">
                 {selectedCoach.phone || 'N/A'}
@@ -557,21 +534,21 @@ export default function CoachesPageClient() {
               <Descriptions.Item label="Vị trí">
                 {selectedCoach.location || 'N/A'}
               </Descriptions.Item>
-              <Descriptions.Item label={<IntlMessages id="coach.detail.joinDate" />}>
+              <Descriptions.Item label="Ngày tham gia">
                 {formatDate(selectedCoach.joinDate)}
               </Descriptions.Item>
               {selectedCoach.lastActive && (
-                <Descriptions.Item label={<IntlMessages id="coach.detail.lastActive" />}>
+                <Descriptions.Item label="Hoạt động cuối">
                   {formatDate(selectedCoach.lastActive)}
                 </Descriptions.Item>
               )}
             </Descriptions>
 
-            <Descriptions title={<IntlMessages id="coach.detail.professionalInfo" />} column={2}>
-              <Descriptions.Item label={<IntlMessages id="coach.detail.experience" />}>
+            <Descriptions title="Thông tin nghề nghiệp" column={2}>
+              <Descriptions.Item label="Kinh nghiệm">
                 {selectedCoach.experience} năm
               </Descriptions.Item>
-              <Descriptions.Item label={<IntlMessages id="coach.detail.hourlyRate" />}>
+              <Descriptions.Item label="Giá theo giờ">
                 {formatCurrency(selectedCoach.hourlyRate)}
               </Descriptions.Item>
               <Descriptions.Item label="Chuyên môn" span={2}>
@@ -585,11 +562,11 @@ export default function CoachesPageClient() {
               </Descriptions.Item>
             </Descriptions>
 
-            <Descriptions title={<IntlMessages id="coach.detail.stats" />} column={2}>
-              <Descriptions.Item label={<IntlMessages id="coach.detail.totalSessions" />}>
+            <Descriptions title="Thống kê hoạt động" column={2}>
+              <Descriptions.Item label="Tổng buổi học">
                 {selectedCoach.totalSessions}
               </Descriptions.Item>
-              <Descriptions.Item label={<IntlMessages id="coach.detail.totalStudents" />}>
+              <Descriptions.Item label="Tổng học viên">
                 {selectedCoach.totalStudents}
               </Descriptions.Item>
             </Descriptions>
@@ -597,7 +574,7 @@ export default function CoachesPageClient() {
             {selectedCoach.bio && (
               <div>
                 <Title level={5} className="mb-3">
-                  <IntlMessages id="coach.detail.bio" />
+                  Tiểu sử
                 </Title>
                 <Text>{selectedCoach.bio}</Text>
               </div>
@@ -622,7 +599,7 @@ export default function CoachesPageClient() {
 
       {/* Certificate Modal */}
       <Modal
-        title={<IntlMessages id="coach.certificates.title" />}
+        title="Quản lý chứng chỉ"
         open={isCertificateModalVisible}
         onCancel={() => setIsCertificateModalVisible(false)}
         footer={null}
@@ -653,7 +630,7 @@ export default function CoachesPageClient() {
                         icon={<LinkOutlined />}
                         onClick={() => window.open(cert.certificateUrl, '_blank')}
                       >
-                        <IntlMessages id="coach.certificates.view" />
+                        Xem chứng chỉ
                       </Button>
                     ),
                     cert.status === 'pending' && (
@@ -665,7 +642,7 @@ export default function CoachesPageClient() {
                             handleUpdateCertificate(selectedCoach.id, cert.id, 'verified')
                           }
                         >
-                          <IntlMessages id="coach.certificates.verify" />
+                          Xác minh
                         </Button>
                         <Button
                           danger
@@ -679,7 +656,7 @@ export default function CoachesPageClient() {
                             )
                           }
                         >
-                          <IntlMessages id="coach.certificates.reject" />
+                          Từ chối
                         </Button>
                       </Space>
                     ),
@@ -692,40 +669,41 @@ export default function CoachesPageClient() {
                         <Text className="font-medium">{cert.name}</Text>
                         <Badge
                           status={getCertificateStatusColor(cert.status) as any}
-                          text={<IntlMessages id={`coach.certificates.${cert.status}`} />}
+                          text={
+                            cert.status === 'verified'
+                              ? 'Đã xác minh'
+                              : cert.status === 'pending'
+                                ? 'Chờ xác minh'
+                                : cert.status === 'expired'
+                                  ? 'Hết hạn'
+                                  : 'Bị từ chối'
+                          }
                         />
                       </div>
                     }
                     description={
                       <div className="space-y-2">
                         <div className="flex items-center space-x-4">
-                          <Text className="text-gray-500">
-                            <IntlMessages id="coach.certificates.issuer" />: {cert.issuer}
-                          </Text>
+                          <Text className="text-gray-500">Nhà cung cấp: {cert.issuer}</Text>
                         </div>
                         <div className="flex items-center space-x-4">
                           <Text className="text-gray-500">
                             <CalendarOutlined className="mr-1" />
-                            <IntlMessages id="coach.certificates.issueDate" />:{' '}
-                            {formatDate(cert.issueDate)}
+                            Ngày cấp: {formatDate(cert.issueDate)}
                           </Text>
                           {cert.expiryDate && (
                             <Text className="text-gray-500">
-                              <IntlMessages id="coach.certificates.expiryDate" />:{' '}
-                              {formatDate(cert.expiryDate)}
+                              Ngày hết hạn: {formatDate(cert.expiryDate)}
                             </Text>
                           )}
                         </div>
                         {cert.verifiedBy && cert.verifiedAt && (
                           <div className="text-sm text-green-600">
-                            <IntlMessages id="coach.certificates.verifiedBy" />: {cert.verifiedBy} -{' '}
-                            {formatDate(cert.verifiedAt)}
+                            Xác minh bởi: {cert.verifiedBy} - {formatDate(cert.verifiedAt)}
                           </div>
                         )}
                         {cert.notes && (
-                          <div className="text-sm text-gray-600">
-                            <IntlMessages id="coach.certificates.notes" />: {cert.notes}
-                          </div>
+                          <div className="text-sm text-gray-600">Ghi chú: {cert.notes}</div>
                         )}
                       </div>
                     }

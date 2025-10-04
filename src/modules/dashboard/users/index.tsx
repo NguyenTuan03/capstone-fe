@@ -39,7 +39,6 @@ import type { MenuProps } from 'antd';
 
 import { UserApiService } from '@/services/userApi';
 import { User, GetUsersParams, UserListStats } from '@/types/user';
-import IntlMessages from '@/@crema/helper/IntlMessages';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -188,8 +187,8 @@ export default function UsersPageClient() {
           <p>
             Bạn có chắc chắn muốn khóa tài khoản của <strong>{selectedUser.name}</strong>?
           </p>
-          <p className="text-red-600 font-medium">Lý do: {finalReason}</p>
-          <p className="text-gray-500 text-sm mt-2">
+          <p className="chu-do-600 chu-dam">Lý do: {finalReason}</p>
+          <p className="chu-xam-500 chu-nho margin-tren-2">
             Người dùng sẽ không thể đăng nhập sau khi bị khóa.
           </p>
         </div>
@@ -232,7 +231,7 @@ export default function UsersPageClient() {
           <p>
             Bạn có chắc chắn muốn xóa người dùng <strong>{userName}</strong>?
           </p>
-          <p className="text-red-600 font-medium">Hành động này không thể hoàn tác!</p>
+          <p className="chu-do-600 chu-dam">Hành động này không thể hoàn tác!</p>
         </div>
       ),
       okText: 'Xóa',
@@ -255,7 +254,7 @@ export default function UsersPageClient() {
     {
       key: 'view',
       icon: <EyeOutlined />,
-      label: <IntlMessages id="user.actions.view" />,
+      label: 'Xem chi tiết',
       onClick: () => handleViewUser(user.id),
     },
     {
@@ -266,7 +265,7 @@ export default function UsersPageClient() {
           {
             key: 'block',
             icon: <StopOutlined />,
-            label: <IntlMessages id="user.actions.block" />,
+            label: 'Khóa tài khoản',
             onClick: () => handleBlockUser(user),
             danger: true,
           },
@@ -277,7 +276,7 @@ export default function UsersPageClient() {
           {
             key: 'unblock',
             icon: <PlayCircleOutlined />,
-            label: <IntlMessages id="user.actions.unblock" />,
+            label: 'Mở khóa tài khoản',
             onClick: () => handleUnblockUser(user.id),
           },
         ]
@@ -288,7 +287,7 @@ export default function UsersPageClient() {
     {
       key: 'delete',
       icon: <DeleteOutlined />,
-      label: <IntlMessages id="user.actions.delete" />,
+      label: 'Xóa tài khoản',
       onClick: () => handleDeleteUser(user.id, user.name),
       danger: true,
     },
@@ -297,44 +296,52 @@ export default function UsersPageClient() {
   // Table columns
   const columns: ColumnsType<User> = [
     {
-      title: <IntlMessages id="user.table.info" />,
+      title: 'Thông tin người dùng',
       key: 'userInfo',
       width: 280,
       render: (_, record) => (
-        <div className="flex items-center space-x-2">
-          <Avatar src={record.avatar} className="bg-blue-500" size="default">
+        <div className="hien-thi-ngang can-giua khoang-cach-ngang-2">
+          <Avatar src={record.avatar} className="nen-xanh-500" size="default">
             {record.name.charAt(0).toUpperCase()}
           </Avatar>
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center space-x-1">
-              <Text className="font-medium">{record.name}</Text>
-              {record.role === 'admin' && (
-                <CheckCircleOutlined className="text-purple-500 text-xs" />
-              )}
+          <div className="mo-rong-1 rong-toi-thieu-0">
+            <div className="hien-thi-ngang can-giua khoang-cach-ngang-1">
+              <Text className="chu-dam">{record.name}</Text>
+              {record.role === 'admin' && <CheckCircleOutlined className="chu-tim-500 chu-nho" />}
             </div>
-            <Text className="text-sm text-gray-500">{record.email}</Text>
+            <Text className="chu-nho chu-xam-500">{record.email}</Text>
           </div>
         </div>
       ),
     },
     {
-      title: <IntlMessages id="user.table.role" />,
+      title: 'Vai trò',
       key: 'role',
       width: 120,
       render: (_, record) => (
         <Tag color={getRoleColor(record.role)}>
-          <IntlMessages id={`user.role.${record.role}`} />
+          {record.role === 'admin'
+            ? 'Quản trị viên'
+            : record.role === 'coach'
+              ? 'Huấn luyện viên'
+              : 'Học viên'}
         </Tag>
       ),
     },
     {
-      title: <IntlMessages id="user.table.status" />,
+      title: 'Trạng thái',
       key: 'status',
       width: 140,
       render: (_, record) => (
         <Badge
           status={getStatusColor(record.status) as any}
-          text={<IntlMessages id={`user.status.${record.status}`} />}
+          text={
+            record.status === 'active'
+              ? 'Đang hoạt động'
+              : record.status === 'blocked'
+                ? 'Bị khóa'
+                : 'Chờ duyệt'
+          }
         />
       ),
     },
@@ -352,7 +359,7 @@ export default function UsersPageClient() {
       render: (_, record) => <Text className="font-medium">{record.totalSessions || 0}</Text>,
     },
     {
-      title: <IntlMessages id="user.table.actions" />,
+      title: 'Thao tác',
       key: 'actions',
       width: 100,
       align: 'center',
@@ -373,17 +380,13 @@ export default function UsersPageClient() {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <Title level={2}>
-            <IntlMessages id="user.management.title" />
-          </Title>
+          <Title level={2}>Quản lý người dùng</Title>
           <Text className="text-gray-600">
-            <IntlMessages id="user.management.subtitle" />
+            Quản lý thông tin và trạng thái của tất cả người dùng trong hệ thống
           </Text>
         </div>
         <Space>
-          <Button icon={<ExportOutlined />}>
-            <IntlMessages id="user.export" />
-          </Button>
+          <Button icon={<ExportOutlined />}>Xuất dữ liệu</Button>
         </Space>
       </div>
 
@@ -394,54 +397,42 @@ export default function UsersPageClient() {
             <Card className="text-center">
               <UserOutlined className="text-3xl text-blue-500 mb-2" />
               <div className="text-2xl font-bold">{stats.total}</div>
-              <Text className="text-gray-600">
-                <IntlMessages id="user.stats.total" />
-              </Text>
+              <Text className="text-gray-600">Tổng số người dùng</Text>
             </Card>
           </Col>
           <Col xs={24} sm={8} md={6}>
             <Card className="text-center">
               <CheckCircleOutlined className="text-3xl text-green-500 mb-2" />
               <div className="text-2xl font-bold">{stats.active}</div>
-              <Text className="text-gray-600">
-                <IntlMessages id="user.stats.active" />
-              </Text>
+              <Text className="text-gray-600">Đang hoạt động</Text>
             </Card>
           </Col>
           <Col xs={24} sm={8} md={6}>
             <Card className="text-center">
               <StopOutlined className="text-3xl text-red-500 mb-2" />
               <div className="text-2xl font-bold">{stats.blocked}</div>
-              <Text className="text-gray-600">
-                <IntlMessages id="user.stats.blocked" />
-              </Text>
+              <Text className="text-gray-600">Bị khóa</Text>
             </Card>
           </Col>
           <Col xs={24} sm={8} md={6}>
             <Card className="text-center">
               <ClockCircleOutlined className="text-3xl text-orange-500 mb-2" />
               <div className="text-2xl font-bold">{stats.pending}</div>
-              <Text className="text-gray-600">
-                <IntlMessages id="user.stats.pending" />
-              </Text>
+              <Text className="text-gray-600">Chờ duyệt</Text>
             </Card>
           </Col>
           <Col xs={24} sm={8} md={6}>
             <Card className="text-center">
               <UserOutlined className="text-3xl text-cyan-500 mb-2" />
               <div className="text-2xl font-bold">{stats.learners}</div>
-              <Text className="text-gray-600">
-                <IntlMessages id="user.stats.learners" />
-              </Text>
+              <Text className="text-gray-600">Học viên</Text>
             </Card>
           </Col>
           <Col xs={24} sm={8} md={6}>
             <Card className="text-center">
               <TeamOutlined className="text-3xl text-blue-500 mb-2" />
               <div className="text-2xl font-bold">{stats.coaches}</div>
-              <Text className="text-gray-600">
-                <IntlMessages id="user.stats.coaches" />
-              </Text>
+              <Text className="text-gray-600">Huấn luyện viên</Text>
             </Card>
           </Col>
         </Row>
@@ -482,18 +473,10 @@ export default function UsersPageClient() {
               className="w-40"
               placeholder="Vai trò"
             >
-              <Option value="all">
-                <IntlMessages id="user.role.all" />
-              </Option>
-              <Option value="learner">
-                <IntlMessages id="user.role.learner" />
-              </Option>
-              <Option value="coach">
-                <IntlMessages id="user.role.coach" />
-              </Option>
-              <Option value="admin">
-                <IntlMessages id="user.role.admin" />
-              </Option>
+              <Option value="all">Tất cả vai trò</Option>
+              <Option value="learner">Học viên</Option>
+              <Option value="coach">Huấn luyện viên</Option>
+              <Option value="admin">Quản trị viên</Option>
             </Select>
 
             <Select
@@ -505,18 +488,10 @@ export default function UsersPageClient() {
               className="w-40"
               placeholder="Trạng thái"
             >
-              <Option value="all">
-                <IntlMessages id="user.status.all" />
-              </Option>
-              <Option value="active">
-                <IntlMessages id="user.status.active" />
-              </Option>
-              <Option value="blocked">
-                <IntlMessages id="user.status.blocked" />
-              </Option>
-              <Option value="pending">
-                <IntlMessages id="user.status.pending" />
-              </Option>
+              <Option value="all">Tất cả trạng thái</Option>
+              <Option value="active">Đang hoạt động</Option>
+              <Option value="blocked">Bị khóa</Option>
+              <Option value="pending">Chờ duyệt</Option>
             </Select>
 
             <Select
@@ -528,18 +503,10 @@ export default function UsersPageClient() {
               className="w-40"
               placeholder="Trình độ"
             >
-              <Option value="all">
-                <IntlMessages id="user.skill.all" />
-              </Option>
-              <Option value="beginner">
-                <IntlMessages id="user.skill.beginner" />
-              </Option>
-              <Option value="intermediate">
-                <IntlMessages id="user.skill.intermediate" />
-              </Option>
-              <Option value="advanced">
-                <IntlMessages id="user.skill.advanced" />
-              </Option>
+              <Option value="all">Tất cả trình độ</Option>
+              <Option value="beginner">Mới bắt đầu</Option>
+              <Option value="intermediate">Trung bình</Option>
+              <Option value="advanced">Nâng cao</Option>
             </Select>
 
             <Button
@@ -551,7 +518,7 @@ export default function UsersPageClient() {
                 setCurrentPage(1);
               }}
             >
-              <IntlMessages id="user.filter.clear" />
+              Xóa bộ lọc
             </Button>
           </div>
         </div>
@@ -585,7 +552,7 @@ export default function UsersPageClient() {
 
       {/* User Detail Modal */}
       <Modal
-        title={<IntlMessages id="user.detail.title" />}
+        title="Chi tiết người dùng"
         open={isDetailModalVisible}
         onCancel={() => setIsDetailModalVisible(false)}
         footer={null}
@@ -603,33 +570,47 @@ export default function UsersPageClient() {
                 </Title>
                 <Space>
                   <Tag color={getRoleColor(selectedUser.role)}>
-                    <IntlMessages id={`user.role.${selectedUser.role}`} />
+                    {selectedUser.role === 'admin'
+                      ? 'Quản trị viên'
+                      : selectedUser.role === 'coach'
+                        ? 'Huấn luyện viên'
+                        : 'Học viên'}
                   </Tag>
                   <Badge
                     status={getStatusColor(selectedUser.status) as any}
-                    text={<IntlMessages id={`user.status.${selectedUser.status}`} />}
+                    text={
+                      selectedUser.status === 'active'
+                        ? 'Đang hoạt động'
+                        : selectedUser.status === 'blocked'
+                          ? 'Bị khóa'
+                          : 'Chờ duyệt'
+                    }
                   />
                 </Space>
               </div>
             </div>
 
-            <Descriptions title={<IntlMessages id="user.detail.basicInfo" />} column={2}>
+            <Descriptions title="Thông tin cơ bản" column={2}>
               <Descriptions.Item label="Email">{selectedUser.email}</Descriptions.Item>
               <Descriptions.Item label="Số điện thoại">
                 {selectedUser.phone || 'N/A'}
               </Descriptions.Item>
               <Descriptions.Item label="Vị trí">{selectedUser.location || 'N/A'}</Descriptions.Item>
-              <Descriptions.Item label={<IntlMessages id="user.detail.joinDate" />}>
+              <Descriptions.Item label="Ngày tham gia">
                 {formatDate(selectedUser.joinDate)}
               </Descriptions.Item>
               {selectedUser.lastLogin && (
-                <Descriptions.Item label={<IntlMessages id="user.detail.lastLogin" />}>
+                <Descriptions.Item label="Lần cuối đăng nhập">
                   {formatDate(selectedUser.lastLogin)}
                 </Descriptions.Item>
               )}
               {selectedUser.skillLevel && (
                 <Descriptions.Item label="Trình độ">
-                  <IntlMessages id={`user.skill.${selectedUser.skillLevel}`} />
+                  {selectedUser.skillLevel === 'beginner'
+                    ? 'Mới bắt đầu'
+                    : selectedUser.skillLevel === 'intermediate'
+                      ? 'Trung bình'
+                      : 'Nâng cao'}
                 </Descriptions.Item>
               )}
             </Descriptions>
@@ -649,17 +630,17 @@ export default function UsersPageClient() {
             )}
 
             {selectedUser.stats && (
-              <Descriptions title={<IntlMessages id="user.detail.stats" />} column={2}>
-                <Descriptions.Item label={<IntlMessages id="user.detail.totalSessions" />}>
+              <Descriptions title="Thống kê hoạt động" column={2}>
+                <Descriptions.Item label="Tổng số buổi học">
                   {selectedUser.totalSessions || 0}
                 </Descriptions.Item>
-                <Descriptions.Item label={<IntlMessages id="user.detail.totalSpent" />}>
+                <Descriptions.Item label="Tổng chi tiêu">
                   {formatCurrency(selectedUser.totalSpent || 0)}
                 </Descriptions.Item>
-                <Descriptions.Item label={<IntlMessages id="user.detail.completedLessons" />}>
+                <Descriptions.Item label="Bài học hoàn thành">
                   {selectedUser.stats.completedLessons}/{selectedUser.stats.totalLessons}
                 </Descriptions.Item>
-                <Descriptions.Item label={<IntlMessages id="user.detail.currentLevel" />}>
+                <Descriptions.Item label="Cấp độ hiện tại">
                   {selectedUser.stats.currentLevel}
                 </Descriptions.Item>
               </Descriptions>
@@ -668,7 +649,7 @@ export default function UsersPageClient() {
             {selectedUser.stats?.achievements && selectedUser.stats.achievements.length > 0 && (
               <div>
                 <Title level={5} className="mb-3">
-                  <IntlMessages id="user.detail.achievements" />
+                  Thành tựu
                 </Title>
                 <Space wrap>
                   {selectedUser.stats.achievements.map((achievement, index) => (
@@ -685,22 +666,20 @@ export default function UsersPageClient() {
 
       {/* Block User Modal */}
       <Modal
-        title={<IntlMessages id="user.block.title" />}
+        title="Khóa tài khoản"
         open={isBlockModalVisible}
         onCancel={() => setIsBlockModalVisible(false)}
         footer={null}
         width={600}
       >
         <div className="mb-4">
-          <Text className="text-gray-600">
-            <IntlMessages id="user.block.subtitle" />
-          </Text>
+          <Text className="text-gray-600">Bạn có chắc chắn muốn khóa tài khoản này không?</Text>
         </div>
 
         <Form form={blockForm} layout="vertical" onFinish={submitBlock}>
           <Form.Item
             name="reason"
-            label={<IntlMessages id="user.block.reason.label" />}
+            label="Lý do khóa"
             rules={[{ required: true, message: 'Vui lòng chọn lý do khóa tài khoản' }]}
           >
             <Select
@@ -730,7 +709,7 @@ export default function UsersPageClient() {
               return selectedReason === 'Khác (tự nhập lý do)' ? (
                 <Form.Item
                   name="customReason"
-                  label={<IntlMessages id="user.block.customReason.label" />}
+                  label="Lý do khác"
                   rules={[
                     {
                       required: true,
@@ -750,11 +729,9 @@ export default function UsersPageClient() {
           </Form.Item>
 
           <div className="flex justify-end space-x-2">
-            <Button onClick={() => setIsBlockModalVisible(false)}>
-              <IntlMessages id="common.cancel" />
-            </Button>
+            <Button onClick={() => setIsBlockModalVisible(false)}>Hủy</Button>
             <Button type="primary" danger htmlType="submit">
-              <IntlMessages id="user.actions.block" />
+              Khóa tài khoản
             </Button>
           </div>
         </Form>

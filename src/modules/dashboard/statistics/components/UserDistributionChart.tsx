@@ -31,14 +31,14 @@ const UserDistributionChart: React.FC<UserDistributionChartProps> = ({
   };
 
   return (
-    <Card title={title} className="h-full">
-      <Space direction="vertical" size="large" className="w-full">
+    <Card title={title} className="chieu-cao-day">
+      <Space direction="vertical" size="large" className="rong-day">
         {data.map((item, index) => {
           const percentage = total > 0 ? Math.round((item.count / total) * 100) : 0;
 
           return (
             <div key={index}>
-              <Row justify="space-between" align="middle" className="mb-2">
+              <Row justify="space-between" align="middle" className="margin-duoi-2">
                 <Col>
                   <Text strong>{item.type}</Text>
                 </Col>

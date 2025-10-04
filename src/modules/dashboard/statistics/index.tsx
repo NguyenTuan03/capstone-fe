@@ -31,7 +31,6 @@ import {
   ThunderboltOutlined,
 } from '@ant-design/icons';
 
-import IntlMessages from '@/@crema/helper/IntlMessages';
 import StatisticsApiService from '@/services/statisticsApi';
 import { StatisticsData, GetStatisticsParams } from '@/types/statistics';
 

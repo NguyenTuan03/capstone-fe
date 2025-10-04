@@ -37,7 +37,6 @@ import {
 } from '@ant-design/icons';
 
 import { ColumnsType } from 'antd/es/table';
-import IntlMessages from '@/@crema/helper/IntlMessages';
 import { Session } from '@/types/session';
 
 const { RangePicker } = DatePicker;
@@ -112,7 +111,7 @@ const SessionsTable: React.FC<SessionsTableProps> = ({
   // Table columns
   const columns: ColumnsType<Session> = [
     {
-      title: <IntlMessages id="session.table.id" />,
+      title: 'Mã buổi học',
       dataIndex: 'id',
       key: 'id',
       width: 120,
@@ -123,7 +122,7 @@ const SessionsTable: React.FC<SessionsTableProps> = ({
       ),
     },
     {
-      title: <IntlMessages id="session.table.learner" />,
+      title: 'Học viên',
       key: 'learner',
       width: 200,
       render: (_, session) => (
@@ -137,7 +136,7 @@ const SessionsTable: React.FC<SessionsTableProps> = ({
       ),
     },
     {
-      title: <IntlMessages id="session.table.coach" />,
+      title: 'Huấn luyện viên',
       key: 'coach',
       width: 200,
       render: (_, session) => (
@@ -151,7 +150,7 @@ const SessionsTable: React.FC<SessionsTableProps> = ({
       ),
     },
     {
-      title: <IntlMessages id="session.table.datetime" />,
+      title: 'Thời gian',
       key: 'datetime',
       width: 160,
       render: (_, session) => (
@@ -166,21 +165,21 @@ const SessionsTable: React.FC<SessionsTableProps> = ({
           </div>
           <div style={{ fontSize: '11px', color: '#666' }}>
             <Tag color={session.type === 'online' ? 'blue' : 'green'}>
-              <IntlMessages id={`session.type.${session.type}`} />
+              {session.type === 'online' ? 'Trực tuyến' : 'Trực tiếp'}
             </Tag>
           </div>
         </div>
       ),
     },
     {
-      title: <IntlMessages id="session.table.status" />,
+      title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
       width: 120,
       render: (status: Session['status']) => getStatusTag(status),
     },
     {
-      title: <IntlMessages id="session.table.payment" />,
+      title: 'Thanh toán',
       key: 'payment',
       width: 150,
       render: (_, session) => (
@@ -224,20 +223,20 @@ const SessionsTable: React.FC<SessionsTableProps> = ({
       ),
     },
     {
-      title: <IntlMessages id="session.table.actions" />,
+      title: 'Thao tác',
       key: 'actions',
       width: 120,
       render: (_, session) => {
         const menuItems = [
           {
             key: 'view',
-            label: <IntlMessages id="session.actions.view" />,
+            label: 'Xem chi tiết',
             icon: <EyeOutlined />,
             onClick: () => handleViewSession(session),
           },
           {
             key: 'refund',
-            label: <IntlMessages id="session.actions.refund" />,
+            label: 'Hoàn tiền',
             icon: <DollarOutlined />,
             onClick: () => handleRefund(session),
             disabled: session.paymentStatus === 'refunded' || session.paymentStatus === 'pending',
@@ -247,13 +246,13 @@ const SessionsTable: React.FC<SessionsTableProps> = ({
           },
           {
             key: 'warn-learner',
-            label: <IntlMessages id="session.actions.warnLearner" />,
+            label: 'Cảnh báo học viên',
             icon: <WarningOutlined />,
             onClick: () => handleWarn(session, 'learner'),
           },
           {
             key: 'warn-coach',
-            label: <IntlMessages id="session.actions.warnCoach" />,
+            label: 'Cảnh báo huấn luyện viên',
             icon: <WarningOutlined />,
             onClick: () => handleWarn(session, 'coach'),
           },
@@ -290,11 +289,9 @@ const SessionsTable: React.FC<SessionsTableProps> = ({
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <Title level={3} style={{ margin: 0 }}>
-          <IntlMessages id="session.management.title" />
+          Quản lý buổi học
         </Title>
-        <Text type="secondary">
-          <IntlMessages id="session.management.subtitle" />
-        </Text>
+        <Text type="secondary">Quản lý và theo dõi tất cả các buổi học trong hệ thống</Text>
       </div>
 
       {/* Stats Cards */}
@@ -303,7 +300,7 @@ const SessionsTable: React.FC<SessionsTableProps> = ({
           <Col xs={24} sm={12} md={6}>
             <Card size="small">
               <Statistic
-                title={<IntlMessages id="session.stats.total" />}
+                title="Tổng buổi học"
                 value={stats.total}
                 prefix={<CalendarOutlined style={{ color: '#1890ff' }} />}
               />
@@ -312,7 +309,7 @@ const SessionsTable: React.FC<SessionsTableProps> = ({
           <Col xs={24} sm={12} md={6}>
             <Card size="small">
               <Statistic
-                title={<IntlMessages id="session.stats.completed" />}
+                title="Hoàn thành"
                 value={stats.completed}
                 prefix={<Badge status="success" />}
               />
@@ -321,7 +318,7 @@ const SessionsTable: React.FC<SessionsTableProps> = ({
           <Col xs={24} sm={12} md={6}>
             <Card size="small">
               <Statistic
-                title={<IntlMessages id="session.stats.revenue" />}
+                title="Doanh thu"
                 value={stats.totalRevenue}
                 formatter={(value) => formatCurrency(Number(value))}
                 prefix={<DollarOutlined style={{ color: '#52c41a' }} />}
@@ -359,24 +356,12 @@ const SessionsTable: React.FC<SessionsTableProps> = ({
               style={{ width: '100%' }}
               placeholder="Trạng thái"
             >
-              <Option value="all">
-                <IntlMessages id="session.status.all" />
-              </Option>
-              <Option value="scheduled">
-                <IntlMessages id="session.status.scheduled" />
-              </Option>
-              <Option value="in_progress">
-                <IntlMessages id="session.status.in_progress" />
-              </Option>
-              <Option value="completed">
-                <IntlMessages id="session.status.completed" />
-              </Option>
-              <Option value="cancelled">
-                <IntlMessages id="session.status.cancelled" />
-              </Option>
-              <Option value="no_show">
-                <IntlMessages id="session.status.no_show" />
-              </Option>
+              <Option value="all">Tất cả trạng thái</Option>
+              <Option value="scheduled">Đã lên lịch</Option>
+              <Option value="in_progress">Đang diễn ra</Option>
+              <Option value="completed">Hoàn thành</Option>
+              <Option value="cancelled">Đã hủy</Option>
+              <Option value="no_show">Không tham gia</Option>
             </Select>
           </Col>
           <Col xs={24} sm={12} md={4}>
@@ -386,21 +371,11 @@ const SessionsTable: React.FC<SessionsTableProps> = ({
               style={{ width: '100%' }}
               placeholder="Thanh toán"
             >
-              <Option value="all">
-                <IntlMessages id="session.payment.all" />
-              </Option>
-              <Option value="paid">
-                <IntlMessages id="session.payment.paid" />
-              </Option>
-              <Option value="pending">
-                <IntlMessages id="session.payment.pending" />
-              </Option>
-              <Option value="refunded">
-                <IntlMessages id="session.payment.refunded" />
-              </Option>
-              <Option value="partial_refund">
-                <IntlMessages id="session.payment.partial_refund" />
-              </Option>
+              <Option value="all">Tất cả thanh toán</Option>
+              <Option value="paid">Đã thanh toán</Option>
+              <Option value="pending">Chờ thanh toán</Option>
+              <Option value="refunded">Đã hoàn tiền</Option>
+              <Option value="partial_refund">Hoàn tiền một phần</Option>
             </Select>
           </Col>
           <Col xs={24} sm={12} md={4}>
@@ -410,15 +385,9 @@ const SessionsTable: React.FC<SessionsTableProps> = ({
               style={{ width: '100%' }}
               placeholder="Hình thức"
             >
-              <Option value="all">
-                <IntlMessages id="session.type.all" />
-              </Option>
-              <Option value="online">
-                <IntlMessages id="session.type.online" />
-              </Option>
-              <Option value="offline">
-                <IntlMessages id="session.type.offline" />
-              </Option>
+              <Option value="all">Tất cả loại</Option>
+              <Option value="online">Trực tuyến</Option>
+              <Option value="offline">Trực tiếp</Option>
             </Select>
           </Col>
           <Col xs={24} sm={12} md={4}>
@@ -443,15 +412,9 @@ const SessionsTable: React.FC<SessionsTableProps> = ({
               style={{ width: '100%' }}
               placeholder="Vấn đề"
             >
-              <Option value="all">
-                <IntlMessages id="session.filter.issues.all" />
-              </Option>
-              <Option value="yes">
-                <IntlMessages id="session.filter.issues.yes" />
-              </Option>
-              <Option value="no">
-                <IntlMessages id="session.filter.issues.no" />
-              </Option>
+              <Option value="all">Tất cả</Option>
+              <Option value="yes">Có vấn đề</Option>
+              <Option value="no">Không có vấn đề</Option>
             </Select>
           </Col>
           <Col xs={24} sm={12} md={4}>
@@ -461,25 +424,19 @@ const SessionsTable: React.FC<SessionsTableProps> = ({
               style={{ width: '100%' }}
               placeholder="Ghi hình"
             >
-              <Option value="all">
-                <IntlMessages id="session.filter.recording.all" />
-              </Option>
-              <Option value="yes">
-                <IntlMessages id="session.filter.recording.yes" />
-              </Option>
-              <Option value="no">
-                <IntlMessages id="session.filter.recording.no" />
-              </Option>
+              <Option value="all">Tất cả</Option>
+              <Option value="yes">Có ghi hình</Option>
+              <Option value="no">Không ghi hình</Option>
             </Select>
           </Col>
           <Col xs={24} sm={12} md={4}>
             <Button icon={<FilterOutlined />} onClick={handleClearFilters}>
-              <IntlMessages id="session.filter.clear" />
+              Xóa bộ lọc
             </Button>
           </Col>
           <Col xs={24} sm={12} md={6}>
             <Button icon={<ExportOutlined />} onClick={() => console.log('Export feature')}>
-              <IntlMessages id="session.filter.export" />
+              Xuất dữ liệu
             </Button>
           </Col>
         </Row>

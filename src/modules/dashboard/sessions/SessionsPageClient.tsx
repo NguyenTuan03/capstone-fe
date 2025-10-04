@@ -50,7 +50,6 @@ import {
 
 import { ColumnsType } from 'antd/es/table';
 import dayjs, { Dayjs } from 'dayjs';
-import IntlMessages from '@/@crema/helper/IntlMessages';
 import { SessionApiService } from '@/services/sessionApi';
 import {
   Session,
@@ -164,7 +163,11 @@ const SessionsPageClient = () => {
     const config = statusConfig[status];
     return (
       <Tag color={config.color}>
-        <IntlMessages id={config.text} />
+        {config.text === 'session.actions.refund'
+          ? 'Hoàn tiền'
+          : config.text === 'session.actions.warn'
+            ? 'Cảnh báo'
+            : 'Thao tác'}
       </Tag>
     );
   };
@@ -181,7 +184,11 @@ const SessionsPageClient = () => {
     const config = paymentConfig[paymentStatus];
     return (
       <Tag color={config.color}>
-        <IntlMessages id={config.text} />
+        {config.text === 'session.actions.refund'
+          ? 'Hoàn tiền'
+          : config.text === 'session.actions.warn'
+            ? 'Cảnh báo'
+            : 'Thao tác'}
       </Tag>
     );
   };

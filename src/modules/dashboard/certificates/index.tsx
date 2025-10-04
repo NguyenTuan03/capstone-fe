@@ -36,7 +36,6 @@ import {
 
 import { ColumnsType } from 'antd/es/table';
 import { Dayjs } from 'dayjs';
-import IntlMessages from '@/@crema/helper/IntlMessages';
 import { CertificateVerificationApiService } from '@/services/certificateVerificationApi';
 import { CoachApiService } from '@/services/coachApi';
 import {
@@ -147,7 +146,11 @@ const CertificatesPageClient: React.FC = () => {
     const config = statusConfig[status];
     return (
       <Tag color={config.color}>
-        <IntlMessages id={config.text} />
+        {config.text === 'certificate.actions.approve'
+          ? 'Phê duyệt'
+          : config.text === 'certificate.actions.reject'
+            ? 'Từ chối'
+            : 'Yêu cầu bổ sung'}
       </Tag>
     );
   };
@@ -247,7 +250,7 @@ const CertificatesPageClient: React.FC = () => {
   // Table columns
   const columns: ColumnsType<CoachApplication> = [
     {
-      title: <IntlMessages id="certificate.table.applicant" />,
+      title: 'Người nộp đơn',
       key: 'applicant',
       width: 280,
       render: (_, application) => (
@@ -287,7 +290,7 @@ const CertificatesPageClient: React.FC = () => {
       ),
     },
     {
-      title: <IntlMessages id="certificate.table.status" />,
+      title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
       width: 140,
@@ -301,7 +304,7 @@ const CertificatesPageClient: React.FC = () => {
       render: (date: string) => <Text className="text-sm">{formatDate(date)}</Text>,
     },
     {
-      title: <IntlMessages id="certificate.table.actions" />,
+      title: 'Thao tác',
       key: 'actions',
       width: 100,
       align: 'center',
@@ -354,11 +357,9 @@ const CertificatesPageClient: React.FC = () => {
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <Title level={3} style={{ margin: 0 }}>
-          <IntlMessages id="certificate.verification.title" />
+          Xác minh chứng chỉ
         </Title>
-        <Text type="secondary">
-          <IntlMessages id="certificate.verification.subtitle" />
-        </Text>
+        <Text type="secondary">Quản lý và xác minh các đơn xin chứng chỉ của huấn luyện viên</Text>
       </div>
 
       {/* Stats Cards */}
@@ -367,7 +368,7 @@ const CertificatesPageClient: React.FC = () => {
           <Col xs={24} sm={12} md={4}>
             <Card size="small">
               <Statistic
-                title={<IntlMessages id="certificate.stats.total" />}
+                title="Tổng số đơn"
                 value={stats.total}
                 prefix={<FileTextOutlined style={{ color: '#1890ff' }} />}
               />
@@ -376,7 +377,7 @@ const CertificatesPageClient: React.FC = () => {
           <Col xs={24} sm={12} md={4}>
             <Card size="small">
               <Statistic
-                title={<IntlMessages id="certificate.stats.pending" />}
+                title="Chờ xác minh"
                 value={stats.pending + stats.underReview}
                 prefix={<Badge status="processing" />}
               />
@@ -385,7 +386,7 @@ const CertificatesPageClient: React.FC = () => {
           <Col xs={24} sm={12} md={4}>
             <Card size="small">
               <Statistic
-                title={<IntlMessages id="certificate.stats.approved" />}
+                title="Đã phê duyệt"
                 value={stats.approved}
                 prefix={<Badge status="success" />}
               />
@@ -394,7 +395,7 @@ const CertificatesPageClient: React.FC = () => {
           <Col xs={24} sm={12} md={4}>
             <Card size="small">
               <Statistic
-                title={<IntlMessages id="certificate.stats.rejected" />}
+                title="Bị từ chối"
                 value={stats.rejected}
                 prefix={<Badge status="error" />}
               />
@@ -403,7 +404,7 @@ const CertificatesPageClient: React.FC = () => {
           <Col xs={24} sm={12} md={4}>
             <Card size="small">
               <Statistic
-                title={<IntlMessages id="certificate.stats.avgProcessing" />}
+                title="Thời gian xử lý TB"
                 value={stats.avgProcessingTime}
                 suffix="ngày"
                 prefix={<CalendarOutlined style={{ color: '#52c41a' }} />}
@@ -413,7 +414,7 @@ const CertificatesPageClient: React.FC = () => {
           <Col xs={24} sm={12} md={4}>
             <Card size="small">
               <Statistic
-                title={<IntlMessages id="certificate.stats.urgent" />}
+                title="Cần xử lý gấp"
                 value={stats.urgentApplications}
                 prefix={<ExclamationCircleOutlined style={{ color: '#ff4d4f' }} />}
               />
@@ -499,7 +500,7 @@ const CertificatesPageClient: React.FC = () => {
         <Row gutter={[16, 16]} style={{ marginTop: 16 }}>
           <Col xs={24} sm={12} md={4}>
             <Button icon={<FilterOutlined />} onClick={handleClearFilters}>
-              <IntlMessages id="certificate.filter.clear" />
+              Xóa bộ lọc
             </Button>
           </Col>
         </Row>

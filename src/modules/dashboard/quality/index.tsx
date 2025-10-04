@@ -54,7 +54,6 @@ import type { UploadFile } from 'antd/es/upload/interface';
 
 import { CoachApiService } from '@/services/coachApi';
 import { CoachQuality, CoachReview, SuspendCoachRequest } from '@/types/coach';
-import IntlMessages from '@/@crema/helper/IntlMessages';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -257,7 +256,7 @@ export default function QualityPageClient() {
     {
       key: 'reviews',
       icon: <EyeOutlined />,
-      label: <IntlMessages id="quality.actions.viewReviews" />,
+      label: 'Xem đánh giá',
       onClick: () => handleViewReviews(coach.id),
     },
     {
@@ -268,7 +267,7 @@ export default function QualityPageClient() {
           {
             key: 'suspend',
             icon: <StopOutlined />,
-            label: <IntlMessages id="quality.actions.suspend" />,
+            label: 'Tạm ngưng hoạt động',
             onClick: () => handleSuspendCoach(coach),
             danger: true,
           },
@@ -279,7 +278,7 @@ export default function QualityPageClient() {
           {
             key: 'restore',
             icon: <PlayCircleOutlined />,
-            label: <IntlMessages id="quality.actions.restore" />,
+            label: 'Khôi phục hoạt động',
             onClick: () => handleRestoreCoach(coach.id, coach.name),
           },
         ]
@@ -289,7 +288,7 @@ export default function QualityPageClient() {
   // Table columns
   const columns: ColumnsType<CoachQuality> = [
     {
-      title: <IntlMessages id="quality.table.coach" />,
+      title: 'Huấn luyện viên',
       key: 'coach',
       width: 280,
       render: (_, record) => (
@@ -309,14 +308,20 @@ export default function QualityPageClient() {
             <Text className="text-sm text-gray-500">{record.email}</Text>
             <Badge
               status={getStatusColor(record.status) as any}
-              text={<IntlMessages id={`coach.status.${record.status}`} />}
+              text={
+                record.status === 'active'
+                  ? 'Đang hoạt động'
+                  : record.status === 'suspended'
+                    ? 'Bị tạm ngưng'
+                    : 'Chờ duyệt'
+              }
             />
           </div>
         </div>
       ),
     },
     {
-      title: <IntlMessages id="quality.table.quality" />,
+      title: 'Chất lượng',
       key: 'quality',
       width: 200,
       render: (_, record) => (
@@ -336,7 +341,7 @@ export default function QualityPageClient() {
       ),
     },
     {
-      title: <IntlMessages id="quality.table.performance" />,
+      title: 'Hiệu suất',
       key: 'performance',
       width: 200,
       render: (_, record) => (
@@ -374,7 +379,7 @@ export default function QualityPageClient() {
       ),
     },
     {
-      title: <IntlMessages id="quality.table.issues" />,
+      title: 'Vấn đề',
       key: 'issues',
       width: 120,
       render: (_, record) => (
@@ -399,7 +404,7 @@ export default function QualityPageClient() {
       ),
     },
     {
-      title: <IntlMessages id="quality.table.actions" />,
+      title: 'Thao tác',
       key: 'actions',
       width: 80,
       render: (_, record) => (
@@ -419,11 +424,9 @@ export default function QualityPageClient() {
       {/* Header */}
       <div className="flex justify-between items-start">
         <div>
-          <Title level={2}>
-            <IntlMessages id="quality.management.title" />
-          </Title>
+          <Title level={2}>Giám sát chất lượng huấn luyện viên</Title>
           <Text className="text-gray-600">
-            <IntlMessages id="quality.management.subtitle" />
+            Theo dõi và đánh giá chất lượng giảng dạy của huấn luyện viên
           </Text>
         </div>
         <Space>
@@ -508,7 +511,7 @@ export default function QualityPageClient() {
 
       {/* Review Detail Modal */}
       <Modal
-        title={<IntlMessages id="quality.reviews.title" />}
+        title="Xem đánh giá chi tiết"
         open={isReviewModalVisible}
         onCancel={() => setIsReviewModalVisible(false)}
         footer={null}
@@ -544,7 +547,7 @@ export default function QualityPageClient() {
                         icon={<PlayCircleFilled />}
                         onClick={() => window.open(review.sessionVideo, '_blank')}
                       >
-                        <IntlMessages id="quality.reviews.watchVideo" />
+                        Xem video
                       </Button>
                     ),
                     review.reviewVideo && (
@@ -558,7 +561,7 @@ export default function QualityPageClient() {
                     ),
                     review.isReported && (
                       <Tag color="red" icon={<FlagOutlined />}>
-                        <IntlMessages id="quality.reviews.reported" />
+                        Báo cáo
                       </Tag>
                     ),
                   ].filter(Boolean)}
@@ -598,9 +601,7 @@ export default function QualityPageClient() {
                           />
                         )}
                         {!review.sessionVideo && (
-                          <Text className="text-gray-400 text-sm">
-                            <IntlMessages id="quality.reviews.noVideo" />
-                          </Text>
+                          <Text className="text-gray-400 text-sm">Không có video ghi hình</Text>
                         )}
                       </div>
                     }
@@ -614,7 +615,7 @@ export default function QualityPageClient() {
 
       {/* Suspend Modal */}
       <Modal
-        title={<IntlMessages id="quality.suspend.title" />}
+        title="Tạm ngưng hoạt động"
         open={isSuspendModalVisible}
         onCancel={() => setIsSuspendModalVisible(false)}
         footer={null}
@@ -622,14 +623,14 @@ export default function QualityPageClient() {
       >
         <div className="mb-4">
           <Text className="text-gray-600">
-            <IntlMessages id="quality.suspend.subtitle" />
+            Bạn có chắc chắn muốn tạm ngưng hoạt động của huấn luyện viên này?
           </Text>
         </div>
 
         <Form form={suspendForm} layout="vertical" onFinish={submitSuspend}>
           <Form.Item
             name="reason"
-            label={<IntlMessages id="quality.suspend.reason.label" />}
+            label="Lý do tạm ngưng"
             rules={[{ required: true, message: 'Vui lòng chọn lý do đình chỉ' }]}
           >
             <Select
@@ -659,7 +660,7 @@ export default function QualityPageClient() {
               return selectedReason === 'Khác (tự nhập lý do)' ? (
                 <Form.Item
                   name="customReason"
-                  label={<IntlMessages id="quality.suspend.customReason.label" />}
+                  label="Lý do khác"
                   rules={[
                     {
                       required: true,
@@ -678,7 +679,7 @@ export default function QualityPageClient() {
             }}
           </Form.Item>
 
-          <Form.Item name="evidence" label={<IntlMessages id="quality.suspend.evidence.label" />}>
+          <Form.Item name="evidence" label={'Bằng chứng'}>
             <Upload
               multiple
               listType="picture-card"
@@ -694,7 +695,7 @@ export default function QualityPageClient() {
             </Upload>
           </Form.Item>
 
-          <Form.Item name="notes" label={<IntlMessages id="quality.suspend.notes.label" />}>
+          <Form.Item name="notes" label={'Ghi chú'}>
             <TextArea
               rows={3}
               placeholder="Ghi chú thêm cho việc đình chỉ..."
@@ -706,7 +707,7 @@ export default function QualityPageClient() {
           <div className="flex justify-end space-x-2">
             <Button onClick={() => setIsSuspendModalVisible(false)}>Hủy</Button>
             <Button type="primary" danger htmlType="submit">
-              <IntlMessages id="quality.actions.suspend" />
+              Tạm ngưng
             </Button>
           </div>
         </Form>

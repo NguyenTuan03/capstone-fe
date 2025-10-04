@@ -20,7 +20,6 @@ import {
 import type { MenuProps } from 'antd';
 
 import Header from '@/modules/auth/header';
-import IntlMessages from '@/@crema/helper/IntlMessages';
 
 const { Sider, Content } = Layout;
 
@@ -33,32 +32,32 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {
         key: '/dashboard',
         icon: <DashboardOutlined />,
-        label: <IntlMessages id="menu.dashboard" />,
+        label: 'Tổng quan',
       },
-      { key: '/users', icon: <UserOutlined />, label: <IntlMessages id="menu.users" /> },
-      { key: '/coaches', icon: <TeamOutlined />, label: <IntlMessages id="menu.coaches" /> },
-      { key: '/curriculum', icon: <BookOutlined />, label: <IntlMessages id="menu.curriculum" /> },
+      { key: '/users', icon: <UserOutlined />, label: 'Người dùng' },
+      { key: '/coaches', icon: <TeamOutlined />, label: 'Huấn luyện viên' },
+      { key: '/curriculum', icon: <BookOutlined />, label: 'Giáo trình' },
       {
         key: '/achievements',
         icon: <TrophyOutlined />,
-        label: <IntlMessages id="menu.achievements" />,
+        label: 'Thành tựu',
       },
       {
         key: '/certificates',
         icon: <SafetyCertificateOutlined />,
-        label: <IntlMessages id="menu.certificates" />,
+        label: 'Chứng chỉ',
       },
-      { key: '/quality', icon: <StarOutlined />, label: <IntlMessages id="menu.quality" /> },
-      { key: '/sessions', icon: <CalendarOutlined />, label: <IntlMessages id="menu.sessions" /> },
+      { key: '/quality', icon: <StarOutlined />, label: 'Giám sát chất lượng' },
+      { key: '/sessions', icon: <CalendarOutlined />, label: 'Quản lý buổi học' },
       {
         key: '/course-verification',
         icon: <CheckCircleOutlined />,
-        label: <IntlMessages id="menu.courseVerification" />,
+        label: 'Xác minh khóa học',
       },
       {
         key: '/statistics',
         icon: <BarChartOutlined />,
-        label: <IntlMessages id="menu.statistics" />,
+        label: 'Thống kê',
       },
     ],
     [],
@@ -84,19 +83,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const segments = useMemo(() => pathname.split('/').filter(Boolean), [pathname]);
 
   const getPageTitle = (segment: string) => {
-    const titleIds: { [key: string]: string } = {
-      dashboard: 'breadcrumb.dashboard',
-      users: 'breadcrumb.users',
-      coaches: 'breadcrumb.coaches',
-      curriculum: 'breadcrumb.curriculum',
-      achievements: 'breadcrumb.achievements',
-      certificates: 'breadcrumb.certificates',
-      quality: 'breadcrumb.quality',
-      sessions: 'breadcrumb.sessions',
-      'course-verification': 'breadcrumb.courseVerification',
-      statistics: 'breadcrumb.statistics',
+    const titleMap: { [key: string]: string } = {
+      dashboard: 'Tổng quan',
+      users: 'Người dùng',
+      coaches: 'Huấn luyện viên',
+      curriculum: 'Giáo trình',
+      achievements: 'Thành tựu',
+      certificates: 'Chứng chỉ',
+      quality: 'Giám sát chất lượng',
+      sessions: 'Quản lý buổi học',
+      'course-verification': 'Xác minh khóa học',
+      statistics: 'Thống kê',
     };
-    return titleIds[segment] ? <IntlMessages id={titleIds[segment]} /> : segment;
+    return titleMap[segment] || segment;
   };
 
   return (

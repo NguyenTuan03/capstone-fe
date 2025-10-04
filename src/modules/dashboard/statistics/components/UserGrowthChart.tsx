@@ -34,8 +34,8 @@ const UserGrowthChart: React.FC<UserGrowthChartProps> = ({
   };
 
   return (
-    <Card title={title} className="h-full">
-      <div className="space-y-6">
+    <Card title={title} className="chieu-cao-day">
+      <div className="khoang-cach-doc-6">
         {data.slice(-6).map((item, index, array) => {
           const prevItem = index > 0 ? array[index - 1] : item;
           const totalCurrent = item.learners + item.coaches + item.admins;
@@ -43,10 +43,10 @@ const UserGrowthChart: React.FC<UserGrowthChartProps> = ({
           const growthRate = getGrowthRate(totalCurrent, totalPrevious);
 
           return (
-            <div key={item.month} className="border-b border-gray-100 pb-4 last:border-b-0">
-              <Row justify="space-between" align="middle" className="mb-3">
+            <div key={item.month} className="vien-duoi vien-xam-100 padding-duoi-4 cuoi-khong-vien">
+              <Row justify="space-between" align="middle" className="margin-duoi-3">
                 <Col>
-                  <Title level={5} className="mb-0">
+                  <Title level={5} className="margin-duoi-0">
                     {item.month}
                   </Title>
                 </Col>
@@ -66,36 +66,36 @@ const UserGrowthChart: React.FC<UserGrowthChartProps> = ({
 
               <Row gutter={[16, 8]}>
                 <Col span={8}>
-                  <Text className="text-xs text-gray-500">Học viên</Text>
+                  <Text className="chu-nho mau-xam-500">Học viên</Text>
                   <Progress
                     percent={Math.round((item.learners / maxValue) * 100)}
                     strokeColor={getProgressColor(item.learners, maxValue)}
                     showInfo={false}
                     size="small"
                   />
-                  <Text className="text-xs font-medium">{item.learners}</Text>
+                  <Text className="chu-nho chu-dam">{item.learners}</Text>
                 </Col>
 
                 <Col span={8}>
-                  <Text className="text-xs text-gray-500">Huấn luyện viên</Text>
+                  <Text className="chu-nho mau-xam-500">Huấn luyện viên</Text>
                   <Progress
                     percent={Math.round((item.coaches / maxValue) * 100)}
                     strokeColor={getProgressColor(item.coaches, maxValue)}
                     showInfo={false}
                     size="small"
                   />
-                  <Text className="text-xs font-medium">{item.coaches}</Text>
+                  <Text className="chu-nho chu-dam">{item.coaches}</Text>
                 </Col>
 
                 <Col span={8}>
-                  <Text className="text-xs text-gray-500">Quản trị</Text>
+                  <Text className="chu-nho mau-xam-500">Quản trị</Text>
                   <Progress
                     percent={Math.round((item.admins / maxValue) * 100)}
                     strokeColor={getProgressColor(item.admins, maxValue)}
                     showInfo={false}
                     size="small"
                   />
-                  <Text className="text-xs font-medium">{item.admins}</Text>
+                  <Text className="chu-nho chu-dam">{item.admins}</Text>
                 </Col>
               </Row>
             </div>
