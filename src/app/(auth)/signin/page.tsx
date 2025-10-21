@@ -30,15 +30,25 @@ export default function Login() {
     const password = values.password;
 
     if (email === 'admin' && password === 'admin1') {
-      // Fake successful login - redirect to dashboard
-      console.log('✅ Fake login successful - redirecting to dashboard');
-      message.success('Đăng nhập thành công!');
+      // Admin login - redirect to dashboard
+      message.success('Đăng nhập thành công! Chào mừng Admin!');
       setTimeout(() => {
-        router.push('/dashboard');
-      }, 1000); // Small delay to show success message
+        router.push('/(dashboard)/dashboard');
+      }, 1000);
+    } else if (email === 'coach' && password === 'coach') {
+      // Coach login - redirect to coach dashboard (using dashboard for now)
+      message.success('Đăng nhập thành công! Chào mừng Coach!');
+      setTimeout(() => {
+        router.push('/(dashboard)/coaches');
+      }, 1000);
+    } else if (email === 'learner' && password === 'learner') {
+      // Learner login - redirect to learner dashboard
+      message.success('Đăng nhập thành công! Chào mừng Learner!');
+      setTimeout(() => {
+        router.push('/home');
+      }, 1000);
     } else {
       // Wrong credentials - show error
-      console.log('❌ Wrong credentials');
       message.error('Sai tài khoản hoặc mật khẩu!');
     }
   };
