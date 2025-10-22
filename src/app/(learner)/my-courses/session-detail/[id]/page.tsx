@@ -26,58 +26,185 @@ const SessionDetailPage = ({ params }: { params: Promise<{ id: string }> }) => {
   const [selectedAssignment, setSelectedAssignment] = useState<any>(null);
   const [isInVideoConference, setIsInVideoConference] = useState(false);
 
-  // Mock data - in real app, this would come from API based on params.id
-  const session = {
-    id: parseInt(id),
-    title: 'Buổi 5: Kỹ thuật serve',
-    date: '2024-02-12',
-    status: 'upcoming',
-    location: 'Sân Pickleball Quận 1',
-    instructor: 'Coach Minh',
-    assignments: [
-      {
-        id: 1,
-        title: 'Quiz kiến thức serve',
-        type: 'quiz',
-        description: 'Làm bài quiz về kỹ thuật serve cơ bản',
-        completed: false,
-        questions: 10,
-        timeLimit: 30, // minutes
-      },
-      {
-        id: 2,
-        title: 'Video thực hành serve',
-        type: 'video',
-        description: 'Quay video thực hành kỹ thuật serve',
-        completed: false,
-        maxDuration: 5, // minutes
-      },
-      {
-        id: 3,
-        title: 'Bài tập serve',
-        type: 'exercise',
-        description: 'Thực hành serve 50 lần và ghi chú',
-        completed: false,
-      },
-    ],
-  };
+  // Use the same data structure as course-detail
+  const courses = [
+    {
+      id: 1,
+      title: 'Cơ bản Pickleball cho người mới bắt đầu',
+      coach: 'Huấn luyện viên Nguyễn Văn A',
+      rating: 4.8,
+      reviews: 124,
+      price: '500.000 VNĐ',
+      duration: '4 tuần',
+      level: 'Cơ bản',
+      image:
+        'https://cdn.britannica.com/25/236225-050-59A4051E/woman-daughter-doubles-pickleball.jpg',
+      location: 'Sân Pickleball Quận 3',
+      courseType: 'individual',
+      startDate: '2025-01-15',
+      endDate: '2025-02-12',
+      status: 'upcoming',
+      weeklySchedule: [
+        { day: 'Thứ 3', time: '19:00-20:30', sessions: 4 },
+        { day: 'Thứ 5', time: '19:00-20:30', sessions: 4 },
+      ],
+      totalSessions: 8,
+      availableSlots: 3,
+    },
+    {
+      id: 2,
+      title: 'Nâng cao kỹ thuật giao bóng',
+      coach: 'Huấn luyện viên Trần Thị B',
+      rating: 4.9,
+      reviews: 89,
+      price: '1.200.000 VNĐ',
+      duration: '3 tuần',
+      level: 'Trung cấp',
+      image:
+        'https://a57.foxnews.com/static.foxnews.com/foxnews.com/content/uploads/2024/07/1200/675/pickleball-paddle-court.jpg?ve=1&tl=1',
+      location: 'Sân Pickleball Quận 1',
+      courseType: 'group',
+      maxGroupSize: 4,
+      currentEnrollment: 2,
+      startDate: '2025-01-08',
+      endDate: '2025-01-29',
+      status: 'ongoing',
+      weeklySchedule: [
+        { day: 'Thứ 2', time: '18:00-19:30', sessions: 3 },
+        { day: 'Thứ 6', time: '18:00-19:30', sessions: 3 },
+      ],
+      totalSessions: 6,
+      availableSlots: 2,
+    },
+    {
+      id: 3,
+      title: 'Chiến thuật thi đấu đôi',
+      coach: 'Huấn luyện viên Lê Văn C',
+      rating: 4.7,
+      reviews: 56,
+      price: '900.000 VNĐ',
+      duration: '2 tuần',
+      level: 'Nâng cao',
+      image:
+        'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT4StMq4jMrFoO5JU3dNwnlckEdorqhSmoaUw&s',
+      location: 'Sân Pickleball Quận 7',
+      courseType: 'group',
+      maxGroupSize: 4,
+      currentEnrollment: 3,
+      startDate: '2025-01-20',
+      endDate: '2025-02-02',
+      status: 'upcoming',
+      weeklySchedule: [
+        { day: 'Thứ 7', time: '15:00-17:00', sessions: 2 },
+        { day: 'Chủ nhật', time: '15:00-17:00', sessions: 2 },
+      ],
+      totalSessions: 4,
+      availableSlots: 1,
+    },
+    {
+      id: 4,
+      title: 'Kỹ thuật cá nhân chuyên sâu',
+      coach: 'Huấn luyện viên Phạm Thị D',
+      rating: 4.9,
+      reviews: 203,
+      price: '1.000.000 VNĐ',
+      duration: '6 tuần',
+      level: 'Nâng cao',
+      image:
+        'https://cdn.britannica.com/25/236225-050-59A4051E/woman-daughter-doubles-pickleball.jpg',
+      location: 'Sân Pickleball Quận 10',
+      courseType: 'individual',
+      startDate: '2025-01-10',
+      endDate: '2025-02-21',
+      status: 'ongoing',
+      weeklySchedule: [
+        { day: 'Thứ 4', time: '17:00-18:30', sessions: 6 },
+        { day: 'Thứ 7', time: '10:00-11:30', sessions: 6 },
+      ],
+      totalSessions: 12,
+      availableSlots: 1,
+    },
+    {
+      id: 5,
+      title: 'Pickleball cho trẻ em',
+      coach: 'Huấn luyện viên Hoàng Thị E',
+      rating: 4.6,
+      reviews: 45,
+      price: '400.000 VNĐ',
+      duration: '4 tuần',
+      level: 'Cơ bản',
+      image:
+        'https://cdn.britannica.com/25/236225-050-59A4051E/woman-daughter-doubles-pickleball.jpg',
+      location: 'Sân Pickleball Quận 5',
+      courseType: 'group',
+      maxGroupSize: 6,
+      currentEnrollment: 4,
+      startDate: '2025-02-01',
+      endDate: '2025-02-29',
+      status: 'upcoming',
+      weeklySchedule: [{ day: 'Thứ 7', time: '09:00-10:30', sessions: 4 }],
+      totalSessions: 4,
+      availableSlots: 2,
+    },
+  ];
 
-  const hasAttendedSession = (sessionId: number) => {
+  // Find the course and generate sessions
+  const course = courses[0]; // Use first course for demo
+  let sessionCounter = 1;
+  const sessions = course.weeklySchedule.flatMap((schedule, weekIndex) =>
+    Array.from({ length: schedule.sessions }, (_, sessionIndex) => {
+      const sessionId = `${course.id}-${weekIndex}-${sessionIndex + 1}`;
+      const sessionNumber = sessionCounter++;
+      return {
+        id: sessionId,
+        title: `Buổi ${sessionNumber}: ${schedule.day}`,
+        date: new Date(Date.now() + (weekIndex * 7 + sessionIndex) * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .split('T')[0],
+        status: sessionNumber <= 4 ? 'completed' : 'upcoming',
+        location: course.location,
+        assignments:
+          sessionNumber <= 4
+            ? [
+                {
+                  id: `${course.id}-${weekIndex}-${sessionIndex + 1}-1`,
+                  title: 'Quiz kiến thức',
+                  type: 'quiz',
+                  completed: true,
+                  score: 85,
+                  questions: 10,
+                },
+              ]
+            : [],
+      };
+    }),
+  );
+
+  // Find the specific session by ID
+  const session = sessions.find((s) => s.id === id);
+
+  // If not found by exact ID, try to find by partial match
+  const fallbackSession = session || sessions.find((s) => s.id.includes(id)) || sessions[0];
+
+  // Debug logging
+  console.log('Session ID from params:', id);
+  console.log('All sessions:', sessions);
+  console.log('Found session:', session);
+  console.log('Using fallback session:', fallbackSession);
+
+  // Use fallback session
+  const currentSession = fallbackSession;
+
+  const hasAttendedSession = (sessionId: string) => {
     // Mock function - in real app, this would check actual attendance
-    return sessionId <= 4; // Assume attended first 4 sessions
+    return sessionId.includes('0') || sessionId.includes('1'); // Assume attended first 4 sessions
   };
 
-  const hasSubmittedAssignment = (assignmentId: number) => {
+  const hasSubmittedAssignment = () => {
     // Mock function - in real app, this would check actual submissions
     return false;
   };
-
-  const getSubmission = (assignmentId: number) => {
-    // Mock function - in real app, this would get actual submission
-    return null;
-  };
-
-  const joinVideoConference = (sessionId: number) => {
+  const joinVideoConference = (sessionId: string) => {
     setIsInVideoConference(true);
     // In real app, this would join actual video conference
     console.log('Joining video conference for session:', sessionId);
@@ -89,12 +216,12 @@ const SessionDetailPage = ({ params }: { params: Promise<{ id: string }> }) => {
     console.log('Leaving video conference');
   };
 
-  const markAttendance = (sessionId: number) => {
+  const markAttendance = (sessionId: string) => {
     // In real app, this would mark attendance
     console.log('Marking attendance for session:', sessionId);
   };
 
-  const sessionHasAttended = hasAttendedSession(session.id);
+  const sessionHasAttended = hasAttendedSession(currentSession.id);
 
   if (selectedAssignment) {
     // Redirect to assignment detail
@@ -110,7 +237,7 @@ const SessionDetailPage = ({ params }: { params: Promise<{ id: string }> }) => {
           Quay lại
         </Button>
         <Title level={2} style={{ margin: 0 }}>
-          {session.title}
+          {currentSession.title}
         </Title>
       </div>
 
@@ -124,19 +251,19 @@ const SessionDetailPage = ({ params }: { params: Promise<{ id: string }> }) => {
             marginBottom: 8,
           }}
         >
-          <Text type="secondary">{session.location}</Text>
+          <Text type="secondary">{currentSession.location}</Text>
           <div style={{ display: 'flex', gap: 8 }}>
             {sessionHasAttended && <Badge color="green" text="Đã tham dự" />}
-            <Tag color={session.status === 'completed' ? 'green' : 'blue'}>
-              {session.status === 'completed' ? 'Đã hoàn thành' : 'Sắp tới'}
+            <Tag color={currentSession.status === 'completed' ? 'green' : 'blue'}>
+              {currentSession.status === 'completed' ? 'Đã hoàn thành' : 'Sắp tới'}
             </Tag>
           </div>
         </div>
-        <Text type="secondary">Ngày học: {session.date}</Text>
+        <Text type="secondary">Ngày học: {currentSession.date}</Text>
       </Card>
 
       {/* Video Conference and Actions */}
-      {session.status === 'upcoming' && (
+      {currentSession.status === 'upcoming' && (
         <Card
           style={{
             marginBottom: 24,
@@ -179,7 +306,7 @@ const SessionDetailPage = ({ params }: { params: Promise<{ id: string }> }) => {
               type="primary"
               size="large"
               icon={<PhoneOutlined />}
-              onClick={() => joinVideoConference(session.id)}
+              onClick={() => joinVideoConference(currentSession.id)}
               style={{ width: '100%' }}
             >
               Tham gia video conference
@@ -218,7 +345,7 @@ const SessionDetailPage = ({ params }: { params: Promise<{ id: string }> }) => {
       )}
 
       {/* Attendance Status for Past Sessions */}
-      {session.status === 'completed' && !sessionHasAttended && (
+      {currentSession.status === 'completed' && !sessionHasAttended && (
         <Card
           style={{
             marginBottom: 24,
@@ -250,7 +377,7 @@ const SessionDetailPage = ({ params }: { params: Promise<{ id: string }> }) => {
             <Button
               type="primary"
               icon={<CheckCircleOutlined />}
-              onClick={() => markAttendance(session.id)}
+              onClick={() => markAttendance(currentSession.id)}
               style={{ backgroundColor: '#faad14', borderColor: '#faad14' }}
             >
               Đã tham dự
@@ -260,13 +387,12 @@ const SessionDetailPage = ({ params }: { params: Promise<{ id: string }> }) => {
       )}
 
       {/* Assignments */}
-      {session.assignments.length > 0 && (
+      {currentSession.assignments.length > 0 && (
         <Card title="Bài tập & hoạt động">
           <List
-            dataSource={session.assignments}
+            dataSource={currentSession.assignments}
             renderItem={(assignment: any) => {
-              const hasSubmitted = hasSubmittedAssignment(assignment.id);
-              const submission = getSubmission(assignment.id);
+              const hasSubmitted = hasSubmittedAssignment();
 
               return (
                 <List.Item
@@ -386,11 +512,11 @@ const SessionDetailPage = ({ params }: { params: Promise<{ id: string }> }) => {
         </Card>
       )}
 
-      {session.assignments.length === 0 && (
+      {currentSession.assignments.length === 0 && (
         <Card>
           <div style={{ textAlign: 'center', padding: '40px 0' }}>
             <Text type="secondary">
-              {session.status === 'completed'
+              {currentSession.status === 'completed'
                 ? 'Buổi học này chưa có bài tập nào được giao.'
                 : 'Bài tập sẽ được giao sau khi buổi học kết thúc.'}
             </Text>

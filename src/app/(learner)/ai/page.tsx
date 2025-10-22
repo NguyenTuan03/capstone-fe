@@ -1,261 +1,123 @@
 'use client';
 
 import React, { useState } from 'react';
-import {
-  Card,
-  Row,
-  Col,
-  Button,
-  Typography,
-  Upload,
-  Progress,
-  List,
-  Avatar,
-  Tag,
-  Space,
-} from 'antd';
-import {
-  UploadOutlined,
-  PlayCircleOutlined,
-  EyeOutlined,
-  DownloadOutlined,
-  RobotOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  FileTextOutlined,
-  VideoCameraOutlined,
-} from '@ant-design/icons';
+import { Layout, Menu, Typography, ConfigProvider } from 'antd';
+import { VideoCameraOutlined, CompressOutlined, TrophyOutlined } from '@ant-design/icons';
+import VideoAnalysis from '@/modules/learner/ai/VideoAnalysis';
+import VideoComparator from '@/modules/learner/ai/VideoComparator';
 
-const { Title, Text } = Typography;
-const { Dragger } = Upload;
+const { Header, Content } = Layout;
+const { Title } = Typography;
 
-const AIPage = () => {
-  const [uploading, setUploading] = useState(false);
+enum AnalysisType {
+  VideoAnalysis = 'Phân tích Video',
+  VideoComparator = 'So sánh Video',
+}
 
-  const analysisHistory = [
+const App: React.FC = () => {
+  const [activeTab, setActiveTab] = useState<AnalysisType>(AnalysisType.VideoAnalysis);
+
+  const menuItems = [
     {
-      id: 1,
-      title: 'Phân tích kỹ thuật serve - Video 1',
-      date: '2024-01-20',
-      status: 'Hoàn thành',
-      score: 85,
-      feedback: 'Kỹ thuật serve tốt, cần cải thiện độ chính xác',
-      duration: '2:30',
-      fileSize: '15.2 MB',
+      key: AnalysisType.VideoAnalysis,
+      icon: <VideoCameraOutlined />,
+      label: AnalysisType.VideoAnalysis,
     },
     {
-      id: 2,
-      title: 'Phân tích chiến thuật đôi - Video 2',
-      date: '2024-01-18',
-      status: 'Hoàn thành',
-      score: 92,
-      feedback: 'Phối hợp tốt, cần tăng cường giao tiếp',
-      duration: '3:45',
-      fileSize: '22.1 MB',
-    },
-    {
-      id: 3,
-      title: 'Phân tích kỹ thuật volley - Video 3',
-      date: '2024-01-15',
-      status: 'Đang xử lý',
-      score: null,
-      feedback: null,
-      duration: '1:50',
-      fileSize: '12.8 MB',
+      key: AnalysisType.VideoComparator,
+      icon: <CompressOutlined />,
+      label: AnalysisType.VideoComparator,
     },
   ];
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Hoàn thành':
-        return 'success';
-      case 'Đang xử lý':
-        return 'processing';
-      case 'Lỗi':
-        return 'error';
+  const renderContent = () => {
+    switch (activeTab) {
+      case AnalysisType.VideoAnalysis:
+        return <VideoAnalysis />;
+      case AnalysisType.VideoComparator:
+        return <VideoComparator />;
       default:
-        return 'default';
+        return <VideoAnalysis />;
     }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'Hoàn thành':
-        return <CheckCircleOutlined />;
-      case 'Đang xử lý':
-        return <ClockCircleOutlined />;
-      case 'Lỗi':
-        return <RobotOutlined />;
-      default:
-        return <PlayCircleOutlined />;
-    }
-  };
-
-  const handleUpload = (file: any) => {
-    setUploading(true);
-    // Simulate upload
-    setTimeout(() => {
-      setUploading(false);
-    }, 2000);
-    return false; // Prevent default upload
   };
 
   return (
-    <div>
-      <Title level={2}>AI Phân tích kỹ thuật</Title>
-
-      {/* Upload Section */}
-      <Card title="Tải lên video để phân tích" style={{ marginBottom: 24 }}>
-        <Dragger
-          name="file"
-          multiple={false}
-          accept="video/*"
-          beforeUpload={handleUpload}
-          disabled={uploading}
-          style={{ padding: '40px 0' }}
+    <ConfigProvider
+      theme={{
+        token: {
+          colorPrimary: '#13c2c2',
+          colorBgContainer: '#1a1f3a',
+          colorBgElevated: '#1a1f3a',
+          colorBorder: '#2a2f4a',
+          colorText: '#ffffff',
+          colorTextSecondary: '#8c8fa5',
+        },
+        components: {
+          Menu: {
+            itemSelectedBg: 'transparent',
+            itemSelectedColor: '#13c2c2',
+          },
+        },
+      }}
+    >
+      <Layout style={{ minHeight: '100vh', background: '#0a0e27' }}>
+        <Header
+          style={{
+            background: '#1a1f3a',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+            padding: 0,
+            height: 64,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
         >
-          <p className="ant-upload-drag-icon">
-            <UploadOutlined style={{ fontSize: 48, color: '#1890ff' }} />
-          </p>
-          <p className="ant-upload-text">Nhấp hoặc kéo thả video vào đây</p>
-          <p className="ant-upload-hint">
-            Hỗ trợ định dạng: MP4, AVI, MOV. Kích thước tối đa: 100MB
-          </p>
-        </Dragger>
-        <div style={{ marginTop: 16, textAlign: 'center' }}>
-          <Button
-            type="primary"
-            size="large"
-            icon={<UploadOutlined />}
-            loading={uploading}
-            disabled={uploading}
-          >
-            {uploading ? 'Đang tải lên...' : 'Bắt đầu phân tích'}
-          </Button>
-        </div>
-      </Card>
-
-      {/* Analysis History */}
-      <Card title="Lịch sử phân tích">
-        <List
-          dataSource={analysisHistory}
-          renderItem={(item) => (
-            <List.Item
-              actions={[
-                <Button key={item.id} type="link" icon={<EyeOutlined />}>
-                  Xem chi tiết
-                </Button>,
-                item.status === 'Hoàn thành' && (
-                  <Button key={item.id} type="link" icon={<DownloadOutlined />}>
-                    Tải báo cáo
-                  </Button>
-                ),
-              ]}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <TrophyOutlined style={{ fontSize: 32, color: '#13c2c2' }} />
+            <Title
+              level={2}
+              style={{
+                margin: 0,
+                color: '#ffffff',
+                fontWeight: 700,
+                letterSpacing: '0.5px',
+              }}
             >
-              <List.Item.Meta
-                avatar={
-                  <Avatar
-                    icon={getStatusIcon(item.status)}
-                    style={{
-                      backgroundColor:
-                        item.status === 'Hoàn thành'
-                          ? '#52c41a'
-                          : item.status === 'Đang xử lý'
-                            ? '#1890ff'
-                            : '#ff4d4f',
-                    }}
-                  />
-                }
-                title={item.title}
-                description={
-                  <div>
-                    <div style={{ marginBottom: 8, display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <Text type="secondary">Ngày: {item.date}</Text>
-                      <Tag color={getStatusColor(item.status)}>{item.status}</Tag>
-                      <Text type="secondary">• {item.duration}</Text>
-                      <Text type="secondary">• {item.fileSize}</Text>
-                    </div>
-                    {item.status === 'Hoàn thành' && (
-                      <div>
-                        <div style={{ marginBottom: 4 }}>
-                          <Text strong>Điểm số: {item.score}/100</Text>
-                        </div>
-                        <div>
-                          <Text type="secondary">{item.feedback}</Text>
-                        </div>
-                      </div>
-                    )}
-                    {item.status === 'Đang xử lý' && (
-                      <div>
-                        <Text type="secondary">Đang phân tích video...</Text>
-                        <Progress percent={65} size="small" style={{ marginTop: 4 }} />
-                      </div>
-                    )}
-                  </div>
-                }
-              />
-            </List.Item>
-          )}
-        />
-      </Card>
+              Pickleball AI Coach
+            </Title>
+          </div>
+        </Header>
 
-      {/* AI Features */}
-      <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
-        <Col xs={24} sm={12} lg={8}>
-          <Card title="Phân tích kỹ thuật" size="small">
-            <div style={{ textAlign: 'center', padding: '20px 0' }}>
-              <PlayCircleOutlined style={{ fontSize: 32, color: '#1890ff', marginBottom: 8 }} />
-              <div>Phân tích chuyển động và kỹ thuật</div>
-            </div>
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={8}>
-          <Card title="Đánh giá hiệu suất" size="small">
-            <div style={{ textAlign: 'center', padding: '20px 0' }}>
-              <EyeOutlined style={{ fontSize: 32, color: '#52c41a', marginBottom: 8 }} />
-              <div>Đánh giá và gợi ý cải thiện</div>
-            </div>
-          </Card>
-        </Col>
-        <Col xs={24} sm={12} lg={8}>
-          <Card title="Báo cáo chi tiết" size="small">
-            <div style={{ textAlign: 'center', padding: '20px 0' }}>
-              <FileTextOutlined style={{ fontSize: 32, color: '#faad14', marginBottom: 8 }} />
-              <div>Xuất báo cáo phân tích</div>
-            </div>
-          </Card>
-        </Col>
-      </Row>
+        <Layout>
+          <Content
+            style={{
+              background: '#0a0e27',
+              padding: 24,
+              maxWidth: 1400,
+              margin: '0 auto',
+              width: '100%',
+            }}
+          >
+            <Menu
+              mode="horizontal"
+              selectedKeys={[activeTab]}
+              items={menuItems}
+              onClick={({ key }) => setActiveTab(key as AnalysisType)}
+              style={{
+                background: 'transparent',
+                borderBottom: '1px solid #2a2f4a',
+                marginBottom: 32,
+                justifyContent: 'center',
+              }}
+              theme="dark"
+            />
 
-      {/* Quick Stats */}
-      <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
-        <Col xs={24} sm={8}>
-          <Card>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 24, fontWeight: 'bold', color: '#1890ff' }}>12</div>
-              <div style={{ color: '#666' }}>Video đã phân tích</div>
-            </div>
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 24, fontWeight: 'bold', color: '#52c41a' }}>87</div>
-              <div style={{ color: '#666' }}>Điểm trung bình</div>
-            </div>
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 24, fontWeight: 'bold', color: '#faad14' }}>5</div>
-              <div style={{ color: '#666' }}>Báo cáo đã tải</div>
-            </div>
-          </Card>
-        </Col>
-      </Row>
-    </div>
+            <div style={{ padding: '0 16px' }}>{renderContent()}</div>
+          </Content>
+        </Layout>
+      </Layout>
+    </ConfigProvider>
   );
 };
 
-export default AIPage;
+export default App;

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, Row, Col, Button, Progress, Typography, List, Avatar, Tag } from 'antd';
 import { PlayCircleOutlined, CheckCircleOutlined, TrophyOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
@@ -9,7 +9,6 @@ const { Title, Text } = Typography;
 
 const MyCoursesPage = () => {
   const router = useRouter();
-  const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const myCourses = [
     {
       id: 1,
@@ -95,57 +94,6 @@ const MyCoursesPage = () => {
     }
   };
 
-  if (selectedCourse) {
-    return (
-      <div>
-        <div
-          style={{
-            marginBottom: 16,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <Title level={2}>Chi tiết khóa học</Title>
-          <Button onClick={() => setSelectedCourse(null)}>Quay lại</Button>
-        </div>
-
-        <Card>
-          <Card.Meta
-            title={selectedCourse.title}
-            description={
-              <div>
-                <Text type="secondary">Giảng viên: {selectedCourse.instructor}</Text>
-                <br />
-                <div style={{ marginTop: 8, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <Tag color={getStatusColor(selectedCourse.status)}>{selectedCourse.status}</Tag>
-                  <Tag color={getTypeColor(selectedCourse.courseType)}>
-                    {selectedCourse.courseType === 'individual' ? 'Cá nhân' : 'Nhóm'}
-                  </Tag>
-                  <Tag color={getLevelColor(selectedCourse.level)}>{selectedCourse.level}</Tag>
-                </div>
-                <div style={{ marginTop: 12 }}>
-                  <Text strong>Tiến độ: {selectedCourse.progress}%</Text>
-                  <Progress percent={selectedCourse.progress} style={{ marginTop: 4 }} />
-                </div>
-                <div style={{ marginTop: 12 }}>
-                  <Text type="secondary">
-                    {selectedCourse.status === 'Đang học'
-                      ? `Bài tiếp theo: ${selectedCourse.nextLesson}`
-                      : selectedCourse.nextLesson}
-                  </Text>
-                </div>
-                <div style={{ marginTop: 8, fontSize: '12px', color: '#666' }}>
-                  {selectedCourse.startDate} - {selectedCourse.endDate}
-                </div>
-              </div>
-            }
-          />
-        </Card>
-      </div>
-    );
-  }
-
   return (
     <div>
       <Title level={2}>Khóa học của tôi</Title>
@@ -208,7 +156,7 @@ const MyCoursesPage = () => {
                   key={course.id}
                   type="primary"
                   icon={<PlayCircleOutlined />}
-                  onClick={() => setSelectedCourse(course)}
+                  onClick={() => router.push(`/my-courses/course-detail`)}
                 >
                   Xem chi tiết
                 </Button>,

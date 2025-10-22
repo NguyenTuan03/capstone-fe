@@ -4,18 +4,21 @@ import React, { useState } from 'react';
 import { Card, Row, Col, Button, Tag, Typography, Input, Select, Badge } from 'antd';
 import {
   SearchOutlined,
-  PlayCircleOutlined,
   StarOutlined,
   CalendarOutlined,
   ClockCircleOutlined,
   EnvironmentOutlined,
+  UserOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
+import { useRouter } from 'next/navigation';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
 const { Option } = Select;
 
 const CoursesPage = () => {
+  const router = useRouter();
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('all');
   const [selectedTypeFilter, setSelectedTypeFilter] = useState('all');
   const [selectedLevelFilter, setSelectedLevelFilter] = useState('all');
@@ -36,6 +39,7 @@ const CoursesPage = () => {
       startDate: '15/02/2024',
       endDate: '15/04/2024',
       totalSessions: 16,
+      image: '/assets/images/pickleball.jpg',
       weeklySchedule: [
         { day: 'Thứ 2', time: '18:00-19:30', sessions: 1 },
         { day: 'Thứ 4', time: '18:00-19:30', sessions: 1 },
@@ -60,6 +64,7 @@ const CoursesPage = () => {
       currentEnrollment: 6,
       maxGroupSize: 8,
       availableSlots: 2,
+      image: '/assets/images/pickleball.jpg',
       weeklySchedule: [
         { day: 'Thứ 3', time: '19:00-20:30', sessions: 1 },
         { day: 'Thứ 5', time: '19:00-20:30', sessions: 1 },
@@ -84,6 +89,7 @@ const CoursesPage = () => {
       currentEnrollment: 4,
       maxGroupSize: 6,
       availableSlots: 2,
+      image: '/assets/images/pickleball.jpg',
       weeklySchedule: [
         { day: 'Thứ 2', time: '17:00-18:30', sessions: 1 },
         { day: 'Thứ 4', time: '17:00-18:30', sessions: 1 },
@@ -92,10 +98,10 @@ const CoursesPage = () => {
   ];
 
   const filteredCourses = courses.filter((course) => {
-    if (selectedStatusFilter !== 'all' && course.status !== selectedStatusFilter) return false;
-    if (selectedTypeFilter !== 'all' && course.courseType !== selectedTypeFilter) return false;
-    if (selectedLevelFilter !== 'all' && course.level !== selectedLevelFilter) return false;
-    return true;
+    const typeMatch = selectedTypeFilter === 'all' || course.courseType === selectedTypeFilter;
+    const levelMatch = selectedLevelFilter === 'all' || course.level === selectedLevelFilter;
+    const statusMatch = selectedStatusFilter === 'all' || course.status === selectedStatusFilter;
+    return typeMatch && levelMatch && statusMatch;
   });
 
   const getStatusColor = (status: string) => {
@@ -206,8 +212,17 @@ const CoursesPage = () => {
                 </div>
               }
               actions={[
-                <Button key={course.id} type="primary" icon={<PlayCircleOutlined />}>
-                  Xem chi tiết
+                <Button
+                  key={course.id}
+                  type="primary"
+                  icon={course.courseType === 'individual' ? <UserOutlined /> : <TeamOutlined />}
+                  style={{
+                    backgroundColor: course.courseType === 'individual' ? '#52c41a' : '#722ed1',
+                    borderColor: course.courseType === 'individual' ? '#52c41a' : '#722ed1',
+                  }}
+                  onClick={() => router.push('/payment')}
+                >
+                  {course.courseType === 'individual' ? 'Đăng ký cá nhân' : 'Đăng ký'}
                 </Button>,
               ]}
             >
