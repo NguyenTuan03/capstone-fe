@@ -39,7 +39,7 @@ export default function Login() {
       // Coach login - redirect to coach dashboard (using dashboard for now)
       message.success('Đăng nhập thành công! Chào mừng Coach!');
       setTimeout(() => {
-        router.push('/(dashboard)/coaches');
+        router.push('/summary');
       }, 1000);
     } else if (email === 'learner' && password === 'learner') {
       // Learner login - redirect to learner dashboard

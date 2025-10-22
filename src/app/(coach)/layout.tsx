@@ -1,264 +1,375 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { usePathname, useRouter } from 'next/navigation';
-import { Layout, Menu } from 'antd';
+import React, { useState } from 'react';
+import { Layout, Menu, Avatar, Rate, Badge, Tooltip } from 'antd';
 import {
-  DashboardOutlined,
-  UserOutlined,
+  LineChartOutlined,
+  CalendarOutlined,
   TeamOutlined,
   BookOutlined,
-  TrophyOutlined,
-  SafetyCertificateOutlined,
-  StarOutlined,
-  CalendarOutlined,
-  CheckCircleOutlined,
+  ScheduleOutlined,
   BarChartOutlined,
-  LeftOutlined,
-  RightOutlined,
+  FileTextOutlined,
+  VideoCameraOutlined,
+  DollarOutlined,
+  SettingOutlined,
+  BellOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
 } from '@ant-design/icons';
-import type { MenuProps } from 'antd';
-
-import Header from '@/modules/auth/header';
 
 const { Sider, Content } = Layout;
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter();
-  const pathname = usePathname();
-
-  const items: MenuProps['items'] = useMemo(
-    () => [
-      {
-        key: '/dashboard',
-        icon: <DashboardOutlined />,
-        label: 'Tổng quan',
-      },
-      { key: '/users', icon: <UserOutlined />, label: 'Người dùng' },
-      { key: '/coaches', icon: <TeamOutlined />, label: 'Huấn luyện viên' },
-      { key: '/curriculum', icon: <BookOutlined />, label: 'Giáo trình' },
-      {
-        key: '/achievements',
-        icon: <TrophyOutlined />,
-        label: 'Thành tựu',
-      },
-      {
-        key: '/certificates',
-        icon: <SafetyCertificateOutlined />,
-        label: 'Chứng chỉ',
-      },
-      { key: '/quality', icon: <StarOutlined />, label: 'Giám sát chất lượng' },
-      { key: '/sessions', icon: <CalendarOutlined />, label: 'Quản lý buổi học' },
-      {
-        key: '/course-verification',
-        icon: <CheckCircleOutlined />,
-        label: 'Xác minh khóa học',
-      },
-      {
-        key: '/statistics',
-        icon: <BarChartOutlined />,
-        label: 'Thống kê',
-      },
-    ],
-    [],
-  );
-
-  const savedOpenKeys =
-    typeof window !== 'undefined' ? localStorage.getItem('admin_open_keys') || '[]' : '[]';
-  const [openKeys, setOpenKeys] = useState<string[]>(JSON.parse(savedOpenKeys));
+const CoachLayout = ({ children }: { children: React.ReactNode }) => {
   const [collapsed, setCollapsed] = useState(false);
+  const [selectedKey, setSelectedKey] = useState('overview');
 
-  useEffect(() => {
-    try {
-      localStorage.setItem('admin_open_keys', JSON.stringify(openKeys));
-    } catch {}
-  }, [openKeys]);
-
-  const handleMenuClick: MenuProps['onClick'] = ({ key }) => {
-    if (typeof key === 'string') {
-      router.push(key);
-    }
-  };
-
-  const segments = useMemo(() => pathname.split('/').filter(Boolean), [pathname]);
-
-  const getPageTitle = (segment: string) => {
-    const titleMap: { [key: string]: string } = {
-      dashboard: 'Tổng quan',
-      users: 'Người dùng',
-      coaches: 'Huấn luyện viên',
-      curriculum: 'Giáo trình',
-      achievements: 'Thành tựu',
-      certificates: 'Chứng chỉ',
-      quality: 'Giám sát chất lượng',
-      sessions: 'Quản lý buổi học',
-      'course-verification': 'Xác minh khóa học',
-      statistics: 'Thống kê',
-    };
-    return titleMap[segment] || segment;
-  };
+  const menuItems = [
+    {
+      key: 'overview',
+      icon: <LineChartOutlined />,
+      label: 'Tổng quan',
+    },
+    {
+      key: 'schedule',
+      icon: <CalendarOutlined />,
+      label: 'Lịch dạy',
+    },
+    {
+      key: 'students',
+      icon: <TeamOutlined />,
+      label: 'Học viên',
+    },
+    {
+      key: 'courses',
+      icon: <BookOutlined />,
+      label: 'Khóa học',
+    },
+    {
+      key: 'upcoming-courses',
+      icon: <ScheduleOutlined />,
+      label: 'Khóa học sắp mở',
+    },
+    {
+      key: 'analytics',
+      icon: <BarChartOutlined />,
+      label: 'Phân tích học viên',
+    },
+    {
+      key: 'content',
+      icon: <FileTextOutlined />,
+      label: 'Kho nội dung',
+    },
+    {
+      key: 'video-conference',
+      icon: <VideoCameraOutlined />,
+      label: 'Video Conference',
+    },
+    {
+      key: 'income',
+      icon: <DollarOutlined />,
+      label: 'Thu nhập',
+    },
+    {
+      key: 'settings',
+      icon: <SettingOutlined />,
+      label: 'Cài đặt',
+    },
+  ];
 
   return (
-    <Layout className="min-h-screen" style={{ minHeight: '100vh' }}>
+    <Layout style={{ minHeight: '100vh' }}>
       <Sider
+        collapsible
         collapsed={collapsed}
-        defaultCollapsed={false}
+        onCollapse={setCollapsed}
         width={240}
         collapsedWidth={80}
-        className="!bg-white border-r border-gray-200"
+        trigger={null}
         style={{
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
+          background: '#059669',
           position: 'fixed',
           left: 0,
           top: 0,
-          zIndex: 100,
+          bottom: 0,
+          overflow: 'auto',
+          boxShadow: '2px 0 8px rgba(0,0,0,0.1)',
+          zIndex: 1000,
         }}
-        trigger={null}
       >
-        <div className="h-12 flex items-center justify-center border-b border-gray-200">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
-              <span className="text-white font-bold text-sm">PL</span>
-            </div>
-            {!collapsed && (
-              <div className="flex flex-col">
-                <span className="text-sm font-bold text-gray-800">PICKLE-LEARN</span>
-                <span className="text-xs text-gray-500">Admin Portal</span>
-              </div>
-            )}
-          </div>
+        {/* Logo */}
+        <div
+          style={{
+            padding: collapsed ? '20px 0' : '20px 24px',
+            textAlign: 'center',
+            color: 'white',
+            fontSize: collapsed ? '18px' : '22px',
+            fontWeight: 'bold',
+            borderBottom: '1px solid rgba(255,255,255,0.1)',
+            transition: 'all 0.2s',
+            background: 'rgba(0,0,0,0.1)',
+          }}
+        >
+          {collapsed ? 'PL' : 'PICKLE-LEARN'}
         </div>
+
+        {/* Profile Section */}
+        {!collapsed && (
+          <div
+            style={{
+              padding: '24px 20px',
+              textAlign: 'center',
+              borderBottom: '1px solid rgba(255,255,255,0.1)',
+              background: 'rgba(0,0,0,0.05)',
+            }}
+          >
+            <div style={{ position: 'relative', display: 'inline-block', marginBottom: '12px' }}>
+              <Avatar
+                size={72}
+                style={{
+                  backgroundColor: '#10b981',
+                  fontSize: '28px',
+                  fontWeight: 'bold',
+                  border: '3px solid rgba(255,255,255,0.3)',
+                }}
+              >
+                LDH
+              </Avatar>
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: 2,
+                  right: 2,
+                  width: 16,
+                  height: 16,
+                  borderRadius: '50%',
+                  background: '#10b981',
+                  border: '2px solid white',
+                }}
+              />
+            </div>
+            <div
+              style={{ color: 'white', fontWeight: '600', fontSize: '16px', marginBottom: '4px' }}
+            >
+              Lại Đức Hùng
+            </div>
+            <div
+              style={{
+                color: 'rgba(255,255,255,0.8)',
+                fontSize: '13px',
+                marginBottom: '10px',
+                background: 'rgba(255,255,255,0.1)',
+                padding: '4px 12px',
+                borderRadius: '12px',
+                display: 'inline-block',
+              }}
+            >
+              Huấn luyện viên Pro
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '8px',
+                marginTop: '8px',
+              }}
+            >
+              <Rate disabled defaultValue={4.8} style={{ fontSize: '14px' }} allowHalf />
+            </div>
+            <div
+              style={{
+                color: '#ffd700',
+                fontSize: '15px',
+                fontWeight: '600',
+                marginTop: '6px',
+              }}
+            >
+              ⭐ 4.8/5
+            </div>
+          </div>
+        )}
+
+        {collapsed && (
+          <div
+            style={{
+              padding: '24px 0',
+              textAlign: 'center',
+              borderBottom: '1px solid rgba(255,255,255,0.1)',
+            }}
+          >
+            <Tooltip title="Lại Đức Hùng - 4.8/5" placement="right">
+              <div style={{ position: 'relative', display: 'inline-block' }}>
+                <Avatar
+                  size={48}
+                  style={{
+                    backgroundColor: '#10b981',
+                    fontSize: '18px',
+                    fontWeight: 'bold',
+                    border: '2px solid rgba(255,255,255,0.3)',
+                    cursor: 'pointer',
+                  }}
+                >
+                  LDH
+                </Avatar>
+                <div
+                  style={{
+                    position: 'absolute',
+                    bottom: 0,
+                    right: 0,
+                    width: 12,
+                    height: 12,
+                    borderRadius: '50%',
+                    background: '#10b981',
+                    border: '2px solid #059669',
+                  }}
+                />
+              </div>
+            </Tooltip>
+          </div>
+        )}
+
+        {/* Menu */}
         <Menu
+          theme="dark"
+          selectedKeys={[selectedKey]}
           mode="inline"
-          selectedKeys={[pathname === '/' ? '/dashboard' : pathname.split('?')[0]]}
-          openKeys={openKeys}
-          onOpenChange={(keys) => setOpenKeys(keys as string[])}
-          items={items}
-          onClick={handleMenuClick}
-          className="!border-r-0"
-          style={{ flex: 1 }}
+          items={menuItems}
+          onClick={({ key }) => setSelectedKey(key)}
+          style={{
+            background: 'transparent',
+            border: 'none',
+            marginTop: '8px',
+            paddingBottom: '80px',
+          }}
+          className="coach-sidebar-menu"
         />
 
-        {/* Custom Collapse Button */}
-        <div
-          className="h-12 flex items-center justify-center cursor-pointer hover:bg-gray-50 transition-colors duration-200"
-          onClick={() => setCollapsed(!collapsed)}
-          style={{
-            backgroundColor: 'transparent',
-          }}
-        >
-          {collapsed ? (
-            <RightOutlined
-              style={{
-                fontSize: '14px',
-                color: '#666',
-                transition: 'all 0.2s ease',
-              }}
-            />
-          ) : (
-            <LeftOutlined
-              style={{
-                fontSize: '14px',
-                color: '#666',
-                transition: 'all 0.2s ease',
-              }}
-            />
-          )}
-        </div>
-      </Sider>
-      <Layout
-        style={{
-          minHeight: '100vh',
-          marginLeft: collapsed ? '80px' : '240px',
-          transition: 'margin-left 0.2s ease',
-        }}
-      >
+        {/* Collapse Button */}
         <div
           style={{
-            position: 'fixed',
-            top: 0,
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
             right: 0,
-            left: collapsed ? '80px' : '240px',
-            zIndex: 99,
-            transition: 'left 0.2s ease',
-            borderLeft: 'none',
-            borderRight: 'none',
-          }}
-        >
-          <Header />
-        </div>
-        <Content
-          style={{
-            height: 'calc(100vh - 48px)',
-            backgroundColor: '#f5f5f5',
-            marginTop: '48px',
-            padding: '24px',
-            overflow: 'hidden',
+            padding: '16px',
+            borderTop: '1px solid rgba(255,255,255,0.1)',
+            background: 'rgba(0,0,0,0.1)',
+            textAlign: 'center',
           }}
         >
           <div
-            className="bg-white rounded-lg shadow"
+            onClick={() => setCollapsed(!collapsed)}
             style={{
-              height: 'calc(100vh - 96px)',
+              color: 'white',
+              fontSize: '18px',
+              cursor: 'pointer',
+              padding: '8px',
               borderRadius: '8px',
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s',
+              background: 'rgba(255,255,255,0.1)',
+              width: collapsed ? '48px' : 'auto',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
             }}
           >
+            {collapsed ? (
+              <MenuUnfoldOutlined />
+            ) : (
+              <>
+                <MenuFoldOutlined style={{ marginRight: '8px' }} />
+                {!collapsed && <span style={{ fontSize: '14px' }}>Thu gọn</span>}
+              </>
+            )}
+          </div>
+        </div>
+
+        <style jsx global>{`
+          .coach-sidebar-menu .ant-menu-item {
+            margin: 4px 12px !important;
+            border-radius: 8px !important;
+            height: 44px !important;
+            line-height: 44px !important;
+            transition: all 0.2s !important;
+          }
+
+          .coach-sidebar-menu .ant-menu-item:hover {
+            background: rgba(255, 255, 255, 0.15) !important;
+          }
+
+          .coach-sidebar-menu .ant-menu-item-selected {
+            background: rgba(255, 255, 255, 0.2) !important;
+            font-weight: 500 !important;
+          }
+
+          .coach-sidebar-menu .ant-menu-item-selected::after {
+            display: none !important;
+          }
+
+          .coach-sidebar-menu .ant-menu-item .anticon {
+            font-size: 18px !important;
+          }
+        `}</style>
+      </Sider>
+
+      <Layout style={{ marginLeft: collapsed ? 80 : 240, transition: 'all 0.2s' }}>
+        {/* Header */}
+        <div
+          style={{
+            background: 'white',
+            padding: '16px 32px',
+            display: 'flex',
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+            borderBottom: '1px solid #f0f0f0',
+            position: 'sticky',
+            top: 0,
+            zIndex: 999,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+          }}
+        >
+          <Badge count={3} offset={[-5, 5]}>
             <div
               style={{
-                flex: 1,
-                overflowY: 'auto',
-                overflowX: 'hidden',
-                padding: '24px',
-                width: '100%',
-                boxSizing: 'border-box',
+                cursor: 'pointer',
+                padding: '8px',
+                borderRadius: '8px',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = '#f5f5f5';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
               }}
             >
-              {children}
+              <BellOutlined style={{ fontSize: '20px' }} />
             </div>
-          </div>
+          </Badge>
+        </div>
+
+        <Content
+          style={{
+            margin: 0,
+            background: '#f5f5f5',
+            minHeight: 'calc(100vh - 64px)',
+          }}
+        >
+          {children}
         </Content>
       </Layout>
     </Layout>
   );
-}
+};
 
-/*
-// AUTHENTICATION DISABLED FOR UI DEVELOPMENT
-// TO ENABLE: Uncomment the auth logic below and comment out current layout
-
-'use client';
-
-import AppLoader from '@/@crema/components/AppLoader';
-import { useJWTAuth } from '@/@crema/services/jwt-auth/JWTAuthProvider';
-import Header from '@/modules/auth/header';
-
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const { user, isLoading } = useJWTAuth();
-
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <AppLoader />
-      </div>
-    );
-  }
-
-  if (!user) {
-    return null;
-  }
-
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <main className="py-8">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">{children}</div>
-      </main>
-    </div>
-  );
-}
-*/
+export default CoachLayout;

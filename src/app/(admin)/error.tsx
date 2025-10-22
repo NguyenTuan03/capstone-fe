@@ -4,19 +4,19 @@ import { useEffect } from 'react';
 import { Result, Button } from 'antd';
 import { HomeOutlined, ReloadOutlined, DashboardOutlined } from '@ant-design/icons';
 
-interface CoachErrorProps {
+interface DashboardErrorProps {
   error: Error & { digest?: string };
   reset: () => void;
 }
 
 /**
- * Coach Error Page
+ * Dashboard Error Page
  *
- * Specific error handling for coach section
+ * Specific error handling for dashboard section
  */
-export default function CoachError({ error, reset }: CoachErrorProps) {
+export default function DashboardError({ error, reset }: DashboardErrorProps) {
   useEffect(() => {
-    console.error('Coach Error:', error);
+    console.error('Dashboard Error:', error);
   }, [error]);
 
   const handleGoHome = () => {
@@ -24,7 +24,7 @@ export default function CoachError({ error, reset }: CoachErrorProps) {
   };
 
   const handleGoDashboard = () => {
-    window.location.href = '/coach/dashboard';
+    window.location.href = '/dashboard';
   };
 
   return (
