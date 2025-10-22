@@ -1,7 +1,14 @@
 import { GoogleGenAI, Type } from '@google/genai';
 import { CombinedAnalysisResult, VideoComparisonResult } from '@/@crema/types/models/AI';
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
+const apiKey = process.env.NEXT_PUBLIC_API_KEY;
+if (!apiKey) {
+  throw new Error(
+    'NEXT_PUBLIC_API_KEY environment variable is not set. Please add it to your .env.local file.',
+  );
+}
+
+const ai = new GoogleGenAI({ apiKey });
 
 const model = 'gemini-2.5-flash';
 
