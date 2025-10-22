@@ -65,6 +65,32 @@ const analyzeVideoSchema = {
   ],
 };
 
+const retryWithBackoff = async <T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 1000,
+): Promise<T> => {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error: any) {
+      const isRetryableError =
+        error?.message?.includes('overloaded') ||
+        error?.message?.includes('503') ||
+        error?.message?.includes('UNAVAILABLE');
+
+      if (!isRetryableError || attempt === maxRetries - 1) {
+        throw error;
+      }
+
+      const delay = baseDelay * Math.pow(2, attempt);
+      console.log(`Attempt ${attempt + 1} failed, retrying in ${delay}ms...`);
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+  throw new Error('Max retries exceeded');
+};
+
 export const analyzeVideo = async (base64Frames: string[]): Promise<CombinedAnalysisResult> => {
   const prompt = `
     Bạn là một huấn luyện viên pickleball chuyên nghiệp với kiến thức sâu rộng về cơ sinh học.
@@ -84,25 +110,27 @@ export const analyzeVideo = async (base64Frames: string[]): Promise<CombinedAnal
     inlineData: { mimeType: 'image/jpeg', data: frame },
   }));
 
-  try {
-    const response = await ai.models.generateContent({
-      model,
-      contents: {
-        parts: [...imageParts, { text: prompt }],
-      },
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: analyzeVideoSchema,
-      },
-    });
+  return retryWithBackoff(async () => {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: {
+          parts: [...imageParts, { text: prompt }],
+        },
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: analyzeVideoSchema,
+        },
+      });
 
-    return parseJsonResponse<CombinedAnalysisResult>(response.text || '');
-  } catch (error) {
-    console.error('Gemini API call failed in analyzeVideo:', error);
-    throw new Error(
-      'AI không thể xử lý video. Điều này có thể do sự cố mạng hoặc sự cố dịch vụ tạm thời. Vui lòng thử lại sau.',
-    );
-  }
+      return parseJsonResponse<CombinedAnalysisResult>(response.text || '');
+    } catch (error) {
+      console.error('Gemini API call failed in analyzeVideo:', error);
+      throw new Error(
+        'AI không thể xử lý video. Điều này có thể do sự cố mạng hoặc sự cố dịch vụ tạm thời. Vui lòng thử lại sau.',
+      );
+    }
+  });
 };
 
 const comparisonDetailSchema = {
@@ -263,21 +291,23 @@ export const compareVideos = async (
     { text: prompt },
   ];
 
-  try {
-    const response = await ai.models.generateContent({
-      model,
-      contents: { parts },
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: compareVideosSchema,
-      },
-    });
+  return retryWithBackoff(async () => {
+    try {
+      const response = await ai.models.generateContent({
+        model,
+        contents: { parts },
+        config: {
+          responseMimeType: 'application/json',
+          responseSchema: compareVideosSchema,
+        },
+      });
 
-    return parseJsonResponse<VideoComparisonResult>(response.text || '');
-  } catch (error) {
-    console.error('Gemini API call failed in compareVideos:', error);
-    throw new Error(
-      'AI không thể xử lý video để so sánh. Điều này có thể do sự cố mạng hoặc sự cố dịch vụ tạm thời. Vui lòng thử lại sau.',
-    );
-  }
+      return parseJsonResponse<VideoComparisonResult>(response.text || '');
+    } catch (error) {
+      console.error('Gemini API call failed in compareVideos:', error);
+      throw new Error(
+        'AI không thể xử lý video để so sánh. Điều này có thể do sự cố mạng hoặc sự cố dịch vụ tạm thời. Vui lòng thử lại sau.',
+      );
+    }
+  });
 };
