@@ -95,7 +95,7 @@ const CoachOverview = () => {
           marginBottom: 24,
           borderRadius: 12,
         }}
-        bodyStyle={{ padding: '32px' }}
+        styles={{ body: { padding: '32px' } }}
       >
         <Row justify="space-between" align="middle" gutter={[16, 16]}>
           <Col xs={24} md={16}>
@@ -131,7 +131,7 @@ const CoachOverview = () => {
                 minWidth: 180,
                 textAlign: 'center',
               }}
-              bodyStyle={{ padding: '20px' }}
+              styles={{ body: { padding: '20px' } }}
             >
               <Title level={1} style={{ color: 'white', margin: 0, fontSize: 48 }}>
                 4.8
@@ -151,7 +151,7 @@ const CoachOverview = () => {
           <Col xs={24} sm={12} lg={6} key={index}>
             <Card
               style={{ borderRadius: 12, border: '1px solid #f0f0f0' }}
-              bodyStyle={{ padding: '20px' }}
+              styles={{ body: { padding: '20px' } }}
             >
               <Space direction="vertical" style={{ width: '100%' }} size={12}>
                 <div

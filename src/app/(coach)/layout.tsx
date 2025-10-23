@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Layout, Menu, Avatar, Rate, Badge, Tooltip } from 'antd';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   LineChartOutlined,
   CalendarOutlined,
@@ -22,7 +23,14 @@ const { Sider, Content } = Layout;
 
 const CoachLayout = ({ children }: { children: React.ReactNode }) => {
   const [collapsed, setCollapsed] = useState(false);
-  const [selectedKey, setSelectedKey] = useState('overview');
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Get current selected key from pathname
+  const getSelectedKey = () => {
+    if (pathname === '/coach' || pathname === '/coach/summary') return 'overview';
+    return pathname.split('/').pop() || 'overview';
+  };
 
   const menuItems = [
     {
@@ -41,14 +49,9 @@ const CoachLayout = ({ children }: { children: React.ReactNode }) => {
       label: 'Học viên',
     },
     {
-      key: 'courses',
+      key: 'course-manage',
       icon: <BookOutlined />,
       label: 'Khóa học',
-    },
-    {
-      key: 'upcoming-courses',
-      icon: <ScheduleOutlined />,
-      label: 'Khóa học sắp mở',
     },
     {
       key: 'analytics',
@@ -232,10 +235,16 @@ const CoachLayout = ({ children }: { children: React.ReactNode }) => {
         {/* Menu */}
         <Menu
           theme="dark"
-          selectedKeys={[selectedKey]}
+          selectedKeys={[getSelectedKey()]}
           mode="inline"
           items={menuItems}
-          onClick={({ key }) => setSelectedKey(key)}
+          onClick={({ key }) => {
+            if (key === 'overview') {
+              router.push('/coach/summary');
+            } else {
+              router.push(`${key}`);
+            }
+          }}
           style={{
             background: 'transparent',
             border: 'none',

@@ -178,6 +178,10 @@ export default function Login() {
               />
             </Form.Item>
 
+            <Form.Item name="remember" valuePropName="checked" className="mb-4">
+              <Checkbox className="text-gray-600">Nhớ tôi</Checkbox>
+            </Form.Item>
+
             <Form.Item className="mb-6">
               <Button
                 type="primary"
@@ -190,11 +194,8 @@ export default function Login() {
             </Form.Item>
           </Form>
 
-          {/* Remember & Forgot Password */}
-          <div className="flex items-center justify-between text-sm">
-            <Form.Item name="remember" valuePropName="checked" className="mb-0">
-              <Checkbox className="text-gray-600">Nhớ tôi</Checkbox>
-            </Form.Item>
+          {/* Forgot Password */}
+          <div className="flex justify-end text-sm mb-6">
             <Link href="/forgot-password" className="text-blue-600 hover:text-blue-700 font-medium">
               Quên mật khẩu?
             </Link>

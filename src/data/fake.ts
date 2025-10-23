@@ -1,0 +1,22 @@
+export const course = {
+  id: 'coach-003',
+  email: 'le.coach.c@email.com',
+  name: 'Lê Văn Cường',
+  phone: '+84 901 333 333',
+  avatar:
+    'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+  status: 'suspended',
+  location: 'Đà Nẵng',
+  joinDate: '2023-04-10T00:00:00Z',
+  lastActive: '2024-01-20T10:15:00Z',
+  experience: 7,
+  rating: 3.2,
+  totalSessions: 203,
+  totalStudents: 67,
+  hourlyRate: 250000,
+  specialties: ['Chiến thuật nâng cao', 'Thi đấu chuyên nghiệp'],
+  bio: 'Cựu vận động viên pickleball quốc gia với nhiều năm kinh nghiệm thi đấu và huấn luyện.',
+  suspendReason: 'Nhiều khiếu nại về thái độ không chuyên nghiệp trong buổi học',
+  suspendedAt: '2024-01-22T00:00:00Z',
+  suspendedBy: 'admin-001',
+};
