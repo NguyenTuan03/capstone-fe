@@ -112,18 +112,22 @@ export const analyzeVideo = async (base64Frames: string[]): Promise<CombinedAnal
 
   return retryWithBackoff(async () => {
     try {
-      const response = await ai.models.generateContent({
-        model,
-        contents: {
-          parts: [...imageParts, { text: prompt }],
-        },
-        config: {
+      const genModel = ai.getGenerativeModel({ model });
+      const result = await genModel.generateContent({
+        contents: [
+          {
+            role: 'user',
+            parts: [...imageParts, { text: prompt }],
+          },
+        ],
+        generationConfig: {
           responseMimeType: 'application/json',
-          responseSchema: analyzeVideoSchema,
+          responseSchema: analyzeVideoSchema as any,
         },
       });
 
-      return parseJsonResponse<CombinedAnalysisResult>(response.text || '');
+      const response = await result.response;
+      return parseJsonResponse<CombinedAnalysisResult>(response.text());
     } catch (error) {
       console.error('Gemini API call failed in analyzeVideo:', error);
       throw new Error(
@@ -299,16 +303,22 @@ export const compareVideos = async (
 
   return retryWithBackoff(async () => {
     try {
-      const response = await ai.models.generateContent({
-        model,
-        contents: { parts },
-        config: {
+      const genModel = ai.getGenerativeModel({ model });
+      const result = await genModel.generateContent({
+        contents: [
+          {
+            role: 'user',
+            parts,
+          },
+        ],
+        generationConfig: {
           responseMimeType: 'application/json',
-          responseSchema: compareVideosSchema,
+          responseSchema: compareVideosSchema as any,
         },
       });
 
-      return parseJsonResponse<VideoComparisonResult>(response.text || '');
+      const response = await result.response;
+      return parseJsonResponse<VideoComparisonResult>(response.text());
     } catch (error) {
       console.error('Gemini API call failed in compareVideos:', error);
       throw new Error(
