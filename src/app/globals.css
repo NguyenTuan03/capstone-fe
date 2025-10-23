@@ -20,6 +20,76 @@ body {
   padding: 0;
   min-height: 100vh;
   overflow-x: hidden;
+  font-size: 15px; /* Tăng font size mặc định từ 14px lên 15px */
+}
+
+/* Tăng font size cho Ant Design components */
+.ant-table {
+  font-size: 15px !important;
+}
+
+.ant-table-thead > tr > th {
+  font-size: 15px !important;
+  font-weight: 600;
+}
+
+.ant-table-tbody > tr > td {
+  font-size: 15px !important;
+}
+
+.ant-btn {
+  font-size: 15px !important;
+}
+
+.ant-input,
+.ant-select-selection-item,
+.ant-picker-input > input {
+  font-size: 15px !important;
+}
+
+.ant-typography {
+  font-size: 15px !important;
+}
+
+.ant-card-head-title {
+  font-size: 17px !important;
+  font-weight: 600;
+}
+
+.ant-descriptions-item-label {
+  font-size: 15px !important;
+}
+
+.ant-descriptions-item-content {
+  font-size: 15px !important;
+}
+
+.ant-tag {
+  font-size: 14px !important;
+}
+
+.ant-badge-status-text {
+  font-size: 15px !important;
+}
+
+.ant-modal-title {
+  font-size: 18px !important;
+}
+
+.ant-modal-body {
+  font-size: 15px !important;
+}
+
+.ant-form-item-label > label {
+  font-size: 15px !important;
+}
+
+.ant-menu-item {
+  font-size: 15px !important;
+}
+
+.ant-dropdown-menu-item {
+  font-size: 15px !important;
 }
 
 html {

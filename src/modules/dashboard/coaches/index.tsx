@@ -231,11 +231,11 @@ export default function CoachesPageClient() {
               <Text className="font-medium">{record.name}</Text>
               {record.rating >= 4.5 && (
                 <Tooltip title="Huấn luyện viên xuất sắc">
-                  <TrophyOutlined className="text-yellow-500 text-xs" />
+                  <TrophyOutlined className="text-yellow-500 text-sm" />
                 </Tooltip>
               )}
             </div>
-            <Text className="text-sm text-gray-500">{record.email}</Text>
+            <Text className="text-base text-gray-500">{record.email}</Text>
           </div>
         </div>
       ),
@@ -261,7 +261,7 @@ export default function CoachesPageClient() {
       render: (_, record) => (
         <div className="text-center">
           <Text className="font-medium">{record.rating.toFixed(1)}</Text>
-          <div className="text-xs text-gray-500">⭐</div>
+          <div className="text-base text-gray-500">⭐</div>
         </div>
       ),
     },
@@ -587,7 +587,7 @@ export default function CoachesPageClient() {
                 </Title>
                 <Text className="text-red-600">{selectedCoach.suspendReason}</Text>
                 {selectedCoach.suspendedAt && (
-                  <div className="text-sm text-gray-500 mt-1">
+                  <div className="text-base text-gray-500 mt-1">
                     Đình chỉ lúc: {formatDate(selectedCoach.suspendedAt)}
                   </div>
                 )}
@@ -698,12 +698,12 @@ export default function CoachesPageClient() {
                           )}
                         </div>
                         {cert.verifiedBy && cert.verifiedAt && (
-                          <div className="text-sm text-green-600">
+                          <div className="text-base text-green-600">
                             Xác minh bởi: {cert.verifiedBy} - {formatDate(cert.verifiedAt)}
                           </div>
                         )}
                         {cert.notes && (
-                          <div className="text-sm text-gray-600">Ghi chú: {cert.notes}</div>
+                          <div className="text-base text-gray-600">Ghi chú: {cert.notes}</div>
                         )}
                       </div>
                     }

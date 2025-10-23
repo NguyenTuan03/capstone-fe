@@ -228,9 +228,9 @@ export default function QualityPageClient() {
           </p>
           <p className="text-red-600 font-medium">Lý do: {finalReason}</p>
           {evidenceUrls.length > 0 && (
-            <p className="text-gray-500 text-sm">Bằng chứng: {evidenceUrls.length} file</p>
+            <p className="text-gray-500 text-base">Bằng chứng: {evidenceUrls.length} file</p>
           )}
-          <p className="text-gray-500 text-sm mt-2">
+          <p className="text-gray-500 text-base mt-2">
             Huấn luyện viên sẽ không thể nhận buổi học mới sau khi bị đình chỉ.
           </p>
         </div>
@@ -305,7 +305,7 @@ export default function QualityPageClient() {
                 </Tooltip>
               )}
             </div>
-            <Text className="text-sm text-gray-500">{record.email}</Text>
+            <Text className="text-base text-gray-500">{record.email}</Text>
             <Badge
               status={getStatusColor(record.status) as any}
               text={
@@ -330,11 +330,11 @@ export default function QualityPageClient() {
             <Rate disabled value={record.rating} allowHalf />
             <Tag color={getRatingColor(record.rating)}>{record.rating.toFixed(1)}</Tag>
           </div>
-          <div className="text-sm text-gray-500">{record.totalReviews} đánh giá</div>
+          <div className="text-base text-gray-500">{record.totalReviews} đánh giá</div>
           {record.hasComplaints && (
             <div className="flex items-center space-x-1">
               <WarningOutlined className="text-red-500" />
-              <Text className="text-red-500 text-xs">{record.complaintsCount} khiếu nại</Text>
+              <Text className="text-red-500 text-base">{record.complaintsCount} khiếu nại</Text>
             </div>
           )}
         </div>
