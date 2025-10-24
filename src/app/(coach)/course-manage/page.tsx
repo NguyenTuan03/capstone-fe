@@ -1,5 +1,7 @@
 'use client';
+import { extractFrames } from '@/@crema/utils/video';
 import React, { useState } from 'react';
+import * as geminiService from '@/@crema/services/apis/ai/geminiService';
 
 const CourseManagement = () => {
   const [activeTab, setActiveTab] = useState('all');
@@ -23,7 +25,12 @@ const CourseManagement = () => {
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
   const [isExerciseModalVisible, setIsExerciseModalVisible] = useState<any>(false);
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
+  const [isAIFeedbackModalVisible, setIsAIFeedbackModalVisible] = useState<any>(false);
+  const [aiAnalysisResults, setAiAnalysisResults] = useState<any>(null);
+  const [isAnalyzingAI, setIsAnalyzingAI] = useState<any>(false);
+  const [aiAnalysisError, setAiAnalysisError] = useState<any>(null);
 
+  // Video comparison states (removed unused states)
   // Mock data for exercises and submissions
   const exercises = [
     {
@@ -53,7 +60,7 @@ const CourseManagement = () => {
         studentName: 'Nguyễn Văn A',
         studentAvatar: 'NVA',
         submittedAt: '2025-10-25 14:30',
-        videoUrl: 'student1-serve.mp4',
+        videoUrl: '/assets/videos/demo.mp4',
         status: 'pending',
         aiAnalyzed: true,
         aiSummary: 'Tư thế tốt nhưng cần cải thiện follow-through',
@@ -63,7 +70,7 @@ const CourseManagement = () => {
         studentName: 'Trần Văn B',
         studentAvatar: 'TVB',
         submittedAt: '2025-10-26 09:15',
-        videoUrl: 'student2-serve.mp4',
+        videoUrl: '/assets/videos/demo.mp4',
         status: 'reviewed',
         aiAnalyzed: true,
         aiSummary: 'Kỹ thuật cơ bản đúng, tốc độ còn chậm',
@@ -73,7 +80,7 @@ const CourseManagement = () => {
         studentName: 'Lê Thị C',
         studentAvatar: 'LTC',
         submittedAt: '2025-10-26 16:45',
-        videoUrl: 'student3-serve.mp4',
+        videoUrl: '/assets/videos/demo.mp4',
         status: 'pending',
         aiAnalyzed: true,
         aiSummary: 'Footwork cần cải thiện, tư thế cầm vợt tốt',
@@ -85,7 +92,7 @@ const CourseManagement = () => {
         studentName: 'Phạm Văn D',
         studentAvatar: 'PVD',
         submittedAt: '2025-10-27 10:20',
-        videoUrl: 'student4-return.mp4',
+        videoUrl: '/assets/videos/demo.mp4',
         status: 'pending',
         aiAnalyzed: false,
         aiSummary: null,
@@ -289,6 +296,73 @@ const CourseManagement = () => {
 
   const handleFormChange = (field: any, value: any) => {
     setCourseForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  // AI Analysis function
+  const handleAIAnalysis = async () => {
+    if (!selectedSubmission) return;
+
+    setIsAnalyzingAI(true);
+    setAiAnalysisError(null);
+    setAiAnalysisResults(null);
+
+    try {
+      // Load coach video from public folder
+      const coachVideoResponse = await fetch('/assets/videos/coach-demo.mp4');
+      const coachVideoBlob = await coachVideoResponse.blob();
+      const coachVideoFile = new File([coachVideoBlob], 'coach-demo.mp4', { type: 'video/mp4' });
+
+      // Load learner video from submission
+      const learnerVideoResponse = await fetch(selectedSubmission.videoUrl);
+      const learnerVideoBlob = await learnerVideoResponse.blob();
+      const learnerVideoFile = new File([learnerVideoBlob], 'learner-video.mp4', {
+        type: 'video/mp4',
+      });
+
+      const extractKeyFrames = async (file: File) => {
+        const video = document.createElement('video');
+        video.src = URL.createObjectURL(file);
+        await new Promise((resolve) => {
+          video.onloadedmetadata = resolve;
+        });
+        const duration = video.duration;
+        URL.revokeObjectURL(video.src);
+        const timestamps = [duration * 0.25, duration * 0.5, duration * 0.75].map((t) =>
+          parseFloat(t.toFixed(2)),
+        );
+        const frames = await extractFrames(file, timestamps);
+        return { frames, timestamps };
+      };
+
+      const [coachData, learnerData] = await Promise.all([
+        extractKeyFrames(coachVideoFile),
+        extractKeyFrames(learnerVideoFile),
+      ]);
+
+      const analysisResult = await geminiService.compareVideos(
+        coachData.frames,
+        coachData.timestamps,
+        learnerData.frames,
+        learnerData.timestamps,
+      );
+      console.log('analysisResult', analysisResult);
+      setAiAnalysisResults(analysisResult);
+    } catch (err) {
+      console.error(err);
+      if (err instanceof Error) {
+        if (err.message.includes('load video')) {
+          setAiAnalysisError(
+            'Lỗi khi tải một trong các video. Vui lòng đảm bảo cả hai đều là tệp video hợp lệ và thử lại.',
+          );
+        } else {
+          setAiAnalysisError(err.message);
+        }
+      } else {
+        setAiAnalysisError('Đã xảy ra lỗi không xác định khi so sánh video.');
+      }
+    } finally {
+      setIsAnalyzingAI(false);
+    }
   };
 
   const filteredCourses = courses.filter((course) => {
@@ -1660,11 +1734,26 @@ const CourseManagement = () => {
             }}
           >
             <div className="flex justify-between items-center p-6 border-b">
-              <div>
-                <h2 className="text-2xl font-bold">{selectedExercise.title}</h2>
-                <p className="text-gray-600 mt-1">
-                  {submissions[selectedExercise.id]?.length || 0} học viên đã nộp bài
-                </p>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => {
+                    setIsExerciseModalVisible(false);
+                    setSelectedExercise(null);
+                    setSelectedSubmission(null);
+                    setIsManageModalVisible(true);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all"
+                >
+                  <span className="text-lg">←</span>
+                  <span className="font-medium">Quay lại</span>
+                </button>
+                <div className="h-8 w-px bg-gray-300"></div>
+                <div>
+                  <h2 className="text-2xl font-bold">{selectedExercise.title}</h2>
+                  <p className="text-gray-600 mt-1">
+                    {submissions[selectedExercise.id]?.length || 0} học viên đã nộp bài
+                  </p>
+                </div>
               </div>
               <button
                 onClick={() => {
@@ -1685,42 +1774,62 @@ const CourseManagement = () => {
                   {submissions[selectedExercise.id]?.map((submission: any) => (
                     <div
                       key={submission.id}
-                      className="border rounded-lg p-4 hover:bg-gray-50 transition-colors"
+                      className="bg-white rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-blue-200"
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-4 flex-1">
-                          <div className="w-12 h-12 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-lg">
+                          <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-purple-600 text-white rounded-xl flex items-center justify-center font-bold text-xl shadow-lg">
                             {submission.studentAvatar}
                           </div>
                           <div className="flex-1">
-                            <div className="font-semibold">{submission.studentName}</div>
-                            <div className="text-sm text-gray-500">
-                              Nộp lúc: {submission.submittedAt}
+                            <div className="font-bold text-lg text-gray-800">
+                              {submission.studentName}
+                            </div>
+                            <div className="text-sm text-gray-500 mb-2">
+                              📅 Nộp lúc: {submission.submittedAt}
                             </div>
                             {submission.aiAnalyzed && submission.aiSummary && (
-                              <div className="text-sm text-blue-600 mt-1">
+                              <div className="text-sm text-blue-600 bg-blue-50 px-3 py-2 rounded-lg border border-blue-200">
                                 🤖 AI: {submission.aiSummary}
                               </div>
                             )}
                           </div>
                           <div className="flex items-center gap-3">
                             {submission.status === 'reviewed' ? (
-                              <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                                ✓ Đã chấm
+                              <span className="px-4 py-2 bg-green-100 text-green-800 rounded-full text-sm font-semibold border border-green-200 mr-2">
+                                ✅ Đã chấm
                               </span>
                             ) : (
-                              <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm">
+                              <span className="px-4 py-2 bg-orange-100 text-orange-800 rounded-full text-sm font-semibold border border-orange-200 mr-2">
                                 ⏳ Chờ chấm
                               </span>
                             )}
                           </div>
                         </div>
-                        <button
-                          onClick={() => setSelectedSubmission(submission)}
-                          className="ml-4 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                        >
-                          👁️ Xem & Chấm
-                        </button>
+                        <div className="flex items-center gap-3">
+                          {submission.status === 'reviewed' ? (
+                            <button
+                              onClick={() => setSelectedSubmission(submission)}
+                              className="px-5 py-2.5 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg hover:from-green-600 hover:to-green-700 transition-all font-medium text-sm shadow-md hover:shadow-lg transform hover:scale-[1.02] flex items-center gap-2"
+                            >
+                              <span className="text-base">📊</span>
+                              <span>Xem Kết Quả</span>
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => {
+                                setSelectedSubmission(submission);
+                                setIsAIFeedbackModalVisible(true);
+                                setAiAnalysisResults(null);
+                                setAiAnalysisError(null);
+                              }}
+                              className="px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all font-medium text-sm shadow-md hover:shadow-lg transform hover:scale-[1.02] flex items-center gap-2"
+                            >
+                              <span className="text-base">🤖</span>
+                              <span>Nhận Feedback từ AI</span>
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -1772,7 +1881,7 @@ const CourseManagement = () => {
                       </h4>
                       <div className="bg-gray-800 rounded-lg overflow-hidden">
                         <video controls className="w-full">
-                          <source src={selectedExercise.coachVideoUrl} type="video/mp4" />
+                          <source src={'public/asssets/videos/coach-demo.mp4'} type="video/mp4" />
                         </video>
                       </div>
                       <div className="mt-2 text-sm text-gray-600">📹 Video mẫu chuẩn</div>
@@ -1795,25 +1904,42 @@ const CourseManagement = () => {
 
                   {/* AI Analysis */}
                   {selectedSubmission.aiAnalyzed && (
-                    <div className="bg-white border rounded-lg overflow-hidden">
-                      <div className="bg-gradient-to-r from-blue-500 to-purple-500 px-6 py-4">
-                        <h4 className="font-semibold text-white flex items-center gap-2">
-                          <span>🤖</span>
-                          <span>Phân tích từ AI</span>
+                    <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+                      <div className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 px-8 py-6">
+                        <h4 className="font-bold text-white text-xl flex items-center gap-3">
+                          <span className="text-2xl">🤖</span>
+                          <span>Phân tích từ AI Coach</span>
                         </h4>
+                        <p className="text-blue-100 mt-2">
+                          Phân tích chi tiết kỹ thuật và đưa ra gợi ý cải thiện
+                        </p>
                       </div>
-                      <div className="p-6">
+                      <div className="p-8">
                         {/* Summary */}
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                          <h5 className="font-semibold text-blue-800 mb-2">Tóm tắt</h5>
-                          <p className="text-gray-700">{selectedSubmission.aiSummary}</p>
+                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-6 mb-8">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center">
+                              <span className="text-white text-lg">✨</span>
+                            </div>
+                            <h5 className="font-bold text-blue-800 text-lg">Tóm tắt Phân tích</h5>
+                          </div>
+                          <p className="text-gray-700 text-lg leading-relaxed">
+                            {selectedSubmission.aiSummary}
+                          </p>
                         </div>
 
                         {/* Detailed Analysis */}
-                        <div className="space-y-4">
-                          <h5 className="font-semibold text-gray-800">Chi tiết So sánh</h5>
+                        <div className="space-y-6">
+                          <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center">
+                              <span className="text-white text-lg">📊</span>
+                            </div>
+                            <h5 className="font-bold text-gray-800 text-lg">
+                              Chi tiết So sánh Kỹ thuật
+                            </h5>
+                          </div>
 
-                          <div className="space-y-4">
+                          <div className="space-y-6">
                             {[
                               {
                                 aspect: 'Tư thế cầm vợt',
@@ -1821,6 +1947,7 @@ const CourseManagement = () => {
                                 learner: 'Grip đúng nhưng cổ tay hơi cong',
                                 score: 7,
                                 improvement: 'Giữ cổ tay thẳng hơn khi chuẩn bị đánh',
+                                icon: '🤏',
                               },
                               {
                                 aspect: 'Footwork',
@@ -1828,6 +1955,7 @@ const CourseManagement = () => {
                                 learner: 'Bước chân ngắn, chậm hơn',
                                 score: 5,
                                 improvement: 'Tăng tốc độ di chuyển và mở rộng bước chân',
+                                icon: '🏃',
                               },
                               {
                                 aspect: 'Follow-through',
@@ -1835,45 +1963,65 @@ const CourseManagement = () => {
                                 learner: 'Vung vợt chưa đủ, kết thúc thấp',
                                 score: 6,
                                 improvement: 'Hoàn thiện động tác vung vợt đến hết',
+                                icon: '🎯',
                               },
                             ].map((item, index) => (
-                              <div key={index} className="border rounded-lg p-4">
-                                <div className="flex justify-between items-center mb-3">
-                                  <h6 className="font-semibold text-gray-800">{item.aspect}</h6>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm text-gray-600">Điểm:</span>
+                              <div
+                                key={index}
+                                className="bg-white border-2 border-gray-100 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300"
+                              >
+                                <div className="flex justify-between items-center mb-6">
+                                  <div className="flex items-center gap-4">
+                                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-xl flex items-center justify-center shadow-lg">
+                                      <span className="text-white text-xl">{item.icon}</span>
+                                    </div>
+                                    <h6 className="font-bold text-gray-800 text-lg">
+                                      {item.aspect}
+                                    </h6>
+                                  </div>
+                                  <div className="flex items-center gap-3">
+                                    <span className="text-sm text-gray-600 font-medium">Điểm:</span>
                                     <span
-                                      className={`px-3 py-1 rounded-full text-sm font-bold ${
+                                      className={`px-4 py-2 rounded-xl text-sm font-bold shadow-lg ${
                                         item.score >= 8
-                                          ? 'bg-green-100 text-green-800'
+                                          ? 'bg-green-100 text-green-800 border-2 border-green-200'
                                           : item.score >= 6
-                                            ? 'bg-yellow-100 text-yellow-800'
-                                            : 'bg-red-100 text-red-800'
+                                            ? 'bg-yellow-100 text-yellow-800 border-2 border-yellow-200'
+                                            : 'bg-red-100 text-red-800 border-2 border-red-200'
                                       }`}
                                     >
                                       {item.score}/10
                                     </span>
                                   </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-3 mb-3">
-                                  <div className="bg-blue-50 rounded-lg p-3">
-                                    <div className="text-xs text-blue-600 font-medium mb-1">
-                                      👨‍🏫 HUẤN LUYỆN VIÊN
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                  <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-5 border-2 border-blue-200">
+                                    <div className="flex items-center gap-2 mb-3">
+                                      <span className="text-lg">👨‍🏫</span>
+                                      <div className="text-sm text-blue-700 font-bold">
+                                        HUẤN LUYỆN VIÊN
+                                      </div>
                                     </div>
-                                    <p className="text-sm text-gray-700">{item.coach}</p>
+                                    <p className="text-gray-700 font-medium">{item.coach}</p>
                                   </div>
-                                  <div className="bg-green-50 rounded-lg p-3">
-                                    <div className="text-xs text-green-600 font-medium mb-1">
-                                      👤 HỌC VIÊN
+                                  <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-xl p-5 border-2 border-green-200">
+                                    <div className="flex items-center gap-2 mb-3">
+                                      <span className="text-lg">👤</span>
+                                      <div className="text-sm text-green-700 font-bold">
+                                        HỌC VIÊN
+                                      </div>
                                     </div>
-                                    <p className="text-sm text-gray-700">{item.learner}</p>
+                                    <p className="text-gray-700 font-medium">{item.learner}</p>
                                   </div>
                                 </div>
-                                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                                  <div className="text-xs text-orange-700 font-medium mb-1">
-                                    💡 GỢI Ý CẢI THIỆN
+                                <div className="bg-gradient-to-br from-orange-50 to-yellow-50 border-2 border-orange-200 rounded-xl p-5">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <span className="text-lg">💡</span>
+                                    <div className="text-sm text-orange-700 font-bold">
+                                      GỢI Ý CẢI THIỆN
+                                    </div>
                                   </div>
-                                  <p className="text-sm text-gray-700">{item.improvement}</p>
+                                  <p className="text-gray-700 font-medium">{item.improvement}</p>
                                 </div>
                               </div>
                             ))}
@@ -1883,48 +2031,569 @@ const CourseManagement = () => {
                     </div>
                   )}
 
-                  {/* Coach Feedback */}
-                  <div className="bg-white border rounded-lg overflow-hidden">
-                    <div className="bg-green-600 px-6 py-4">
-                      <h4 className="font-semibold text-white">✍️ Nhận xét của Coach</h4>
-                    </div>
-                    <div className="p-6">
-                      <textarea
-                        rows={6}
-                        placeholder="Nhập nhận xét chi tiết của bạn cho học viên..."
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                      />
-                      <div className="mt-4 flex items-center gap-3">
-                        <label className="flex items-center gap-2">
-                          <span className="text-sm text-gray-700">Điểm tổng:</span>
-                          <input
-                            type="number"
-                            min="0"
-                            max="10"
-                            step="0.5"
-                            placeholder="0-10"
-                            className="w-20 px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
-                          />
-                        </label>
-                        <select className="px-4 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-green-500">
-                          <option>Đạt yêu cầu</option>
-                          <option>Chưa đạt</option>
-                          <option>Xuất sắc</option>
-                        </select>
+                  {/* Coach Feedback Results - Only show for reviewed submissions */}
+                  {selectedSubmission.status === 'reviewed' && (
+                    <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+                      <div className="bg-gradient-to-r from-emerald-500 to-teal-600 px-8 py-6">
+                        <h4 className="font-bold text-white text-xl flex items-center gap-3">
+                          <span className="text-2xl">📊</span>
+                          <span>Kết quả chấm bài</span>
+                        </h4>
+                        <p className="text-emerald-100 mt-2">Đánh giá và nhận xét từ Coach</p>
+                      </div>
+                      <div className="p-8">
+                        {/* Score Summary */}
+                        <div className="bg-gradient-to-br from-emerald-50 to-teal-50 border-2 border-emerald-200 rounded-2xl p-6 mb-8">
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                              <div className="w-12 h-12 bg-emerald-500 rounded-xl flex items-center justify-center">
+                                <span className="text-white text-xl">🎯</span>
+                              </div>
+                              <h5 className="font-bold text-emerald-800 text-lg">Điểm tổng kết</h5>
+                            </div>
+                            <div className="text-right">
+                              <div className="text-3xl font-bold text-emerald-600">8.5/10</div>
+                              <div className="text-sm text-emerald-700">Xuất sắc</div>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-3 gap-4">
+                            <div className="text-center">
+                              <div className="text-2xl font-bold text-emerald-600">7.5</div>
+                              <div className="text-sm text-gray-600">Kỹ thuật</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-2xl font-bold text-emerald-600">9.0</div>
+                              <div className="text-sm text-gray-600">Tư thế</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-2xl font-bold text-emerald-600">8.5</div>
+                              <div className="text-sm text-gray-600">Tổng thể</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Coach Comments */}
+                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-6 mb-6">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center">
+                              <span className="text-white text-lg">💬</span>
+                            </div>
+                            <h5 className="font-bold text-blue-800 text-lg">Nhận xét của Coach</h5>
+                          </div>
+                          <div className="bg-white rounded-xl p-4 border border-blue-100">
+                            <p className="text-gray-700 text-lg leading-relaxed">
+                              &quot;Học viên có kỹ thuật cơ bản tốt, tư thế cầm vợt đúng. Tuy nhiên
+                              cần cải thiện tốc độ di chuyển và hoàn thiện động tác follow-through.
+                              Nhìn chung đã đạt yêu cầu và có tiềm năng phát triển tốt.&quot;
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Improvement Suggestions */}
+                        <div className="bg-gradient-to-br from-orange-50 to-yellow-50 border-2 border-orange-200 rounded-2xl p-6">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center">
+                              <span className="text-white text-lg">💡</span>
+                            </div>
+                            <h5 className="font-bold text-orange-800 text-lg">Gợi ý cải thiện</h5>
+                          </div>
+                          <div className="space-y-3">
+                            <div className="flex items-start gap-3">
+                              <span className="text-orange-600 text-lg">•</span>
+                              <span className="text-gray-700">
+                                Tăng tốc độ di chuyển khi đón bóng
+                              </span>
+                            </div>
+                            <div className="flex items-start gap-3">
+                              <span className="text-orange-600 text-lg">•</span>
+                              <span className="text-gray-700">
+                                Hoàn thiện động tác vung vợt đến hết
+                              </span>
+                            </div>
+                            <div className="flex items-start gap-3">
+                              <span className="text-orange-600 text-lg">•</span>
+                              <span className="text-gray-700">
+                                Luyện tập thêm về timing và rhythm
+                              </span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Coach Feedback - Only show for pending submissions */}
+                  {selectedSubmission.status === 'pending' && (
+                    <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+                      <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-8 py-6">
+                        <h4 className="font-bold text-white text-xl flex items-center gap-3">
+                          <span className="text-2xl">✍️</span>
+                          <span>Nhận xét của Coach</span>
+                        </h4>
+                        <p className="text-green-100 mt-2">
+                          Đánh giá chi tiết và đưa ra gợi ý cải thiện cho học viên
+                        </p>
+                      </div>
+                      <div className="p-8">
+                        <div className="mb-6">
+                          <label className="block text-sm font-bold text-gray-700 mb-3">
+                            📝 Nhận xét chi tiết
+                          </label>
+                          <textarea
+                            rows={6}
+                            placeholder="Nhập nhận xét chi tiết của bạn cho học viên..."
+                            className="w-full px-6 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-lg"
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-3">
+                              🎯 Điểm tổng (0-10)
+                            </label>
+                            <input
+                              type="number"
+                              min="0"
+                              max="10"
+                              step="0.5"
+                              placeholder="0-10"
+                              className="w-full px-6 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-lg"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-3">
+                              📊 Đánh giá tổng thể
+                            </label>
+                            <select className="w-full px-6 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-lg">
+                              <option>Đạt yêu cầu</option>
+                              <option>Chưa đạt</option>
+                              <option>Xuất sắc</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Action Buttons */}
-                  <div className="flex gap-3">
-                    <button className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
-                      ✓ Gửi Feedback & Chấm điểm
+                  <div className="flex gap-4">
+                    <button className="flex-1 px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-3">
+                      <span className="text-xl">✓</span>
+                      <span>Gửi Feedback & Chấm điểm</span>
                     </button>
-                    <button className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
-                      💾 Lưu nháp
+                    <button className="px-8 py-4 border-2 border-gray-300 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all font-semibold text-lg flex items-center gap-3">
+                      <span className="text-xl">💾</span>
+                      <span>Lưu nháp</span>
                     </button>
                   </div>
                 </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI Feedback Modal */}
+      {isAIFeedbackModalVisible && selectedSubmission && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1001,
+            padding: '16px',
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: 'white',
+              borderRadius: '16px',
+              width: '100%',
+              maxWidth: '1400px',
+              maxHeight: '90vh',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+            }}
+          >
+            {/* Modal Header */}
+            <div className="flex justify-between items-center p-6 border-b">
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => {
+                    setIsAIFeedbackModalVisible(false);
+                    setSelectedSubmission(null);
+                    setAiAnalysisResults(null);
+                    setAiAnalysisError(null);
+                  }}
+                  className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-all"
+                >
+                  <span className="text-lg">←</span>
+                  <span className="font-medium">Quay lại</span>
+                </button>
+                <div className="h-8 w-px bg-gray-300"></div>
+                <div>
+                  <h2 className="text-2xl font-bold flex items-center gap-3">
+                    <span className="text-3xl">🤖</span>
+                    <span>AI Coach Analysis</span>
+                  </h2>
+                  <p className="text-gray-600 mt-1">
+                    Phân tích kỹ thuật cho {selectedSubmission.studentName}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setIsAIFeedbackModalVisible(false);
+                  setSelectedSubmission(null);
+                  setAiAnalysisResults(null);
+                  setAiAnalysisError(null);
+                }}
+                className="text-gray-500 hover:text-gray-700 text-2xl"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {/* Videos Section - Side by Side */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                {/* Coach Video */}
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-3">
+                    <span className="text-2xl">👨‍🏫</span>
+                    <span>Video Huấn luyện viên (Mẫu)</span>
+                  </h3>
+                  <div className="bg-gray-800 rounded-xl overflow-hidden">
+                    <video controls className="w-full" style={{ maxHeight: '300px' }}>
+                      <source src="/assets/videos/coach-demo.mp4" type="video/mp4" />
+                    </video>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-2">📹 Video mẫu chuẩn từ HLV</p>
+                </div>
+
+                {/* Student Video */}
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-3">
+                    <span className="text-2xl">👤</span>
+                    <span>Video Học viên</span>
+                  </h3>
+                  <div className="bg-gray-800 rounded-xl overflow-hidden">
+                    <video controls className="w-full" style={{ maxHeight: '300px' }}>
+                      <source src={selectedSubmission.videoUrl} type="video/mp4" />
+                    </video>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-2">
+                    📹 Bài làm của {selectedSubmission.studentName}
+                  </p>
+                </div>
+              </div>
+
+              {/* Analyze Button */}
+              <div className="text-center mb-8">
+                <button
+                  onClick={handleAIAnalysis}
+                  disabled={isAnalyzingAI}
+                  className="px-8 py-4 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:from-blue-600 hover:to-purple-700 disabled:from-gray-400 disabled:to-gray-500 transition-all font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 disabled:scale-100 disabled:cursor-not-allowed flex items-center gap-3 mx-auto"
+                >
+                  {isAnalyzingAI ? (
+                    <>
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                      <span>Đang phân tích...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-xl">🔍</span>
+                      <span>Phân tích với AI Coach</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Analysis Results Section - Full Width */}
+              <div className="space-y-6">
+                {isAnalyzingAI && (
+                  <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-8 text-center">
+                    <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
+                    <h3 className="text-xl font-bold text-blue-800 mb-2">AI đang phân tích...</h3>
+                    <p className="text-blue-600">Vui lòng chờ trong giây lát</p>
+                  </div>
+                )}
+
+                {aiAnalysisError && (
+                  <div className="bg-red-50 border-2 border-red-200 rounded-2xl p-6 text-center">
+                    <div className="text-6xl mb-4">⚠️</div>
+                    <h3 className="text-xl font-bold text-red-800 mb-2">Lỗi phân tích</h3>
+                    <p className="text-red-600">{aiAnalysisError}</p>
+                  </div>
+                )}
+
+                {aiAnalysisResults && !isAnalyzingAI && (
+                  <div className="space-y-6">
+                    {/* Analysis Summary */}
+                    <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                      <div className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 px-6 py-4">
+                        <h4 className="font-bold text-white text-xl flex items-center gap-3">
+                          <span className="text-2xl">🤖</span>
+                          <span>Kết quả phân tích AI</span>
+                        </h4>
+                      </div>
+                      <div className="p-6">
+                        {/* Overall Summary */}
+                        <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-4 mb-6">
+                          <div className="flex items-center gap-3 mb-3">
+                            <div className="w-10 h-10 bg-blue-500 rounded-xl flex items-center justify-center">
+                              <span className="text-white text-lg">📊</span>
+                            </div>
+                            <h5 className="font-bold text-blue-800 text-lg">Tóm tắt tổng quan</h5>
+                          </div>
+                          <p className="text-gray-700 text-lg leading-relaxed">
+                            {aiAnalysisResults?.summary}
+                          </p>
+                          <div className="mt-4 flex items-center gap-2">
+                            <span className="text-sm font-semibold text-blue-700">Điểm tổng:</span>
+                            <span className="text-2xl font-bold text-blue-600">
+                              {aiAnalysisResults?.overallScoreForPlayer2}/10
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Detailed Scoring */}
+                        <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl p-4 mb-6">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center">
+                              <span className="text-white text-lg">📊</span>
+                            </div>
+                            <h5 className="font-bold text-purple-800 text-lg">
+                              Điểm chi tiết từng giai đoạn
+                            </h5>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="bg-white border-2 border-green-200 rounded-xl p-4 text-center">
+                              <div className="text-2xl mb-2">🏃‍♂️</div>
+                              <div className="font-bold text-gray-800 mb-2">Chuẩn bị</div>
+                              <div className="text-3xl font-bold text-green-600 mb-1">6/10</div>
+                              <div className="text-sm text-gray-600">Cần cải thiện</div>
+                            </div>
+                            <div className="bg-white border-2 border-yellow-200 rounded-xl p-4 text-center">
+                              <div className="text-2xl mb-2">⚡</div>
+                              <div className="font-bold text-gray-800 mb-2">
+                                Vung vợt & Tiếp xúc
+                              </div>
+                              <div className="text-3xl font-bold text-yellow-600 mb-1">5/10</div>
+                              <div className="text-sm text-gray-600">Cần cải thiện</div>
+                            </div>
+                            <div className="bg-white border-2 border-blue-200 rounded-xl p-4 text-center">
+                              <div className="text-2xl mb-2">🎯</div>
+                              <div className="font-bold text-gray-800 mb-2">Kết thúc</div>
+                              <div className="text-3xl font-bold text-blue-600 mb-1">7/10</div>
+                              <div className="text-sm text-gray-600">Khá tốt</div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Key Differences */}
+                        <div className="space-y-4 mb-6">
+                          <h5 className="font-bold text-gray-800 text-lg flex items-center gap-3">
+                            <span className="text-xl">🔍</span>
+                            <span>Điểm khác biệt chính</span>
+                          </h5>
+                          {aiAnalysisResults?.keyDifferences?.map((diff: any, index: number) => {
+                            // Calculate score based on index (you can adjust this logic)
+                            const scores = [6, 5, 7]; // Example scores for each aspect
+                            const score = scores[index] || 5;
+
+                            return (
+                              <div
+                                key={index}
+                                className="bg-white border-2 border-gray-100 rounded-xl p-4 shadow-lg"
+                              >
+                                <div className="flex justify-between items-center mb-3">
+                                  <h6 className="font-bold text-gray-800 text-lg">{diff.aspect}</h6>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm text-gray-600 font-medium">Điểm:</span>
+                                    <span
+                                      className={`px-3 py-1 rounded-xl text-sm font-bold shadow-lg ${
+                                        score >= 8
+                                          ? 'bg-green-100 text-green-800 border-2 border-green-200'
+                                          : score >= 6
+                                            ? 'bg-yellow-100 text-yellow-800 border-2 border-yellow-200'
+                                            : 'bg-red-100 text-red-800 border-2 border-red-200'
+                                      }`}
+                                    >
+                                      {score}/10
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                    <div className="text-sm font-bold text-blue-700 mb-2">
+                                      👨‍🏫 HLV (Mẫu)
+                                    </div>
+                                    <p className="text-sm text-gray-700">
+                                      {diff.player1_technique}
+                                    </p>
+                                  </div>
+                                  <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                                    <div className="text-sm font-bold text-green-700 mb-2">
+                                      👤 Học viên
+                                    </div>
+                                    <p className="text-sm text-gray-700">
+                                      {diff.player2_technique}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                                  <div className="text-sm font-bold text-orange-700 mb-2">
+                                    💡 Tác động
+                                  </div>
+                                  <p className="text-sm text-gray-700">{diff.impact}</p>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+
+                        {/* Recommendations */}
+                        <div className="bg-gradient-to-br from-orange-50 to-yellow-50 border-2 border-orange-200 rounded-xl p-4">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center">
+                              <span className="text-white text-lg">💡</span>
+                            </div>
+                            <h5 className="font-bold text-orange-800 text-lg">Gợi ý cải thiện</h5>
+                          </div>
+                          <div className="space-y-4">
+                            {aiAnalysisResults?.recommendationsForPlayer2?.map(
+                              (rec: any, index: number) => (
+                                <div
+                                  key={index}
+                                  className="bg-white border border-orange-200 rounded-lg p-4"
+                                >
+                                  <h6 className="font-bold text-orange-800 mb-2">
+                                    {rec.recommendation}
+                                  </h6>
+                                  <div className="bg-gray-50 rounded-lg p-3">
+                                    <div className="font-semibold text-gray-800 mb-2">
+                                      🏃‍♂️ Bài tập: {rec.drill.title}
+                                    </div>
+                                    <p className="text-sm text-gray-700 mb-2">
+                                      {rec.drill.description}
+                                    </p>
+                                    <div className="text-sm font-semibold text-blue-600">
+                                      {rec.drill.practice_sets}
+                                    </div>
+                                  </div>
+                                </div>
+                              ),
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Coach Feedback Section */}
+                    <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                      <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-4">
+                        <h4 className="font-bold text-white text-xl flex items-center gap-3">
+                          <span className="text-2xl">✍️</span>
+                          <span>Nhận xét của Coach</span>
+                        </h4>
+                        <p className="text-green-100 mt-2">
+                          Đánh giá chi tiết và đưa ra gợi ý cải thiện cho học viên
+                        </p>
+                      </div>
+                      <div className="p-6">
+                        <div className="mb-6">
+                          <label className="block text-sm font-bold text-gray-700 mb-3">
+                            📝 Nhận xét chi tiết
+                          </label>
+                          <textarea
+                            rows={6}
+                            placeholder="Nhập nhận xét chi tiết của bạn cho học viên..."
+                            className="w-full px-6 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-lg"
+                          />
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-3">
+                              🎯 Điểm tổng (0-10)
+                            </label>
+                            <input
+                              type="number"
+                              min="0"
+                              max="10"
+                              step="0.5"
+                              placeholder="0-10"
+                              className="w-full px-6 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-lg"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-bold text-gray-700 mb-3">
+                              📊 Đánh giá tổng thể
+                            </label>
+                            <select className="w-full px-6 py-4 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500 text-lg">
+                              <option>Đạt yêu cầu</option>
+                              <option>Chưa đạt</option>
+                              <option>Xuất sắc</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div className="flex gap-3 mt-6">
+                          <button className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center gap-2">
+                            <span>💾</span>
+                            <span>Gửi Feedback & Chấm điểm</span>
+                          </button>
+                          <button className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all font-semibold">
+                            Lưu nháp
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {!isAnalyzingAI && !aiAnalysisResults && !aiAnalysisError && (
+                  <div className="bg-gray-50 rounded-2xl p-12 text-center">
+                    <div className="text-8xl mb-6">🤖</div>
+                    <h3 className="text-2xl font-bold text-gray-700 mb-4">AI Coach Analysis</h3>
+                    <p className="text-gray-600 text-lg mb-6">
+                      Nhấn &quot;Phân tích với AI Coach&quot; để bắt đầu phân tích kỹ thuật
+                    </p>
+                    <div className="text-sm text-gray-500 space-y-2">
+                      <p>• AI sẽ phân tích tư thế, chuyển động và kỹ thuật</p>
+                      <p>• Nhận được gợi ý cải thiện cụ thể</p>
+                      <p>• So sánh với video mẫu của HLV</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="border-t p-6 flex justify-end gap-3 bg-gray-50">
+              <button
+                onClick={() => {
+                  setIsAIFeedbackModalVisible(false);
+                  setSelectedSubmission(null);
+                  setAiAnalysisResults(null);
+                  setAiAnalysisError(null);
+                }}
+                className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+              >
+                Đóng
+              </button>
+              {aiAnalysisResults && (
+                <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2">
+                  <span>💾</span>
+                  <span>Lưu kết quả</span>
+                </button>
               )}
             </div>
           </div>
@@ -2109,9 +2778,6 @@ const CourseManagement = () => {
                 <div>
                   <div className="mb-4 flex justify-between items-center">
                     <h3 className="font-semibold text-lg">Danh sách học viên</h3>
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                      ➕ Thêm học viên
-                    </button>
                   </div>
 
                   <div className="bg-white border rounded-lg overflow-hidden">
@@ -2175,9 +2841,6 @@ const CourseManagement = () => {
                 <div>
                   <div className="mb-4 flex justify-between items-center">
                     <h3 className="font-semibold text-lg">Lịch học chi tiết</h3>
-                    <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                      ➕ Thêm buổi học
-                    </button>
                   </div>
 
                   <div className="space-y-3">
@@ -2225,53 +2888,70 @@ const CourseManagement = () => {
               {/* Exercises Tab */}
               {manageTab === 'exercises' && (
                 <div>
-                  <div className="flex justify-between items-center mb-6">
-                    <h3 className="font-semibold text-xl">Quản lý Bài tập</h3>
-                    <button className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-md">
-                      ➕ Tạo bài tập mới
-                    </button>
+                  <div className="flex justify-between items-center mb-8">
+                    <div>
+                      <h3 className="text-2xl font-bold text-gray-800 mb-2 flex items-center gap-3">
+                        <span className="text-3xl">📝</span>
+                        <span>Quản lý Bài tập</span>
+                      </h3>
+                      <p className="text-gray-600">
+                        Quản lý và theo dõi các bài tập trong khóa học
+                      </p>
+                    </div>
                   </div>
 
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     {exercises.map((exercise) => (
                       <div
                         key={exercise.id}
-                        className="border-2 rounded-lg p-6 bg-white hover:shadow-lg transition-all"
+                        className="bg-white rounded-2xl p-8 shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 hover:border-blue-200"
                       >
-                        <div className="flex justify-between items-start mb-4">
+                        <div className="flex justify-between items-start mb-6">
                           <div className="flex-1">
-                            <h4 className="font-bold text-xl mb-2 text-gray-800">
-                              {exercise.title}
-                            </h4>
-                            <p className="text-gray-600 mb-3">{exercise.description}</p>
-                            <div className="flex items-center gap-4 text-sm">
-                              <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full font-medium">
+                            <div className="flex items-center gap-4 mb-4">
+                              <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
+                                <span className="text-2xl">📝</span>
+                              </div>
+                              <div>
+                                <h4 className="text-2xl font-bold text-gray-800 mb-1">
+                                  {exercise.title}
+                                </h4>
+                                <p className="text-gray-600 text-lg">{exercise.description}</p>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-wrap items-center gap-3 mb-4">
+                              <span className="px-4 py-2 bg-blue-50 text-blue-700 rounded-full font-semibold text-sm border border-blue-200">
                                 📅 Hạn: {exercise.deadline}
                               </span>
-                              <span className="px-3 py-1 bg-purple-50 text-purple-700 rounded-full font-medium">
+                              <span className="px-4 py-2 bg-purple-50 text-purple-700 rounded-full font-semibold text-sm border border-purple-200">
                                 📊 {exercise.submissionsCount} bài nộp
                               </span>
                               {exercise.hasCoachVideo ? (
-                                <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full font-medium">
-                                  ✓ Có video mẫu
+                                <span className="px-4 py-2 bg-green-50 text-green-700 rounded-full font-semibold text-sm border border-green-200 flex items-center gap-2">
+                                  <span>✅</span>
+                                  <span>Có video mẫu</span>
                                 </span>
                               ) : (
-                                <span className="px-3 py-1 bg-orange-50 text-orange-700 rounded-full font-medium">
-                                  ⚠ Thiếu video mẫu
+                                <span className="px-4 py-2 bg-orange-50 text-orange-700 rounded-full font-semibold text-sm border border-orange-200 flex items-center gap-2">
+                                  <span>⚠️</span>
+                                  <span>Thiếu video mẫu</span>
                                 </span>
                               )}
                             </div>
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-3 pt-4 border-t-2">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t border-gray-100">
                           {!exercise.hasCoachVideo ? (
-                            <button className="px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all font-medium shadow-md hover:shadow-lg">
-                              📹 Upload Video Mẫu
+                            <button className="px-6 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2">
+                              <span className="text-lg">📹</span>
+                              <span>Upload Video Mẫu</span>
                             </button>
                           ) : (
-                            <button className="px-6 py-3 bg-green-50 text-green-700 border-2 border-green-500 rounded-lg hover:bg-green-100 transition-all font-medium">
-                              👁️ Xem Video Mẫu
+                            <button className="px-6 py-4 bg-green-50 text-green-700 border-2 border-green-300 rounded-xl hover:bg-green-100 hover:border-green-400 transition-all font-semibold flex items-center justify-center gap-2">
+                              <span className="text-lg">👁️</span>
+                              <span>Xem Video Mẫu</span>
                             </button>
                           )}
                           <button
@@ -2281,12 +2961,10 @@ const CourseManagement = () => {
                               setSelectedExercise(exercise);
                               setIsExerciseModalVisible(true);
                             }}
-                            className="px-6 py-3 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg hover:from-purple-600 hover:to-purple-700 transition-all font-medium shadow-md hover:shadow-lg"
+                            className="px-6 py-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-xl hover:from-purple-600 hover:to-purple-700 transition-all font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-2"
                           >
-                            📋 Xem Bài Nộp ({exercise.submissionsCount})
-                          </button>
-                          <button className="px-6 py-3 bg-gray-100 text-gray-700 border-2 border-gray-300 rounded-lg hover:bg-gray-200 transition-all font-medium">
-                            ✏️ Chỉnh Sửa
+                            <span className="text-lg">📋</span>
+                            <span>Xem Bài Nộp ({exercise.submissionsCount})</span>
                           </button>
                         </div>
                       </div>
@@ -2294,12 +2972,15 @@ const CourseManagement = () => {
                   </div>
 
                   {exercises.length === 0 && (
-                    <div className="bg-gray-50 rounded-lg p-12 text-center border-2 border-dashed border-gray-300">
-                      <div className="text-6xl mb-4">📝</div>
-                      <h4 className="text-xl font-bold text-gray-700 mb-2">Chưa có bài tập nào</h4>
-                      <p className="text-gray-600 mb-6">Tạo bài tập đầu tiên cho khóa học này</p>
-                      <button className="px-8 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium text-lg shadow-md">
-                        ➕ Tạo Bài Tập Mới
+                    <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-2xl p-16 text-center border-2 border-dashed border-gray-300 hover:border-blue-400 transition-all">
+                      <div className="text-8xl mb-6">📝</div>
+                      <h4 className="text-3xl font-bold text-gray-700 mb-4">Chưa có bài tập nào</h4>
+                      <p className="text-gray-600 mb-8 text-lg">
+                        Tạo bài tập đầu tiên cho khóa học này
+                      </p>
+                      <button className="px-10 py-5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all font-bold text-xl shadow-xl hover:shadow-2xl transform hover:scale-105 flex items-center gap-3 mx-auto">
+                        <span className="text-2xl">➕</span>
+                        <span>Tạo Bài Tập Mới</span>
                       </button>
                     </div>
                   )}
@@ -2314,6 +2995,328 @@ const CourseManagement = () => {
                     Tải lên video của huấn luyện viên và học viên để AI phân tích và so sánh kỹ
                     thuật
                   </p>
+
+                  {/* Upload Areas */}
+                  <div>
+                    <h3 className="font-semibold text-lg mb-4">So sánh Kỹ thuật Video</h3>
+                    <p className="text-gray-600 mb-6">
+                      Tải lên video của huấn luyện viên và học viên để AI phân tích và so sánh kỹ
+                      thuật
+                    </p>
+
+                    {/* Two Videos Side by Side - Always visible */}
+                    <div className="grid grid-cols-2 gap-6 mb-6">
+                      {/* Learner Video */}
+                      <div>
+                        <h4 className="font-medium mb-3 text-gray-700 flex items-center gap-2">
+                          <span>👤</span>
+                          <span>Video Học viên</span>
+                        </h4>
+                        {!learnerVideo ? (
+                          <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-green-300 rounded-xl cursor-pointer bg-gradient-to-br from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 transition-all">
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                              <div className="text-6xl mb-3">📹</div>
+                              <p className="mb-2 text-sm text-green-700 font-semibold">
+                                Tải Video Học viên
+                              </p>
+                              <p className="text-xs text-gray-500">Kéo thả hoặc nhấn để chọn</p>
+                              <p className="text-xs text-gray-400 mt-2">
+                                MP4, MOV, AVI • Tối đa 50MB
+                              </p>
+                            </div>
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept="video/*"
+                              onChange={(e: any) => {
+                                if (e.target.files && e.target.files[0]) {
+                                  setLearnerVideo(e.target.files[0]);
+                                  setComparisonResult(null);
+                                  setAnalysisError(null);
+                                }
+                              }}
+                            />
+                          </label>
+                        ) : (
+                          <div className="relative bg-white border-4 border-green-400 rounded-xl p-3 shadow-lg">
+                            <video
+                              controls
+                              src={URL.createObjectURL(learnerVideo)}
+                              className="w-full h-56 object-cover rounded-lg mb-3"
+                            />
+                            <div className="flex items-center justify-between bg-green-50 rounded-lg p-3">
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <span className="text-green-600 text-xl">✅</span>
+                                <p className="text-sm text-gray-700 font-medium truncate">
+                                  {learnerVideo.name}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => setLearnerVideo(null)}
+                                className="ml-2 px-3 py-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 text-sm font-medium transition-colors"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Coach Video */}
+                      <div>
+                        <h4 className="font-medium mb-3 text-gray-700 flex items-center gap-2">
+                          <span>👨‍🏫</span>
+                          <span>Video Huấn luyện viên</span>
+                        </h4>
+                        {!coachVideo ? (
+                          <label className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed border-blue-300 rounded-xl cursor-pointer bg-gradient-to-br from-blue-50 to-indigo-50 hover:from-blue-100 hover:to-indigo-100 transition-all">
+                            <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                              <div className="text-6xl mb-3">📹</div>
+                              <p className="mb-2 text-sm text-blue-700 font-semibold">
+                                Tải Video Huấn luyện viên
+                              </p>
+                              <p className="text-xs text-gray-500">Kéo thả hoặc nhấn để chọn</p>
+                              <p className="text-xs text-gray-400 mt-2">
+                                MP4, MOV, AVI • Tối đa 50MB
+                              </p>
+                            </div>
+                            <input
+                              type="file"
+                              className="hidden"
+                              accept="video/*"
+                              onChange={(e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                  setCoachVideo(e.target.files[0]);
+                                  setComparisonResult(null);
+                                  setAnalysisError(null);
+                                }
+                              }}
+                            />
+                          </label>
+                        ) : (
+                          <div className="relative bg-white border-4 border-blue-400 rounded-xl p-3 shadow-lg">
+                            <video
+                              controls
+                              src={URL.createObjectURL(coachVideo)}
+                              className="w-full h-56 object-cover rounded-lg mb-3"
+                            />
+                            <div className="flex items-center justify-between bg-blue-50 rounded-lg p-3">
+                              <div className="flex items-center gap-2 flex-1 min-w-0">
+                                <span className="text-blue-600 text-xl">✅</span>
+                                <p className="text-sm text-gray-700 font-medium truncate">
+                                  {coachVideo.name}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => setCoachVideo(null)}
+                                className="ml-2 px-3 py-1.5 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 text-sm font-medium transition-colors"
+                              >
+                                🗑️
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Analyze Button */}
+                    <div className="mb-6">
+                      <button
+                        onClick={() => {
+                          if (coachVideo && learnerVideo) {
+                            setIsAnalyzing(true);
+                            setAnalysisError(null);
+                            // Simulate API call
+                            setTimeout(() => {
+                              setComparisonResult({
+                                summary:
+                                  'Phân tích đã hoàn tất. Học viên có tư thế cầm vợt tốt nhưng cần cải thiện chuyển động chân.',
+                                differences: [
+                                  {
+                                    aspect: 'Tư thế cầm vợt',
+                                    coach: 'Cầm vợt với grip chắc chắn, cổ tay thẳng',
+                                    learner: 'Grip đúng nhưng cổ tay hơi cong',
+                                    improvement: 'Giữ cổ tay thẳng hơn khi chuẩn bị đánh',
+                                  },
+                                  {
+                                    aspect: 'Footwork',
+                                    coach: 'Di chuyển nhanh, bước chân rộng',
+                                    learner: 'Bước chân ngắn, chậm hơn',
+                                    improvement: 'Tăng tốc độ di chuyển và mở rộng bước chân',
+                                  },
+                                  {
+                                    aspect: 'Follow-through',
+                                    coach: 'Vung vợt đầy đủ, kết thúc cao',
+                                    learner: 'Vung vợt chưa đủ, kết thúc thấp',
+                                    improvement: 'Hoàn thiện động tác vung vợt đến hết',
+                                  },
+                                ],
+                              });
+                              setIsAnalyzing(false);
+                            }, 3000);
+                          }
+                        }}
+                        disabled={!coachVideo || !learnerVideo || isAnalyzing}
+                        className="w-full px-8 py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl hover:from-blue-700 hover:to-purple-700 disabled:from-gray-300 disabled:to-gray-400 disabled:cursor-not-allowed transition-all font-semibold text-lg shadow-lg transform hover:scale-[1.02]"
+                      >
+                        {isAnalyzing
+                          ? '⏳ Đang phân tích...'
+                          : coachVideo && learnerVideo
+                            ? '🔍 Phân Tích So Sánh'
+                            : '⚠️ Vui lòng tải cả 2 video'}
+                      </button>
+                    </div>
+
+                    {/* Loading State */}
+                    {isAnalyzing && (
+                      <div className="bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 rounded-xl p-10 text-center">
+                        <div className="relative inline-block">
+                          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"></div>
+                          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-2xl">
+                            🤖
+                          </div>
+                        </div>
+                        <p className="text-blue-800 font-semibold text-lg mt-6">
+                          AI Coach đang phân tích video...
+                        </p>
+                        <p className="text-blue-600 text-sm mt-2">
+                          So sánh chi tiết đang được thực hiện
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Error State */}
+                    {analysisError && (
+                      <div className="bg-red-50 border-2 border-red-300 rounded-xl p-6 text-center">
+                        <div className="text-6xl mb-4">⚠️</div>
+                        <p className="text-red-700 font-medium text-lg">{analysisError}</p>
+                      </div>
+                    )}
+
+                    {/* Analysis Results - Feedback Section Below */}
+                    {comparisonResult && !isAnalyzing && (
+                      <div className="space-y-6">
+                        {/* Summary Card */}
+                        <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-6 shadow-lg">
+                          <h4 className="font-bold text-green-800 text-lg mb-3 flex items-center gap-2">
+                            <span className="text-2xl">✨</span>
+                            <span>Tóm tắt Phân tích</span>
+                          </h4>
+                          <p className="text-green-900 leading-relaxed">
+                            {comparisonResult.summary}
+                          </p>
+                        </div>
+
+                        {/* Detailed Comparison */}
+                        <div className="bg-white border-2 border-gray-200 rounded-xl overflow-hidden shadow-lg">
+                          <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b-2 border-gray-200">
+                            <h4 className="font-bold text-gray-800 text-lg flex items-center gap-2">
+                              <span>📊</span>
+                              <span>Chi tiết So sánh Kỹ thuật</span>
+                            </h4>
+                          </div>
+                          <div className="divide-y-2 divide-gray-100">
+                            {comparisonResult.differences.map((diff: any, index: number) => (
+                              <div key={index} className="p-6 hover:bg-gray-50 transition-colors">
+                                <h5 className="font-bold text-gray-800 text-lg mb-5 flex items-center gap-2">
+                                  <span className="flex items-center justify-center w-8 h-8 bg-purple-100 text-purple-700 rounded-full font-bold">
+                                    {index + 1}
+                                  </span>
+                                  <span>{diff.aspect}</span>
+                                </h5>
+
+                                <div className="grid grid-cols-2 gap-4 mb-5">
+                                  <div className="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-5">
+                                    <div className="flex items-center gap-2 mb-3">
+                                      <span className="text-2xl">👨‍🏫</span>
+                                      <span className="text-xs text-blue-700 font-bold uppercase tracking-wider">
+                                        Huấn luyện viên
+                                      </span>
+                                    </div>
+                                    <p className="text-sm text-gray-800 leading-relaxed">
+                                      {diff.coach}
+                                    </p>
+                                  </div>
+
+                                  <div className="bg-gradient-to-br from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-5">
+                                    <div className="flex items-center gap-2 mb-3">
+                                      <span className="text-2xl">👤</span>
+                                      <span className="text-xs text-green-700 font-bold uppercase tracking-wider">
+                                        Học viên
+                                      </span>
+                                    </div>
+                                    <p className="text-sm text-gray-800 leading-relaxed">
+                                      {diff.learner}
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="bg-gradient-to-r from-orange-50 to-amber-50 border-2 border-orange-300 rounded-xl p-5">
+                                  <div className="flex items-center gap-2 mb-3">
+                                    <span className="text-2xl">💡</span>
+                                    <span className="text-xs text-orange-800 font-bold uppercase tracking-wider">
+                                      Gợi ý cải thiện
+                                    </span>
+                                  </div>
+                                  <p className="text-sm text-gray-800 leading-relaxed font-medium">
+                                    {diff.improvement}
+                                  </p>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Action Buttons */}
+                        <div className="flex gap-3">
+                          <button className="flex-1 px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all font-semibold shadow-lg transform hover:scale-[1.02]">
+                            💾 Lưu Phân tích
+                          </button>
+                          <button className="flex-1 px-6 py-4 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl hover:from-green-700 hover:to-green-800 transition-all font-semibold shadow-lg transform hover:scale-[1.02]">
+                            📧 Gửi cho Học viên
+                          </button>
+                          <button
+                            onClick={() => {
+                              setCoachVideo(null);
+                              setLearnerVideo(null);
+                              setComparisonResult(null);
+                            }}
+                            className="px-6 py-4 border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition-all font-semibold shadow-lg transform hover:scale-[1.02]"
+                          >
+                            🔄 So sánh mới
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Empty State */}
+                    {!coachVideo && !learnerVideo && !comparisonResult && !isAnalyzing && (
+                      <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl p-12 text-center border-2 border-dashed border-gray-300">
+                        <div className="text-7xl mb-6">🎾</div>
+                        <h4 className="text-xl font-bold text-gray-700 mb-3">
+                          So sánh Kỹ thuật Video với AI
+                        </h4>
+                        <p className="text-gray-600 mb-6 max-w-md mx-auto">
+                          Tải lên video của huấn luyện viên và học viên để nhận phân tích chi tiết
+                          từ AI Coach
+                        </p>
+                        <div className="text-sm text-gray-500 space-y-2 max-w-lg mx-auto">
+                          <p className="flex items-center justify-center gap-2">
+                            <span>✓</span>
+                            <span>Phân tích tư thế, chuyển động và kỹ thuật</span>
+                          </p>
+                          <p className="flex items-center justify-center gap-2">
+                            <span>✓</span>
+                            <span>So sánh chi tiết giữa huấn luyện viên và học viên</span>
+                          </p>
+                          <p className="flex items-center justify-center gap-2">
+                            <span>✓</span>
+                            <span>Nhận gợi ý cải thiện cụ thể và rõ ràng</span>
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
 
                   {/* Upload Areas */}
                   <div className="grid grid-cols-2 gap-6 mb-6">
