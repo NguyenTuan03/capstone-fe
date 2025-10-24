@@ -576,51 +576,6 @@ const CourseManagement = () => {
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
-      {/* Header */}
-      <div
-        style={{
-          background: 'white',
-          borderBottom: '1px solid #f0f0f0',
-          padding: '20px 48px',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-        }}
-      >
-        <h1 style={{ fontSize: '24px', fontWeight: '600', margin: 0, color: '#1a1a1a' }}>
-          Quản lý khóa học
-        </h1>
-        <div style={{ position: 'relative' }}>
-          <span
-            style={{
-              position: 'absolute',
-              top: '-4px',
-              right: '-4px',
-              backgroundColor: '#ff4d4f',
-              color: 'white',
-              fontSize: '10px',
-              borderRadius: '50%',
-              width: '18px',
-              height: '18px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: '600',
-            }}
-          >
-            3
-          </span>
-          <span
-            style={{ fontSize: '24px', cursor: 'pointer', transition: 'transform 0.2s ease' }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = 'scale(1.1)')}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = 'scale(1)')}
-          >
-            🔔
-          </span>
-        </div>
-      </div>
-
       {/* Content */}
       <div style={{ padding: '24px 48px' }}>
         {/* Title and Button */}

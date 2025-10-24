@@ -18,7 +18,6 @@ import {
 } from 'antd';
 import {
   PlusOutlined,
-  UploadOutlined,
   FileTextOutlined,
   VideoCameraOutlined,
   EditOutlined,
@@ -28,12 +27,10 @@ import {
 
 const ContentLibrary = () => {
   const [isQuizModalVisible, setIsQuizModalVisible] = useState(false);
-  const [isVideoModalVisible, setIsVideoModalVisible] = useState(false);
   const [isExerciseModalVisible, setIsExerciseModalVisible] = useState(false);
 
   // Forms
   const [quizForm] = Form.useForm();
-  const [videoForm] = Form.useForm();
   const [exerciseForm] = Form.useForm();
 
   const quizzes = [
@@ -119,20 +116,6 @@ const ContentLibrary = () => {
         message.success('Tạo quiz thành công!');
         setIsQuizModalVisible(false);
         quizForm.resetFields();
-      })
-      .catch((errorInfo) => {
-        console.log('Validation failed:', errorInfo);
-      });
-  };
-
-  const handleUploadVideo = () => {
-    videoForm
-      .validateFields()
-      .then((values) => {
-        console.log('Uploading video:', values);
-        message.success('Đăng tải video thành công!');
-        setIsVideoModalVisible(false);
-        videoForm.resetFields();
       })
       .catch((errorInfo) => {
         console.log('Validation failed:', errorInfo);
@@ -245,14 +228,6 @@ const ContentLibrary = () => {
               style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
             >
               Tạo Quiz
-            </Button>
-            <Button
-              type="primary"
-              icon={<VideoCameraOutlined />}
-              onClick={() => setIsVideoModalVisible(true)}
-              style={{ backgroundColor: '#fa8c16', borderColor: '#fa8c16' }}
-            >
-              Đăng tải Video
             </Button>
             <Button
               type="primary"
@@ -436,66 +411,6 @@ const ContentLibrary = () => {
         </Form>
       </Modal>
 
-      {/* Upload Video Modal */}
-      <Modal
-        title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <VideoCameraOutlined style={{ color: '#fa8c16' }} />
-            <span>Đăng tải video mới</span>
-          </div>
-        }
-        open={isVideoModalVisible}
-        onOk={handleUploadVideo}
-        onCancel={() => {
-          setIsVideoModalVisible(false);
-          videoForm.resetFields();
-        }}
-        width={600}
-        okText="Đăng tải"
-        cancelText="Hủy"
-        okButtonProps={{
-          style: { backgroundColor: '#fa8c16', borderColor: '#fa8c16' },
-        }}
-      >
-        <Form form={videoForm} layout="vertical">
-          <Form.Item
-            label="Tiêu đề video"
-            name="title"
-            rules={[{ required: true, message: 'Vui lòng nhập tiêu đề video!' }]}
-          >
-            <Input placeholder="VD: Kỹ thuật serve cơ bản" size="large" />
-          </Form.Item>
-
-          <Form.Item label="Mô tả" name="description">
-            <Input.TextArea rows={4} placeholder="Mô tả ngắn về nội dung video..." />
-          </Form.Item>
-
-          <Form.Item
-            label="Tải lên video"
-            name="file"
-            rules={[{ required: true, message: 'Vui lòng chọn file video!' }]}
-          >
-            <Upload.Dragger
-              name="file"
-              multiple={false}
-              accept="video/*"
-              beforeUpload={() => false}
-              style={{ padding: '20px' }}
-            >
-              <p className="ant-upload-drag-icon">
-                <VideoCameraOutlined style={{ fontSize: '48px', color: '#fa8c16' }} />
-              </p>
-              <p className="ant-upload-text" style={{ fontSize: '16px', fontWeight: '500' }}>
-                Kéo và thả video vào đây hoặc click để chọn
-              </p>
-              <p className="ant-upload-hint" style={{ color: '#999' }}>
-                Hỗ trợ: MP4, AVI, MOV (Tối đa 100MB)
-              </p>
-            </Upload.Dragger>
-          </Form.Item>
-        </Form>
-      </Modal>
-
       {/* Create Exercise Modal */}
       <Modal
         title={
@@ -546,6 +461,40 @@ const ContentLibrary = () => {
               <Select.Option value="video">Video</Select.Option>
               <Select.Option value="theory">Lý thuyết</Select.Option>
             </Select>
+          </Form.Item>
+
+          <Form.Item
+            noStyle
+            shouldUpdate={(prevValues, currentValues) => prevValues.type !== currentValues.type}
+          >
+            {({ getFieldValue }) => {
+              const exerciseType = getFieldValue('type');
+              return exerciseType === 'video' ? (
+                <Form.Item
+                  label="Tải lên video"
+                  name="videoFile"
+                  rules={[{ required: true, message: 'Vui lòng chọn file video!' }]}
+                >
+                  <Upload.Dragger
+                    name="videoFile"
+                    multiple={false}
+                    accept="video/*"
+                    beforeUpload={() => false}
+                    style={{ padding: '20px' }}
+                  >
+                    <p className="ant-upload-drag-icon">
+                      <VideoCameraOutlined style={{ fontSize: '48px', color: '#52c41a' }} />
+                    </p>
+                    <p className="ant-upload-text" style={{ fontSize: '16px', fontWeight: '500' }}>
+                      Kéo và thả video vào đây hoặc click để chọn
+                    </p>
+                    <p className="ant-upload-hint" style={{ color: '#999' }}>
+                      Hỗ trợ: MP4, AVI, MOV (Tối đa 100MB)
+                    </p>
+                  </Upload.Dragger>
+                </Form.Item>
+              ) : null;
+            }}
           </Form.Item>
 
           <Form.Item label="Hạn nộp" name="deadline">
