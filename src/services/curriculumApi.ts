@@ -22,7 +22,7 @@ import {
   CurriculumFilterOptions,
   ApiResponse,
 } from '@/types/curriculum';
-import curriculumData from '@/data/curriculum.json';
+import { curriculumData } from '@/data/curriculum';
 
 // Simulate API delay
 const simulateDelay = (ms: number = 100) => new Promise((resolve) => setTimeout(resolve, ms));

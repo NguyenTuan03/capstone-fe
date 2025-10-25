@@ -3,7 +3,7 @@
  * Simulates real authentication endpoints for development
  */
 
-import authData from '@/data/auth.json';
+import { authData } from '@/data/auth';
 
 // Types for authentication
 export interface LoginRequest {

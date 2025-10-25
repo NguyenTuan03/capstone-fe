@@ -1,0 +1,206 @@
+﻿{
+    "users":  [
+                  {
+                      "id":  "user-001",
+                      "email":  "nguyen.van.a@email.com",
+                      "name":  "Nguyá»…n VÄƒn A",
+                      "phone":  "+84 901 234 567",
+                      "avatar":  "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150\u0026h=150\u0026fit=crop\u0026crop=face",
+                      "role":  "learner",
+                      "status":  "active",
+                      "skillLevel":  "beginner",
+                      "location":  "Há»“ ChÃ­ Minh",
+                      "joinDate":  "2024-01-15T00:00:00Z",
+                      "lastLogin":  "2024-01-26T10:30:00Z",
+                      "totalSessions":  8,
+                      "totalSpent":  1200000,
+                      "stats":  {
+                                    "completedLessons":  12,
+                                    "totalLessons":  20,
+                                    "currentLevel":  "CÆ¡ báº£n",
+                                    "achievements":  [
+                                                         "NgÆ°á»i má»›i",
+                                                         "Há»c táº­p chÄƒm chá»‰"
+                                                     ]
+                                }
+                  },
+                  {
+                      "id":  "user-002",
+                      "email":  "tran.thi.b@email.com",
+                      "name":  "Tráº§n Thá»‹ B",
+                      "phone":  "+84 901 234 568",
+                      "avatar":  "https://images.unsplash.com/photo-1531427186611-ad02f065fe8c?w=150\u0026h=150\u0026fit=crop\u0026crop=face",
+                      "role":  "learner",
+                      "status":  "active",
+                      "skillLevel":  "intermediate",
+                      "location":  "HÃ  Ná»™i",
+                      "joinDate":  "2024-01-10T00:00:00Z",
+                      "lastLogin":  "2024-01-25T14:20:00Z",
+                      "totalSessions":  25,
+                      "totalSpent":  3750000,
+                      "stats":  {
+                                    "completedLessons":  35,
+                                    "totalLessons":  45,
+                                    "currentLevel":  "Trung cáº¥p",
+                                    "achievements":  [
+                                                         "NgÆ°á»i má»›i",
+                                                         "Há»c táº­p chÄƒm chá»‰",
+                                                         "Tiáº¿n bá»™ vÆ°á»£t trá»™i"
+                                                     ]
+                                }
+                  },
+                  {
+                      "id":  "user-003",
+                      "email":  "le.van.c@email.com",
+                      "name":  "LÃª VÄƒn C",
+                      "phone":  "+84 901 234 569",
+                      "avatar":  "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150\u0026h=150\u0026fit=crop\u0026crop=face",
+                      "role":  "coach",
+                      "status":  "active",
+                      "location":  "ÄÃ  Náºµng",
+                      "joinDate":  "2024-01-05T00:00:00Z",
+                      "lastLogin":  "2024-01-26T08:45:00Z",
+                      "totalSessions":  120,
+                      "totalSpent":  0,
+                      "stats":  {
+                                    "completedLessons":  0,
+                                    "totalLessons":  0,
+                                    "currentLevel":  "Huáº¥n luyá»‡n viÃªn",
+                                    "achievements":  [
+                                                         "ChuyÃªn gia",
+                                                         "Huáº¥n luyá»‡n viÃªn xuáº¥t sáº¯c"
+                                                     ]
+                                }
+                  },
+                  {
+                      "id":  "user-004",
+                      "email":  "pham.thi.d@email.com",
+                      "name":  "Pháº¡m Thá»‹ D",
+                      "phone":  "+84 901 234 570",
+                      "avatar":  "https://images.unsplash.com/photo-1494790108755-2616c6c4a09e?w=150\u0026h=150\u0026fit=crop\u0026crop=face",
+                      "role":  "learner",
+                      "status":  "blocked",
+                      "skillLevel":  "beginner",
+                      "location":  "Há»“ ChÃ­ Minh",
+                      "joinDate":  "2024-01-20T00:00:00Z",
+                      "lastLogin":  "2024-01-24T16:30:00Z",
+                      "totalSessions":  3,
+                      "totalSpent":  450000,
+                      "blockReason":  "Vi pháº¡m quy Ä‘á»‹nh vá» thÃ¡i Ä‘á»™ trong buá»•i há»c",
+                      "blockedAt":  "2024-01-25T09:00:00Z",
+                      "blockedBy":  "admin-001",
+                      "stats":  {
+                                    "completedLessons":  2,
+                                    "totalLessons":  10,
+                                    "currentLevel":  "CÆ¡ báº£n",
+                                    "achievements":  [
+                                                         "NgÆ°á»i má»›i"
+                                                     ]
+                                }
+                  },
+                  {
+                      "id":  "user-005",
+                      "email":  "hoang.van.e@email.com",
+                      "name":  "HoÃ ng VÄƒn E",
+                      "phone":  "+84 901 234 571",
+                      "avatar":  "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150\u0026h=150\u0026fit=crop\u0026crop=face",
+                      "role":  "learner",
+                      "status":  "active",
+                      "skillLevel":  "advanced",
+                      "location":  "Cáº§n ThÆ¡",
+                      "joinDate":  "2023-12-01T00:00:00Z",
+                      "lastLogin":  "2024-01-26T12:15:00Z",
+                      "totalSessions":  45,
+                      "totalSpent":  6750000,
+                      "stats":  {
+                                    "completedLessons":  60,
+                                    "totalLessons":  65,
+                                    "currentLevel":  "NÃ¢ng cao",
+                                    "achievements":  [
+                                                         "NgÆ°á»i má»›i",
+                                                         "Há»c táº­p chÄƒm chá»‰",
+                                                         "Tiáº¿n bá»™ vÆ°á»£t trá»™i",
+                                                         "ChuyÃªn gia"
+                                                     ]
+                                }
+                  },
+                  {
+                      "id":  "user-006",
+                      "email":  "vu.thi.f@email.com",
+                      "name":  "VÅ© Thá»‹ F",
+                      "phone":  "+84 901 234 572",
+                      "avatar":  "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150\u0026h=150\u0026fit=crop\u0026crop=face",
+                      "role":  "learner",
+                      "status":  "pending",
+                      "skillLevel":  "beginner",
+                      "location":  "Háº£i PhÃ²ng",
+                      "joinDate":  "2024-01-25T00:00:00Z",
+                      "totalSessions":  0,
+                      "totalSpent":  0,
+                      "stats":  {
+                                    "completedLessons":  0,
+                                    "totalLessons":  0,
+                                    "currentLevel":  "ChÆ°a báº¯t Ä‘áº§u",
+                                    "achievements":  [
+
+                                                     ]
+                                }
+                  },
+                  {
+                      "id":  "user-007",
+                      "email":  "dao.van.g@email.com",
+                      "name":  "ÄÃ o VÄƒn G",
+                      "phone":  "+84 901 234 573",
+                      "avatar":  "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150\u0026h=150\u0026fit=crop\u0026crop=face",
+                      "role":  "coach",
+                      "status":  "pending",
+                      "location":  "Nha Trang",
+                      "joinDate":  "2024-01-24T00:00:00Z",
+                      "totalSessions":  0,
+                      "totalSpent":  0,
+                      "stats":  {
+                                    "completedLessons":  0,
+                                    "totalLessons":  0,
+                                    "currentLevel":  "Chá» duyá»‡t",
+                                    "achievements":  [
+
+                                                     ]
+                                }
+                  },
+                  {
+                      "id":  "user-008",
+                      "email":  "bui.thi.h@email.com",
+                      "name":  "BÃ¹i Thá»‹ H",
+                      "phone":  "+84 901 234 574",
+                      "avatar":  "https://images.unsplash.com/photo-1544725176-7c40e5a71c5e?w=150\u0026h=150\u0026fit=crop\u0026crop=face",
+                      "role":  "learner",
+                      "status":  "active",
+                      "skillLevel":  "intermediate",
+                      "location":  "VÅ©ng TÃ u",
+                      "joinDate":  "2024-01-12T00:00:00Z",
+                      "lastLogin":  "2024-01-26T09:30:00Z",
+                      "totalSessions":  18,
+                      "totalSpent":  2700000,
+                      "stats":  {
+                                    "completedLessons":  28,
+                                    "totalLessons":  35,
+                                    "currentLevel":  "Trung cáº¥p",
+                                    "achievements":  [
+                                                         "NgÆ°á»i má»›i",
+                                                         "Há»c táº­p chÄƒm chá»‰",
+                                                         "Tiáº¿n bá»™ vÆ°á»£t trá»™i"
+                                                     ]
+                                }
+                  }
+              ],
+    "blockReasons":  [
+                         "Vi pháº¡m quy Ä‘á»‹nh vá» thÃ¡i Ä‘á»™ trong buá»•i há»c",
+                         "Sá»­ dá»¥ng ngÃ´n tá»« khÃ´ng phÃ¹ há»£p",
+                         "KhÃ´ng tham gia buá»•i há»c mÃ  khÃ´ng thÃ´ng bÃ¡o",
+                         "Thanh toÃ¡n khÃ´ng Ä‘Ãºng háº¡n",
+                         "Vi pháº¡m quy Ä‘á»‹nh cá»™ng Ä‘á»“ng",
+                         "Spam hoáº·c quáº£ng cÃ¡o khÃ´ng phÃ¹ há»£p",
+                         "Táº¡o nhiá»u tÃ i khoáº£n giáº£ máº¡o",
+                         "KhÃ¡c (tá»± nháº­p lÃ½ do)"
+                     ]
+}

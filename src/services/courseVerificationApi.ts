@@ -9,7 +9,7 @@ import {
   REJECTION_REASONS,
   REQUIRED_CHANGES,
 } from '@/types/course-verification';
-import coursesData from '@/data/course-verification.json';
+import { coursesData } from '@/data/course-verification';
 
 // Simulate API delay
 const simulateDelay = (ms: number = 100) => new Promise((resolve) => setTimeout(resolve, ms));

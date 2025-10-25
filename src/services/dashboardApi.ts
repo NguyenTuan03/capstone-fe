@@ -11,7 +11,7 @@ import {
   GetPendingItemsResponse,
   GetDashboardParams,
 } from '@/types/dashboard';
-import dashboardData from '@/data/dashboard.json';
+import { dashboardData } from '@/data/dashboard';
 
 // Simulate API delay
 const simulateDelay = (ms: number = 100) => new Promise((resolve) => setTimeout(resolve, ms));

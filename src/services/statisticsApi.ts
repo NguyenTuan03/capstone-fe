@@ -7,7 +7,7 @@ import {
   ChartType,
   Chart3DConfig,
 } from '@/types/statistics';
-import statisticsData from '@/data/statistics.json';
+import { statisticsData } from '@/data/statistics';
 
 // Simulate API delay
 const simulateDelay = (ms: number = 100) => new Promise((resolve) => setTimeout(resolve, ms));

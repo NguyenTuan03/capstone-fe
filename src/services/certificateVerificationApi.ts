@@ -9,7 +9,7 @@ import {
   ApiResponse,
   REJECTION_REASONS,
 } from '@/types/certificate-verification';
-import applicationsData from '@/data/coach-applications.json';
+import { applicationsData } from '@/data/coach-applications';
 
 // Simulate API delay
 const simulateDelay = (ms: number = 100) => new Promise((resolve) => setTimeout(resolve, ms));

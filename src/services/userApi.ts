@@ -6,7 +6,7 @@ import {
   BlockUserRequest,
   ApiResponse,
 } from '@/types/user';
-import usersData from '@/data/users.json';
+import { usersData } from '@/data_admin/users';
 
 // Simulate API delay
 const simulateDelay = (ms: number = 100) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -25,26 +25,30 @@ export class UserApiService {
       const searchTerm = params.search.toLowerCase();
       filteredUsers = filteredUsers.filter(
         (user) =>
-          user.name.toLowerCase().includes(searchTerm) ||
+          user.fullName.toLowerCase().includes(searchTerm) ||
           user.email.toLowerCase().includes(searchTerm) ||
-          user.phone?.toLowerCase().includes(searchTerm),
+          user.phoneNumber?.toLowerCase().includes(searchTerm),
       );
     }
 
     // Apply role filter
     if (params.role && params.role !== 'all') {
-      filteredUsers = filteredUsers.filter((user) => user.role === params.role);
+      filteredUsers = filteredUsers.filter((user) => user.role.name === params.role?.toUpperCase());
     }
 
-    // Apply status filter
+    // Apply status filter (using isActive)
     if (params.status && params.status !== 'all') {
-      filteredUsers = filteredUsers.filter((user) => user.status === params.status);
+      if (params.status === 'active') {
+        filteredUsers = filteredUsers.filter((user) => user.isActive);
+      } else if (params.status === 'blocked') {
+        filteredUsers = filteredUsers.filter((user) => !user.isActive && user.deletedAt);
+      } else if (params.status === 'pending') {
+        filteredUsers = filteredUsers.filter((user) => !user.isEmailVerified);
+      }
     }
 
-    // Apply skill level filter
-    if (params.skillLevel && params.skillLevel !== 'all') {
-      filteredUsers = filteredUsers.filter((user) => user.skillLevel === params.skillLevel);
-    }
+    // Skill level filter no longer applies to User entity directly
+    // (would need to join with Learner entity)
 
     // Calculate pagination
     const total = filteredUsers.length;
@@ -66,7 +70,7 @@ export class UserApiService {
   static async getUserById(userId: string): Promise<User | null> {
     await simulateDelay();
 
-    const user = usersData.users.find((u) => u.id === userId);
+    const user = usersData.users.find((u) => u.id === Number(userId));
     return (user as User) || null;
   }
 
@@ -80,11 +84,11 @@ export class UserApiService {
 
     return {
       total: users.length,
-      active: users.filter((u) => u.status === 'active').length,
-      blocked: users.filter((u) => u.status === 'blocked').length,
-      pending: users.filter((u) => u.status === 'pending').length,
-      learners: users.filter((u) => u.role === 'learner').length,
-      coaches: users.filter((u) => u.role === 'coach').length,
+      active: users.filter((u) => u.isActive).length,
+      blocked: users.filter((u) => !u.isActive && u.deletedAt).length,
+      pending: users.filter((u) => !u.isEmailVerified).length,
+      learners: users.filter((u) => u.role.name === 'LEARNER').length,
+      coaches: users.filter((u) => u.role.name === 'COACH').length,
     };
   }
 
