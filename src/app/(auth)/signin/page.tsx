@@ -159,7 +159,7 @@ export default function Login() {
               <Input
                 size="large"
                 prefix={<UserOutlined className="text-gray-400" />}
-                placeholder="admin"
+                placeholder="Enter ussername"
                 className="h-12 rounded-xl border-gray-200 hover:border-blue-400 focus:border-blue-500 bg-gray-50/50"
                 autoComplete="email"
               />
@@ -172,7 +172,7 @@ export default function Login() {
               <Input.Password
                 size="large"
                 prefix={<LockOutlined className="text-gray-400" />}
-                placeholder="admin1"
+                placeholder="Enter password"
                 className="h-12 rounded-xl border-gray-200 hover:border-blue-400 focus:border-blue-500 bg-gray-50/50"
                 autoComplete="current-password"
               />
