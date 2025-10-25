@@ -1,5 +1,5 @@
 import { QuizAttempt } from '@/types/quiz-attempt';
-import { sessions } from './sessions';
+import { sessions } from '@/data/sessions';
 import { users } from './users';
 
 // Quiz Attempts - Các lần làm quiz của learners
@@ -263,8 +263,7 @@ export const getBestAttemptForSession = (
   sessionId: number,
 ): QuizAttempt | undefined => {
   const attempts = quizAttempts.filter(
-    (attempt) =>
-      attempt.attemptedBy.id === userId && attempt.session.id === sessionId,
+    (attempt) => attempt.attemptedBy.id === userId && attempt.session.id === sessionId,
   );
   return attempts.sort((a, b) => b.score - a.score)[0];
 };

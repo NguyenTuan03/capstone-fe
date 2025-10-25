@@ -1,5 +1,5 @@
 import { SessionVideo } from '@/types/session-video';
-import { sessions } from './sessions';
+import { sessions } from '@/data/sessions';
 import { videos } from './videos';
 
 // Session Videos - Link videos to sessions
@@ -223,9 +223,7 @@ export const getSessionVideoById = (id: number): SessionVideo | undefined => {
   return sessionVideos.find((sv) => sv.id === id);
 };
 
-export const getSessionVideosBySessionId = (
-  sessionId: number,
-): SessionVideo[] => {
+export const getSessionVideosBySessionId = (sessionId: number): SessionVideo[] => {
   return sessionVideos.filter((sv) => sv.session.id === sessionId);
 };
 
@@ -236,4 +234,3 @@ export const getSessionVideosByVideoId = (videoId: number): SessionVideo[] => {
 export const getSessionVideosByCourseId = (courseId: number): SessionVideo[] => {
   return sessionVideos.filter((sv) => sv.session.course.id === courseId);
 };
-

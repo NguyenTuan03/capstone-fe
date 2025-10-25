@@ -1,6 +1,6 @@
 import { SessionEarning } from '@/types/session-earning';
 import { SessionEarningStatus } from '@/types/enums';
-import { sessions } from './sessions';
+import { sessions } from '@/data/sessions';
 
 // Session Earnings - Thu nhập từ các buổi học
 // Tính toán: Platform lấy 20% phí, Coach nhận 80%
@@ -206,15 +206,11 @@ export const getSessionEarningById = (id: number): SessionEarning | undefined =>
   return sessionEarnings.find((earning) => earning.id === id);
 };
 
-export const getSessionEarningsBySessionId = (
-  sessionId: number,
-): SessionEarning[] => {
+export const getSessionEarningsBySessionId = (sessionId: number): SessionEarning[] => {
   return sessionEarnings.filter((earning) => earning.session.id === sessionId);
 };
 
-export const getSessionEarningsByStatus = (
-  status: SessionEarningStatus,
-): SessionEarning[] => {
+export const getSessionEarningsByStatus = (status: SessionEarningStatus): SessionEarning[] => {
   return sessionEarnings.filter((earning) => earning.status === status);
 };
 
@@ -240,9 +236,7 @@ export const getTotalEarningsByCoachUserId = (coachUserId: number): number => {
     .reduce((total, earning) => total + earning.coachEarningTotal, 0);
 };
 
-export const getPendingEarningsByCoachUserId = (
-  coachUserId: number,
-): number => {
+export const getPendingEarningsByCoachUserId = (coachUserId: number): number => {
   return sessionEarnings
     .filter(
       (earning) =>
@@ -256,10 +250,7 @@ export const getPendingEarningsByCoachUserId = (
 export const getTotalPlatformRevenue = (): number => {
   return sessionEarnings
     .filter((earning) => earning.status === SessionEarningStatus.PAID)
-    .reduce(
-      (total, earning) => total + (earning.sessionPrice - earning.coachEarningTotal),
-      0,
-    );
+    .reduce((total, earning) => total + (earning.sessionPrice - earning.coachEarningTotal), 0);
 };
 
 export const getTotalCoachEarnings = (): number => {
@@ -267,4 +258,3 @@ export const getTotalCoachEarnings = (): number => {
     .filter((earning) => earning.status === SessionEarningStatus.PAID)
     .reduce((total, earning) => total + earning.coachEarningTotal, 0);
 };
-

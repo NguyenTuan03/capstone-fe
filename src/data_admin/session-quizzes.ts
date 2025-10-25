@@ -1,5 +1,5 @@
 import { SessionQuiz } from '@/types/session-quiz';
-import { sessions } from './sessions';
+import { sessions } from '@/data/sessions';
 import { quizzes } from './quizzes';
 
 // Session Quizzes - Liên kết Quiz với Session
@@ -171,9 +171,7 @@ export const getSessionsByQuiz = (quizId: number): SessionQuiz[] => {
 };
 
 export const hasSessionQuiz = (sessionId: number, quizId: number): boolean => {
-  return sessionQuizzes.some(
-    (sq) => sq.session.id === sessionId && sq.quiz.id === quizId,
-  );
+  return sessionQuizzes.some((sq) => sq.session.id === sessionId && sq.quiz.id === quizId);
 };
 
 export const getSessionsWithQuizzes = (): number[] => {

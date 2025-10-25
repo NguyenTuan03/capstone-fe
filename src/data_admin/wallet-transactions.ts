@@ -1,7 +1,7 @@
 import { WalletTransaction } from '@/types/wallet-transaction';
 import { WalletTransactionType } from '@/types/enums';
 import { wallets } from './wallets';
-import { sessions } from './sessions';
+import { sessions } from '@/data/sessions';
 
 // Wallet Transactions - Lịch sử giao dịch trong ví
 // Bao gồm thu nhập từ sessions và rút tiền
@@ -173,25 +173,15 @@ export const getTransactionById = (id: number): WalletTransaction | undefined =>
   return walletTransactions.find((transaction) => transaction.id === id);
 };
 
-export const getTransactionsByWalletId = (
-  walletId: number,
-): WalletTransaction[] => {
-  return walletTransactions.filter(
-    (transaction) => transaction.wallet.id === walletId,
-  );
+export const getTransactionsByWalletId = (walletId: number): WalletTransaction[] => {
+  return walletTransactions.filter((transaction) => transaction.wallet.id === walletId);
 };
 
-export const getTransactionsByUserId = (
-  userId: number,
-): WalletTransaction[] => {
-  return walletTransactions.filter(
-    (transaction) => transaction.wallet.user.id === userId,
-  );
+export const getTransactionsByUserId = (userId: number): WalletTransaction[] => {
+  return walletTransactions.filter((transaction) => transaction.wallet.user.id === userId);
 };
 
-export const getTransactionsByType = (
-  type: WalletTransactionType,
-): WalletTransaction[] => {
+export const getTransactionsByType = (type: WalletTransactionType): WalletTransaction[] => {
   return walletTransactions.filter((transaction) => transaction.type === type);
 };
 
@@ -224,4 +214,3 @@ export const getTotalCommissions = (): number => {
       .reduce((total, t) => total + t.amount, 0),
   );
 };
-

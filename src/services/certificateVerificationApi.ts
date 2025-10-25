@@ -1,14 +1,14 @@
 import {
   CoachApplication,
-  ApplicationStats,
+  FilterOptions,
   GetApplicationsParams,
   GetApplicationsResponse,
   ReviewApplicationRequest,
   CertificateReviewRequest,
-  FilterOptions,
   ApiResponse,
+  ApplicationStats,
   REJECTION_REASONS,
-} from '@/types/certificate-verification';
+} from '@/@crema/types/models/coachApplication';
 import { applicationsData } from '@/data/coach-applications';
 
 // Simulate API delay
@@ -40,12 +40,12 @@ export class CertificateVerificationApiService {
     }
 
     // Apply status filter
-    if (params.status && params.status !== 'all') {
+    if (params.status && params.status !== 'pending') {
       filteredApplications = filteredApplications.filter((app) => app.status === params.status);
     }
 
     // Apply priority filter
-    if (params.priority && params.priority !== 'all') {
+    if (params.priority && params.priority !== 'low') {
       filteredApplications = filteredApplications.filter((app) => app.priority === params.priority);
     }
 

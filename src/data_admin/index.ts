@@ -2,14 +2,12 @@
 // Core entities
 export * from './users';
 export * from './roles';
-export * from './coaches';
 export * from './learners';
 export * from './credentials';
 
 // Course management
 export * from './courses';
 export * from './schedules';
-export * from './sessions';
 export * from './enrollments';
 export * from './feedbacks';
 
@@ -34,4 +32,3 @@ export * from './payments';
 export * from './achievements';
 export * from './achievement-progresses';
 export * from './learner-achievements';
-
