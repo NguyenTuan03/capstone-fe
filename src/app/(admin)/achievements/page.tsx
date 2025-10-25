@@ -52,21 +52,21 @@ interface AchievementData {
   isActive: boolean;
   createdAt: string;
   createdBy: string;
-  
+
   // EventCountAchievement
   eventName?: string;
   targetCount?: number;
-  
+
   // PropertyCheckAchievement
   entityName?: string;
   propertyName?: string;
   comparisonOperator?: string;
   targetValue?: string;
-  
+
   // StreakAchievement
   targetStreakLength?: number;
   streakUnit?: string;
-  
+
   // Stats
   earnedCount?: number;
   progressCount?: number;
@@ -78,7 +78,7 @@ export default function AchievementsPage() {
   const [selectedAchievement, setSelectedAchievement] = useState<AchievementData | null>(null);
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
-  
+
   // Create form state
   const [createForm, setCreateForm] = useState({
     type: 'EVENT_COUNT',
@@ -117,11 +117,11 @@ export default function AchievementsPage() {
       // Count earned and in-progress for each achievement
       let filteredAchievements = mockAchievements.map((achievement) => {
         const earnedCount = learnerAchievements.filter(
-          (la) => la.achievement.id === achievement.id
+          (la) => la.achievement.id === achievement.id,
         ).length;
-        
+
         const progressCount = achievementProgresses.filter(
-          (ap) => ap.achievement.id === achievement.id && ap.currentProgress < 100
+          (ap) => ap.achievement.id === achievement.id && ap.currentProgress < 100,
         ).length;
 
         const data: AchievementData = {
@@ -161,8 +161,7 @@ export default function AchievementsPage() {
         const search = searchText.toLowerCase();
         filteredAchievements = filteredAchievements.filter(
           (a) =>
-            a.name.toLowerCase().includes(search) ||
-            a.description.toLowerCase().includes(search)
+            a.name.toLowerCase().includes(search) || a.description.toLowerCase().includes(search),
         );
       }
 
@@ -248,8 +247,12 @@ export default function AchievementsPage() {
         return;
       }
     } else if (createForm.type === 'PROPERTY_CHECK') {
-      if (!createForm.eventName.trim() || !createForm.entityName.trim() || 
-          !createForm.propertyName.trim() || !createForm.targetValue.trim()) {
+      if (
+        !createForm.eventName.trim() ||
+        !createForm.entityName.trim() ||
+        !createForm.propertyName.trim() ||
+        !createForm.targetValue.trim()
+      ) {
         message.error('Vui lòng điền đầy đủ thông tin');
         return;
       }
@@ -273,7 +276,7 @@ export default function AchievementsPage() {
   const handleToggleStatus = async (achievement: AchievementData) => {
     const newStatus = !achievement.isActive;
     message.success(
-      `Đã ${newStatus ? 'kích hoạt' : 'vô hiệu hóa'} thành tựu "${achievement.name}"`
+      `Đã ${newStatus ? 'kích hoạt' : 'vô hiệu hóa'} thành tựu "${achievement.name}"`,
     );
     loadAchievements();
   };
@@ -284,8 +287,7 @@ export default function AchievementsPage() {
       content: (
         <div>
           <Text>
-            Bạn có chắc chắn muốn xóa thành tựu{' '}
-            <Text strong>"{achievement.name}"</Text>?
+            Bạn có chắc chắn muốn xóa thành tựu <Text strong>&quot;{achievement.name}&quot;</Text>?
           </Text>
           <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded">
             <Text className="text-red-600">
@@ -323,7 +325,7 @@ export default function AchievementsPage() {
   };
 
   const getTypeIcon = (type: string) => {
-    const icons: { [key: string]: JSX.Element } = {
+    const icons: { [key: string]: React.ReactNode } = {
       EVENT_COUNT: <ThunderboltOutlined className="text-2xl text-white" />,
       PROPERTY_CHECK: <SafetyOutlined className="text-2xl text-white" />,
       STREAK: <FireOutlined className="text-2xl text-white" />,
@@ -351,18 +353,16 @@ export default function AchievementsPage() {
       width: 300,
       render: (_, record) => (
         <div className="flex items-start gap-3">
-          <div className={`w-12 h-12 bg-gradient-to-br ${getTypeGradient(record.type)} rounded-lg flex items-center justify-center shadow-md`}>
+          <div
+            className={`w-12 h-12 bg-gradient-to-br ${getTypeGradient(record.type)} rounded-lg flex items-center justify-center shadow-md`}
+          >
             {getTypeIcon(record.type)}
           </div>
           <div className="flex-1">
             <div className="font-medium">{record.name}</div>
-            <div className="text-sm text-gray-500 mt-1 line-clamp-2">
-              {record.description}
-            </div>
+            <div className="text-sm text-gray-500 mt-1 line-clamp-2">{record.description}</div>
             <div className="mt-1">
-              <Tag color={getTypeColor(record.type)} size="small">
-                {getTypeText(record.type)}
-              </Tag>
+              <Tag color={getTypeColor(record.type)}>{getTypeText(record.type)}</Tag>
             </div>
           </div>
         </div>
@@ -467,9 +467,7 @@ export default function AchievementsPage() {
       dataIndex: 'createdAt',
       key: 'createdAt',
       width: 120,
-      render: (date: string) => (
-        <Text className="text-sm">{formatDate(date)}</Text>
-      ),
+      render: (date: string) => <Text className="text-sm">{formatDate(date)}</Text>,
     },
     {
       title: 'Thao tác',
@@ -507,7 +505,7 @@ export default function AchievementsPage() {
           <Title level={2}>Quản lý Thành tựu</Title>
           <Text className="text-gray-600">
             Quản lý hệ thống thành tựu và theo dõi tiến độ của học viên
-        </Text>
+          </Text>
         </div>
         <Button
           type="primary"
@@ -825,7 +823,9 @@ export default function AchievementsPage() {
                   <Select
                     style={{ width: '100%', marginTop: 8 }}
                     value={createForm.comparisonOperator}
-                    onChange={(value) => setCreateForm({ ...createForm, comparisonOperator: value })}
+                    onChange={(value) =>
+                      setCreateForm({ ...createForm, comparisonOperator: value })
+                    }
                   >
                     <Option value="=">=</Option>
                     <Option value="!=">!=</Option>
@@ -910,4 +910,3 @@ export default function AchievementsPage() {
     </div>
   );
 }
-

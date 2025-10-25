@@ -104,8 +104,7 @@ export default function CurriculumPage() {
         const search = searchText.toLowerCase();
         filteredCourses = filteredCourses.filter(
           (c) =>
-            c.name.toLowerCase().includes(search) ||
-            c.coachName.toLowerCase().includes(search)
+            c.name.toLowerCase().includes(search) || c.coachName.toLowerCase().includes(search),
         );
       }
 
@@ -241,10 +240,8 @@ export default function CurriculumPage() {
         <div>
           <div className="font-medium">{record.name}</div>
           <div className="text-sm text-gray-500 mt-1">
-            <Tag color={getLevelColor(record.level)} size="small">
-              {getLevelText(record.level)}
-            </Tag>
-            <Tag size="small">{getFormatText(record.learningFormat)}</Tag>
+            <Tag color={getLevelColor(record.level)}>{getLevelText(record.level)}</Tag>
+            <Tag>{getFormatText(record.learningFormat)}</Tag>
           </div>
         </div>
       ),
@@ -285,9 +282,7 @@ export default function CurriculumPage() {
           <div className="font-medium">
             {record.enrollmentCount || 0}/{record.maxParticipants}
           </div>
-          <div className="text-xs text-gray-500">
-            (Min: {record.minParticipants})
-          </div>
+          <div className="text-xs text-gray-500">(Min: {record.minParticipants})</div>
         </div>
       ),
     },
@@ -307,9 +302,7 @@ export default function CurriculumPage() {
       dataIndex: 'status',
       key: 'status',
       width: 130,
-      render: (status: string) => (
-        <Tag color={getStatusColor(status)}>{getStatusText(status)}</Tag>
-      ),
+      render: (status: string) => <Tag color={getStatusColor(status)}>{getStatusText(status)}</Tag>,
     },
     {
       title: 'Thao tác',
@@ -495,7 +488,7 @@ export default function CurriculumPage() {
         <div>
           <Text>
             Bạn có chắc chắn muốn phê duyệt khóa học{' '}
-            <Text strong>"{selectedCourse?.name}"</Text>?
+            <Text strong>&quot;{selectedCourse?.name}&quot;</Text>?
           </Text>
           <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded">
             <CheckOutlined className="text-green-600 mr-2" />
@@ -522,7 +515,7 @@ export default function CurriculumPage() {
         <div>
           <Text>
             Bạn có chắc chắn muốn từ chối khóa học{' '}
-            <Text strong>"{selectedCourse?.name}"</Text>?
+            <Text strong>&quot;{selectedCourse?.name}&quot;</Text>?
           </Text>
           <div className="mt-4">
             <Text strong className="block mb-2">

@@ -119,7 +119,12 @@ export default function CoachesPage() {
           rating: 4 + Math.random(), // 4-5 stars
           totalCourses: Math.floor(Math.random() * 10),
           totalSessions: Math.floor(Math.random() * 50),
-          status: coach.verificationStatus === 'PENDING' ? 'pending' : coach.verificationStatus === 'REJECTED' ? 'rejected' : 'active',
+          status:
+            coach.verificationStatus === 'PENDING'
+              ? 'pending'
+              : coach.verificationStatus === 'REJECTED'
+                ? 'rejected'
+                : 'active',
           registrationDate: coach.createdAt.toISOString(),
           rejectionReason: coach.rejectionReason,
           credentials: coach.credentials.map((cred) => ({
@@ -140,8 +145,8 @@ export default function CoachesPage() {
       const pending = coachesData.filter((c) => c.status === 'pending');
       const approved = coachesData.filter((c) => c.status !== 'pending');
 
-      setPendingCoaches(pending);
-      setApprovedCoaches(approved);
+      setPendingCoaches(pending as CoachData[]);
+      setApprovedCoaches(approved as CoachData[]);
     } catch (error) {
       console.error('Error loading coaches:', error);
       message.error('Không thể tải danh sách huấn luyện viên');
@@ -176,10 +181,10 @@ export default function CoachesPage() {
 
     message.success(`Đã phê duyệt huấn luyện viên ${selectedCoach.name}`);
     setIsApproveModalVisible(false);
-    
+
     // Move from pending to approved
-    setPendingCoaches(prev => prev.filter(c => c.id !== selectedCoach.id));
-    setApprovedCoaches(prev => [...prev, { ...selectedCoach, status: 'active' }]);
+    setPendingCoaches((prev) => prev.filter((c) => c.id !== selectedCoach.id));
+    setApprovedCoaches((prev) => [...prev, { ...selectedCoach, status: 'active' }]);
   };
 
   const confirmReject = async () => {
@@ -191,7 +196,7 @@ export default function CoachesPage() {
 
     message.success(`Đã từ chối huấn luyện viên ${selectedCoach.name}`);
     setIsRejectModalVisible(false);
-    setPendingCoaches(prev => prev.filter(c => c.id !== selectedCoach.id));
+    setPendingCoaches((prev) => prev.filter((c) => c.id !== selectedCoach.id));
   };
 
   const formatDate = (dateString: string) => {
@@ -204,33 +209,33 @@ export default function CoachesPage() {
       const { feedbacks } = await import('@/data_admin/feedbacks');
       const { courses } = await import('@/data_admin/courses');
       const { coachEntities } = await import('@/data_admin/new-coaches');
-      
+
       // Find coach entity to get user id
-      const coachEntity = coachEntities.find(c => c.id.toString() === coachId);
+      const coachEntity = coachEntities.find((c) => c.id.toString() === coachId);
       if (!coachEntity) {
         message.warning('Không tìm thấy thông tin huấn luyện viên');
         return;
       }
-      
+
       const userId = coachEntity.user.id;
-      
+
       // Get all courses by this coach (using user id)
-      const coachCourses = courses.filter(c => c.createdBy.id === userId);
-      const coachCourseIds = coachCourses.map(c => c.id);
-      
+      const coachCourses = courses.filter((c) => c.createdBy.id === userId);
+      const coachCourseIds = coachCourses.map((c) => c.id);
+
       // Get all feedbacks for these courses
-      const coachFeedbacksList = feedbacks.filter(f => 
-        coachCourseIds.includes(f.course.id)
-      ).map(f => ({
-        id: f.id,
-        comment: f.comment,
-        rating: f.rating,
-        createdAt: f.createdAt,
-        learnerName: f.createdBy.fullName,
-        courseName: f.course.name,
-        courseId: f.course.id,
-      }));
-      
+      const coachFeedbacksList = feedbacks
+        .filter((f) => coachCourseIds.includes(f.course.id))
+        .map((f) => ({
+          id: f.id,
+          comment: f.comment,
+          rating: f.rating,
+          createdAt: f.createdAt,
+          learnerName: f.createdBy.fullName,
+          courseName: f.course.name,
+          courseId: f.course.id,
+        }));
+
       setCoachFeedbacks(coachFeedbacksList);
       setIsFeedbackModalVisible(true);
     } catch (error) {
@@ -268,9 +273,7 @@ export default function CoachesPage() {
       key: 'credentials',
       width: 120,
       align: 'center',
-      render: (_, record) => (
-        <Badge count={record.credentials.length} showZero color="blue" />
-      ),
+      render: (_, record) => <Badge count={record.credentials.length} showZero color="blue" />,
     },
     {
       title: 'Ngày đăng ký',
@@ -294,18 +297,10 @@ export default function CoachesPage() {
             />
           </Tooltip>
           <Tooltip title="Phê duyệt">
-            <Button
-              type="primary"
-              icon={<CheckOutlined />}
-              onClick={() => handleApprove(record)}
-            />
+            <Button type="primary" icon={<CheckOutlined />} onClick={() => handleApprove(record)} />
           </Tooltip>
           <Tooltip title="Từ chối">
-            <Button
-              danger
-              icon={<CloseOutlined />}
-              onClick={() => handleReject(record)}
-            />
+            <Button danger icon={<CloseOutlined />} onClick={() => handleReject(record)} />
           </Tooltip>
         </Space>
       ),
@@ -371,7 +366,9 @@ export default function CoachesPage() {
         <div>
           <Badge
             status={status === 'active' ? 'success' : status === 'rejected' ? 'error' : 'warning'}
-            text={status === 'active' ? 'Hoạt động' : status === 'rejected' ? 'Bị từ chối' : 'Tạm ngưng'}
+            text={
+              status === 'active' ? 'Hoạt động' : status === 'rejected' ? 'Bị từ chối' : 'Tạm ngưng'
+            }
           />
           {status === 'rejected' && record.rejectionReason && (
             <Tooltip title={record.rejectionReason}>
@@ -412,19 +409,13 @@ export default function CoachesPage() {
   const filteredPendingCoaches = pendingCoaches.filter((coach) => {
     if (!searchText) return true;
     const search = searchText.toLowerCase();
-    return (
-      coach.name.toLowerCase().includes(search) ||
-      coach.email.toLowerCase().includes(search)
-    );
+    return coach.name.toLowerCase().includes(search) || coach.email.toLowerCase().includes(search);
   });
 
   const filteredApprovedCoaches = approvedCoaches.filter((coach) => {
     if (!searchText) return true;
     const search = searchText.toLowerCase();
-    return (
-      coach.name.toLowerCase().includes(search) ||
-      coach.email.toLowerCase().includes(search)
-    );
+    return coach.name.toLowerCase().includes(search) || coach.email.toLowerCase().includes(search);
   });
 
   return (
@@ -432,9 +423,7 @@ export default function CoachesPage() {
       {/* Header */}
       <div>
         <Title level={2}>Quản lý Huấn luyện viên</Title>
-        <Text className="text-gray-600">
-          Phê duyệt và quản lý huấn luyện viên trên nền tảng
-        </Text>
+        <Text className="text-gray-600">Phê duyệt và quản lý huấn luyện viên trên nền tảng</Text>
       </div>
 
       {/* Search */}
@@ -562,13 +551,32 @@ export default function CoachesPage() {
 
             {/* Basic Info */}
             <Descriptions title="Thông tin cơ bản" column={2} bordered>
-              <Descriptions.Item label={<><MailOutlined /> Email</>} span={2}>
+              <Descriptions.Item
+                label={
+                  <>
+                    <MailOutlined /> Email
+                  </>
+                }
+                span={2}
+              >
                 {selectedCoach.email}
               </Descriptions.Item>
-              <Descriptions.Item label={<><PhoneOutlined /> Số điện thoại</>}>
+              <Descriptions.Item
+                label={
+                  <>
+                    <PhoneOutlined /> Số điện thoại
+                  </>
+                }
+              >
                 {selectedCoach.phone}
               </Descriptions.Item>
-              <Descriptions.Item label={<><EnvironmentOutlined /> Khu vực</>}>
+              <Descriptions.Item
+                label={
+                  <>
+                    <EnvironmentOutlined /> Khu vực
+                  </>
+                }
+              >
                 {selectedCoach.location}
               </Descriptions.Item>
               <Descriptions.Item label="Kinh nghiệm">
@@ -610,9 +618,7 @@ export default function CoachesPage() {
                               <CalendarOutlined /> Cấp: {formatDate(cred.issuedAt)}
                             </span>
                           )}
-                          {cred.expiresAt && (
-                            <span>Hết hạn: {formatDate(cred.expiresAt)}</span>
-                          )}
+                          {cred.expiresAt && <span>Hết hạn: {formatDate(cred.expiresAt)}</span>}
                         </Space>
                       </div>
                       {cred.publicUrl && (
@@ -680,8 +686,7 @@ export default function CoachesPage() {
       >
         <div>
           <Text>
-            Bạn có chắc chắn muốn từ chối huấn luyện viên{' '}
-            <Text strong>{selectedCoach?.name}</Text>?
+            Bạn có chắc chắn muốn từ chối huấn luyện viên <Text strong>{selectedCoach?.name}</Text>?
           </Text>
           <div className="mt-4">
             <Text strong className="block mb-2">
@@ -721,9 +726,7 @@ export default function CoachesPage() {
               <Row gutter={16}>
                 <Col span={8}>
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-blue-600">
-                      {coachFeedbacks.length}
-                    </div>
+                    <div className="text-3xl font-bold text-blue-600">{coachFeedbacks.length}</div>
                     <div className="text-sm text-gray-600">Tổng feedback</div>
                   </div>
                 </Col>
@@ -731,8 +734,7 @@ export default function CoachesPage() {
                   <div className="text-center">
                     <div className="text-3xl font-bold text-yellow-500">
                       {(
-                        coachFeedbacks.reduce((sum, f) => sum + f.rating, 0) /
-                        coachFeedbacks.length
+                        coachFeedbacks.reduce((sum, f) => sum + f.rating, 0) / coachFeedbacks.length
                       ).toFixed(1)}
                     </div>
                     <div className="text-sm text-gray-600">Đánh giá TB</div>
@@ -741,7 +743,7 @@ export default function CoachesPage() {
                 <Col span={8}>
                   <div className="text-center">
                     <div className="text-3xl font-bold text-green-600">
-                      {[...new Set(coachFeedbacks.map(f => f.courseId))].length}
+                      {[...new Set(coachFeedbacks.map((f) => f.courseId))].length}
                     </div>
                     <div className="text-sm text-gray-600">Khóa học</div>
                   </div>
@@ -773,9 +775,7 @@ export default function CoachesPage() {
                         {feedback.courseName}
                       </Tag>
                     </div>
-                    <Paragraph className="mb-0 text-gray-700">
-                      {feedback.comment}
-                    </Paragraph>
+                    <Paragraph className="mb-0 text-gray-700">{feedback.comment}</Paragraph>
                   </Card>
                 </List.Item>
               )}

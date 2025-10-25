@@ -70,7 +70,7 @@ interface QuizData {
 
 export default function CourseVerificationPage() {
   const [activeTab, setActiveTab] = useState('videos');
-  
+
   // Videos state
   const [videos, setVideos] = useState<VideoData[]>([]);
   const [loadingVideos, setLoadingVideos] = useState(false);
@@ -79,7 +79,7 @@ export default function CourseVerificationPage() {
   const [isApproveVideoModalVisible, setIsApproveVideoModalVisible] = useState(false);
   const [isRejectVideoModalVisible, setIsRejectVideoModalVisible] = useState(false);
   const [videoRejectReason, setVideoRejectReason] = useState('');
-  
+
   // Quizzes state
   const [quizzes, setQuizzes] = useState<QuizData[]>([]);
   const [loadingQuizzes, setLoadingQuizzes] = useState(false);
@@ -130,8 +130,7 @@ export default function CourseVerificationPage() {
         const search = videoSearchText.toLowerCase();
         filteredVideos = filteredVideos.filter(
           (v) =>
-            v.title.toLowerCase().includes(search) ||
-            v.coachName.toLowerCase().includes(search)
+            v.title.toLowerCase().includes(search) || v.coachName.toLowerCase().includes(search),
         );
       }
 
@@ -176,8 +175,7 @@ export default function CourseVerificationPage() {
         const search = quizSearchText.toLowerCase();
         filteredQuizzes = filteredQuizzes.filter(
           (q) =>
-            q.title.toLowerCase().includes(search) ||
-            q.coachName.toLowerCase().includes(search)
+            q.title.toLowerCase().includes(search) || q.coachName.toLowerCase().includes(search),
         );
       }
 
@@ -365,13 +363,11 @@ export default function CourseVerificationPage() {
           </div>
           <div className="flex-1">
             <div className="font-medium">{record.title}</div>
-            <div className="text-xs text-gray-500 mt-1 line-clamp-2">
-              {record.description}
-            </div>
+            <div className="text-xs text-gray-500 mt-1 line-clamp-2">{record.description}</div>
             {record.tags && record.tags.length > 0 && (
               <div className="mt-1">
                 {record.tags.slice(0, 2).map((tag, idx) => (
-                  <Tag key={idx} size="small" className="text-xs">
+                  <Tag key={idx} className="text-xs">
                     {tag}
                   </Tag>
                 ))}
@@ -400,9 +396,7 @@ export default function CourseVerificationPage() {
       dataIndex: 'status',
       key: 'status',
       width: 130,
-      render: (status: string) => (
-        <Tag color={getStatusColor(status)}>{getStatusText(status)}</Tag>
-      ),
+      render: (status: string) => <Tag color={getStatusColor(status)}>{getStatusText(status)}</Tag>,
     },
     {
       title: 'Thao tác',
@@ -457,10 +451,8 @@ export default function CourseVerificationPage() {
             <div className="text-sm text-gray-500 mt-1">{record.description}</div>
           )}
           <div className="mt-1">
-            <Tag color={getLevelColor(record.level)} size="small">
-              {getLevelText(record.level)}
-            </Tag>
-            <Tag size="small">{record.totalQuestions} câu hỏi</Tag>
+            <Tag color={getLevelColor(record.level)}>{getLevelText(record.level)}</Tag>
+            <Tag>{record.totalQuestions} câu hỏi</Tag>
           </div>
         </div>
       ),
@@ -770,7 +762,7 @@ export default function CourseVerificationPage() {
         <div>
           <Text>
             Bạn có chắc chắn muốn phê duyệt video{' '}
-            <Text strong>"{selectedVideo?.title}"</Text>?
+            <Text strong>&quot;{selectedVideo?.title}&quot;</Text>?
           </Text>
           <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded">
             <CheckOutlined className="text-green-600 mr-2" />
@@ -796,7 +788,7 @@ export default function CourseVerificationPage() {
         <div>
           <Text>
             Bạn có chắc chắn muốn từ chối video{' '}
-            <Text strong>"{selectedVideo?.title}"</Text>?
+            <Text strong>&quot;{selectedVideo?.title}&quot;</Text>?
           </Text>
           <div className="mt-4">
             <Text strong className="block mb-2">
@@ -824,7 +816,7 @@ export default function CourseVerificationPage() {
         <div>
           <Text>
             Bạn có chắc chắn muốn phê duyệt quiz{' '}
-            <Text strong>"{selectedQuiz?.title}"</Text>?
+            <Text strong>&quot;{selectedQuiz?.title}&quot;</Text>?
           </Text>
           <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded">
             <CheckOutlined className="text-green-600 mr-2" />
@@ -849,8 +841,8 @@ export default function CourseVerificationPage() {
       >
         <div>
           <Text>
-            Bạn có chắc chắn muốn từ chối quiz{' '}
-            <Text strong>"{selectedQuiz?.title}"</Text>?
+            Bạn có chắc chắn muốn từ chối quiz <Text strong>&quot;{selectedQuiz?.title}&quot;</Text>
+            ?
           </Text>
           <div className="mt-4">
             <Text strong className="block mb-2">
