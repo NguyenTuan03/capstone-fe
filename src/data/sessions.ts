@@ -1,6 +1,6 @@
 import { Session } from '@/types/session';
 import { SessionStatus, PaymentStatus, DayOfWeek } from '@/types/enums';
-import { courses } from './courses';
+import { courses } from '@/data_admin';
 
 // Sessions - Each course has 4-8 sessions
 // We'll create sessions for courses that are APPROVED or ONGOING
@@ -966,4 +966,3 @@ export const getInProgressSessions = (): Session[] => {
 export const getCancelledSessions = (): Session[] => {
   return getSessionsByStatus(SessionStatus.CANCELLED);
 };
-

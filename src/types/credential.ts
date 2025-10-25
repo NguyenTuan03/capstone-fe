@@ -11,5 +11,5 @@ export interface Credential {
   createdAt: Date;
   updatedAt: Date;
   deletedAt?: Date;
+  status?: string;
 }
-

@@ -41,6 +41,7 @@ export enum CourseCredentialType {
   LICENSE = 'LICENSE',
   TRAINING = 'TRAINING',
   ACHIEVEMENT = 'ACHIEVEMENT',
+  OTHER = 'OTHER',
 }
 
 // Enrollment enum
@@ -116,4 +117,3 @@ export enum DayOfWeek {
   SATURDAY = 'Saturday',
   SUNDAY = 'Sunday',
 }
-
