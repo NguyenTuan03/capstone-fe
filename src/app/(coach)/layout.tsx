@@ -240,7 +240,7 @@ const CoachLayout = ({ children }: { children: React.ReactNode }) => {
           items={menuItems}
           onClick={({ key }) => {
             if (key === 'overview') {
-              router.push('/coach/summary');
+              router.push('/summary');
             } else {
               router.push(`${key}`);
             }
