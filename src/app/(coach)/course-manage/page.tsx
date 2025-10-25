@@ -298,6 +298,45 @@ const CourseManagement = () => {
     setCourseForm((prev) => ({ ...prev, [field]: value }));
   };
 
+  // Video refs for timestamp navigation
+  const coachVideoRef = React.useRef<HTMLVideoElement>(null);
+  const studentVideoRef = React.useRef<HTMLVideoElement>(null);
+
+  // Function to jump to timestamp in video with synchronization
+  const jumpToTimestamp = (studentTimestamp: number, coachTimestamp: number) => {
+    console.log('Jumping to timestamps:', { studentTimestamp, coachTimestamp });
+
+    // Jump student video to student timestamp
+    if (studentVideoRef.current) {
+      studentVideoRef.current.currentTime = studentTimestamp;
+      studentVideoRef.current.play();
+      console.log('Student video jumped to:', studentTimestamp);
+    }
+
+    // Jump coach video to coach timestamp
+    if (coachVideoRef.current) {
+      coachVideoRef.current.currentTime = coachTimestamp;
+      coachVideoRef.current.play();
+      console.log('Coach video jumped to:', coachTimestamp);
+    }
+
+    // Scroll to top of videos section
+    const videosSection = document.querySelector('.grid.grid-cols-1.lg\\:grid-cols-2.gap-6.mb-8');
+    if (videosSection) {
+      videosSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    // Pause both videos after 3 seconds to show the moment
+    setTimeout(() => {
+      if (studentVideoRef.current) {
+        studentVideoRef.current.pause();
+      }
+      if (coachVideoRef.current) {
+        coachVideoRef.current.pause();
+      }
+    }, 3000);
+  };
+
   // AI Analysis function
   const handleAIAnalysis = async () => {
     if (!selectedSubmission) return;
@@ -2265,20 +2304,6 @@ const CourseManagement = () => {
             <div className="flex-1 overflow-y-auto p-6">
               {/* Videos Section - Side by Side */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                {/* Coach Video */}
-                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
-                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-3">
-                    <span className="text-2xl">👨‍🏫</span>
-                    <span>Video Huấn luyện viên (Mẫu)</span>
-                  </h3>
-                  <div className="bg-gray-800 rounded-xl overflow-hidden">
-                    <video controls className="w-full" style={{ maxHeight: '300px' }}>
-                      <source src="/assets/videos/coach-demo.mp4" type="video/mp4" />
-                    </video>
-                  </div>
-                  <p className="text-sm text-gray-600 mt-2">📹 Video mẫu chuẩn từ HLV</p>
-                </div>
-
                 {/* Student Video */}
                 <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
                   <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-3">
@@ -2286,13 +2311,35 @@ const CourseManagement = () => {
                     <span>Video Học viên</span>
                   </h3>
                   <div className="bg-gray-800 rounded-xl overflow-hidden">
-                    <video controls className="w-full" style={{ maxHeight: '300px' }}>
+                    <video
+                      ref={studentVideoRef}
+                      controls
+                      className="w-full"
+                      style={{ maxHeight: '300px' }}
+                    >
                       <source src={selectedSubmission.videoUrl} type="video/mp4" />
                     </video>
                   </div>
                   <p className="text-sm text-gray-600 mt-2">
                     📹 Bài làm của {selectedSubmission.studentName}
                   </p>
+                </div>
+                <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+                  <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-3">
+                    <span className="text-2xl">👨‍🏫</span>
+                    <span>Video Huấn luyện viên (Mẫu)</span>
+                  </h3>
+                  <div className="bg-gray-800 rounded-xl overflow-hidden">
+                    <video
+                      ref={coachVideoRef}
+                      controls
+                      className="w-full"
+                      style={{ maxHeight: '300px' }}
+                    >
+                      <source src="/assets/videos/coach-demo.mp4" type="video/mp4" />
+                    </video>
+                  </div>
+                  <p className="text-sm text-gray-600 mt-2">📹 Video mẫu chuẩn từ HLV</p>
                 </div>
               </div>
 
@@ -2365,37 +2412,200 @@ const CourseManagement = () => {
                           </div>
                         </div>
 
-                        {/* Detailed Scoring */}
+                        {/* Detailed Phase Analysis */}
                         <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl p-4 mb-6">
                           <div className="flex items-center gap-3 mb-4">
                             <div className="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center">
                               <span className="text-white text-lg">📊</span>
                             </div>
                             <h5 className="font-bold text-purple-800 text-lg">
-                              Điểm chi tiết từng giai đoạn
+                              Phân tích chi tiết từng giai đoạn
                             </h5>
                           </div>
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="bg-white border-2 border-green-200 rounded-xl p-4 text-center">
-                              <div className="text-2xl mb-2">🏃‍♂️</div>
-                              <div className="font-bold text-gray-800 mb-2">Chuẩn bị</div>
-                              <div className="text-3xl font-bold text-green-600 mb-1">6/10</div>
-                              <div className="text-sm text-gray-600">Cần cải thiện</div>
-                            </div>
-                            <div className="bg-white border-2 border-yellow-200 rounded-xl p-4 text-center">
-                              <div className="text-2xl mb-2">⚡</div>
-                              <div className="font-bold text-gray-800 mb-2">
-                                Vung vợt & Tiếp xúc
-                              </div>
-                              <div className="text-3xl font-bold text-yellow-600 mb-1">5/10</div>
-                              <div className="text-sm text-gray-600">Cần cải thiện</div>
-                            </div>
-                            <div className="bg-white border-2 border-blue-200 rounded-xl p-4 text-center">
-                              <div className="text-2xl mb-2">🎯</div>
-                              <div className="font-bold text-gray-800 mb-2">Kết thúc</div>
-                              <div className="text-3xl font-bold text-blue-600 mb-1">7/10</div>
-                              <div className="text-sm text-gray-600">Khá tốt</div>
-                            </div>
+                          <div className="space-y-4">
+                            {aiAnalysisResults?.comparison &&
+                              Object.entries(aiAnalysisResults.comparison).map(
+                                ([phase, data]: [string, any], index: number) => {
+                                  const phaseNames = {
+                                    preparation: { name: 'Chuẩn bị', icon: '🏃‍♂️', color: 'green' },
+                                    swingAndContact: {
+                                      name: 'Vung vợt & Tiếp xúc',
+                                      icon: '⚡',
+                                      color: 'yellow',
+                                    },
+                                    followThrough: { name: 'Kết thúc', icon: '🎯', color: 'blue' },
+                                  };
+                                  const phaseInfo = phaseNames[phase as keyof typeof phaseNames];
+                                  const scores = [6, 5, 7]; // Example scores
+                                  const score = scores[index] || 5;
+
+                                  return (
+                                    <div
+                                      key={phase}
+                                      className="bg-white border-2 border-gray-100 rounded-xl p-4 shadow-lg"
+                                    >
+                                      <div className="flex justify-between items-center mb-4">
+                                        <div className="flex items-center gap-3">
+                                          <div
+                                            className={`w-12 h-12 bg-${phaseInfo.color}-500 rounded-xl flex items-center justify-center`}
+                                          >
+                                            <span className="text-white text-xl">
+                                              {phaseInfo.icon}
+                                            </span>
+                                          </div>
+                                          <div>
+                                            <h6 className="font-bold text-gray-800 text-lg">
+                                              {phaseInfo.name}
+                                            </h6>
+                                            <div className="text-sm text-gray-600 flex items-center gap-2">
+                                              <span>Học viên:</span>
+                                              <button
+                                                onClick={() =>
+                                                  jumpToTimestamp(
+                                                    data.player2.timestamp,
+                                                    data.player1.timestamp,
+                                                  )
+                                                }
+                                                className="text-green-600 hover:text-green-800 underline font-medium cursor-pointer transition-colors"
+                                                title="Click để đồng bộ cả 2 video"
+                                              >
+                                                {data.player2.timestamp}s
+                                              </button>
+                                              <span>|</span>
+                                              <span>HLV:</span>
+                                              <button
+                                                onClick={() =>
+                                                  jumpToTimestamp(
+                                                    data.player2.timestamp,
+                                                    data.player1.timestamp,
+                                                  )
+                                                }
+                                                className="text-blue-600 hover:text-blue-800 underline font-medium cursor-pointer transition-colors"
+                                                title="Click để đồng bộ cả 2 video"
+                                              >
+                                                {data.player1.timestamp}s
+                                              </button>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-sm text-gray-600 font-medium">
+                                            Điểm:
+                                          </span>
+                                          <span
+                                            className={`px-3 py-1 rounded-xl text-sm font-bold shadow-lg ${
+                                              score >= 8
+                                                ? 'bg-green-100 text-green-800 border-2 border-green-200'
+                                                : score >= 6
+                                                  ? 'bg-yellow-100 text-yellow-800 border-2 border-yellow-200'
+                                                  : 'bg-red-100 text-red-800 border-2 border-red-200'
+                                            }`}
+                                          >
+                                            {score}/10
+                                          </span>
+                                        </div>
+                                      </div>
+
+                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                                          <div className="text-sm font-bold text-green-700 mb-2">
+                                            👤 Học viên
+                                          </div>
+                                          <p className="text-sm text-gray-700 mb-3">
+                                            {data.player2.analysis}
+                                          </p>
+                                          {data.player2.strengths.length > 0 && (
+                                            <div className="mb-2">
+                                              <div className="text-xs font-bold text-green-700 mb-1">
+                                                Điểm mạnh:
+                                              </div>
+                                              <ul className="text-xs text-gray-600 space-y-1">
+                                                {data.player2.strengths.map(
+                                                  (strength: string, i: number) => (
+                                                    <li key={i} className="flex items-start gap-1">
+                                                      <span className="text-green-600">✓</span>
+                                                      <span>{strength}</span>
+                                                    </li>
+                                                  ),
+                                                )}
+                                              </ul>
+                                            </div>
+                                          )}
+                                          {data.player2.weaknesses.length > 0 && (
+                                            <div>
+                                              <div className="text-xs font-bold text-red-700 mb-1">
+                                                Điểm yếu:
+                                              </div>
+                                              <ul className="text-xs text-gray-600 space-y-1">
+                                                {data.player2.weaknesses.map(
+                                                  (weakness: string, i: number) => (
+                                                    <li key={i} className="flex items-start gap-1">
+                                                      <span className="text-red-600">✗</span>
+                                                      <span>{weakness}</span>
+                                                    </li>
+                                                  ),
+                                                )}
+                                              </ul>
+                                            </div>
+                                          )}
+                                        </div>
+
+                                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                          <div className="text-sm font-bold text-blue-700 mb-2">
+                                            👨‍🏫 HLV
+                                          </div>
+                                          <p className="text-sm text-gray-700 mb-3">
+                                            {data.player1.analysis}
+                                          </p>
+                                          {data.player1.strengths.length > 0 && (
+                                            <div className="mb-2">
+                                              <div className="text-xs font-bold text-green-700 mb-1">
+                                                Điểm mạnh:
+                                              </div>
+                                              <ul className="text-xs text-gray-600 space-y-1">
+                                                {data.player1.strengths.map(
+                                                  (strength: string, i: number) => (
+                                                    <li key={i} className="flex items-start gap-1">
+                                                      <span className="text-green-600">✓</span>
+                                                      <span>{strength}</span>
+                                                    </li>
+                                                  ),
+                                                )}
+                                              </ul>
+                                            </div>
+                                          )}
+                                          {data.player1.weaknesses.length > 0 && (
+                                            <div>
+                                              <div className="text-xs font-bold text-red-700 mb-1">
+                                                Điểm yếu:
+                                              </div>
+                                              <ul className="text-xs text-gray-600 space-y-1">
+                                                {data.player1.weaknesses.map(
+                                                  (weakness: string, i: number) => (
+                                                    <li key={i} className="flex items-start gap-1">
+                                                      <span className="text-red-600">✗</span>
+                                                      <span>{weakness}</span>
+                                                    </li>
+                                                  ),
+                                                )}
+                                              </ul>
+                                            </div>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                                        <div className="text-sm font-bold text-orange-700 mb-2">
+                                          🏆 Lợi thế:{' '}
+                                          {data.advantage === 'player1'
+                                            ? 'Huấn luyện viên'
+                                            : 'Học viên'}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                },
+                              )}
                           </div>
                         </div>
 
@@ -2433,20 +2643,20 @@ const CourseManagement = () => {
                                   </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
-                                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                                    <div className="text-sm font-bold text-blue-700 mb-2">
-                                      👨‍🏫 HLV (Mẫu)
-                                    </div>
-                                    <p className="text-sm text-gray-700">
-                                      {diff.player1_technique}
-                                    </p>
-                                  </div>
                                   <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                                     <div className="text-sm font-bold text-green-700 mb-2">
                                       👤 Học viên
                                     </div>
                                     <p className="text-sm text-gray-700">
                                       {diff.player2_technique}
+                                    </p>
+                                  </div>
+                                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                    <div className="text-sm font-bold text-blue-700 mb-2">
+                                      👨‍🏫 HLV (Mẫu)
+                                    </div>
+                                    <p className="text-sm text-gray-700">
+                                      {diff.player1_technique}
                                     </p>
                                   </div>
                                 </div>
