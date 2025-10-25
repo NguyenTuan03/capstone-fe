@@ -21,8 +21,10 @@ import {
   GetActivityLogsResponse,
   CurriculumFilterOptions,
   ApiResponse,
-} from '@/types/curriculum';
-import curriculumData from '@/data/curriculum.json';
+  TextContent,
+  VideoContent,
+} from '@/@crema/types/models/curriculum';
+import { curriculumData } from '@/data/curriculum';
 
 // Simulate API delay
 const simulateDelay = (ms: number = 100) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -520,10 +522,10 @@ export class CurriculumApiService {
       const lesson = allLessons[lessonIndex];
 
       if (request.type === 'text') {
-        lesson.textContent = request.content;
+        lesson.textContent = request.content as TextContent;
         lesson.hasText = true;
       } else if (request.type === 'video') {
-        lesson.videoContent = request.content;
+        lesson.videoContent = request.content as VideoContent;
         lesson.hasVideo = true;
       }
 
@@ -562,16 +564,16 @@ export class CurriculumApiService {
         lessonId: request.lessonId,
         question: request.question,
         type: request.type,
-        options: request.options.map((option, index) => ({
+        options: request.options.map((option: { text: string; order: number }, index: number) => ({
           id: generateId('opt'),
           text: option.text,
           order: option.order || index + 1,
         })),
-        correctAnswers: request.correctAnswers.map((index) => newQuiz.options[index].id),
+        correctAnswers: request.correctAnswers.map((index: number) => newQuiz.options[index].id),
         explanation: request.explanation,
         order: lesson.quizzes.length + 1,
         points: request.points || 10,
-        timeLimit: request.timeLimit,
+        timeLimit: request.timeLimit || 30,
         status: 'active',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -607,7 +609,7 @@ export class CurriculumApiService {
 
       // Find quiz in lessons
       for (const l of allLessons) {
-        const quiz = l.quizzes.find((q) => q.id === request.id);
+        const quiz = l.quizzes.find((q: Quiz) => q.id === request.id);
         if (quiz) {
           foundQuiz = quiz;
           lesson = l;
@@ -626,15 +628,17 @@ export class CurriculumApiService {
       if (request.question) foundQuiz.question = request.question;
       if (request.type) foundQuiz.type = request.type;
       if (request.options) {
-        foundQuiz.options = request.options.map((option, index) => ({
-          id: generateId('opt'),
-          text: option.text,
-          order: option.order || index + 1,
-        }));
+        foundQuiz.options = request.options.map(
+          (option: { text: string; order: number }, index: number) => ({
+            id: generateId('opt'),
+            text: option.text,
+            order: option.order || index + 1,
+          }),
+        );
       }
       if (request.correctAnswers) {
         foundQuiz.correctAnswers = request.correctAnswers.map(
-          (index) => foundQuiz!.options[index].id,
+          (index: number) => foundQuiz!.options[index].id,
         );
       }
       if (request.explanation !== undefined) foundQuiz.explanation = request.explanation;
@@ -670,7 +674,7 @@ export class CurriculumApiService {
 
       // Find quiz in lessons
       for (const l of allLessons) {
-        const quizIndex = l.quizzes.findIndex((q) => q.id === id);
+        const quizIndex = l.quizzes.findIndex((q: Quiz) => q.id === id);
         if (quizIndex !== -1) {
           foundIndex = quizIndex;
           lesson = l;
@@ -752,11 +756,11 @@ export class CurriculumApiService {
         duplicatedLesson.hasQuiz = false;
       } else {
         // Generate new IDs for quizzes and options
-        duplicatedLesson.quizzes = duplicatedLesson.quizzes.map((quiz) => ({
+        duplicatedLesson.quizzes = duplicatedLesson.quizzes.map((quiz: Quiz) => ({
           ...quiz,
           id: generateId('quiz'),
           lessonId: duplicatedLesson.id,
-          options: quiz.options.map((option) => ({
+          options: quiz.options.map((option: { text: string; order: number }) => ({
             ...option,
             id: generateId('opt'),
           })),
@@ -792,16 +796,16 @@ export class CurriculumApiService {
 
     try {
       if (request.type === 'chapter') {
-        request.items.forEach((item) => {
-          const chapter = allChapters.find((c) => c.id === item.id);
+        request.items.forEach((item: { id: string; order: number }) => {
+          const chapter = allChapters.find((c: Chapter) => c.id === item.id);
           if (chapter) {
             chapter.order = item.order;
             chapter.updatedAt = new Date().toISOString();
           }
         });
       } else if (request.type === 'lesson') {
-        request.items.forEach((item) => {
-          const lesson = allLessons.find((l) => l.id === item.id);
+        request.items.forEach((item: { id: string; order: number }) => {
+          const lesson = allLessons.find((l: Lesson) => l.id === item.id);
           if (lesson) {
             lesson.order = item.order;
             lesson.updatedAt = new Date().toISOString();
@@ -891,11 +895,14 @@ export class CurriculumApiService {
     const activeChapters = allChapters.filter((c) => c.status === 'active').length;
     const activeLessons = allLessons.filter((l) => l.status === 'active').length;
     const activeQuizzes = allLessons.reduce(
-      (sum, lesson) => sum + lesson.quizzes.filter((q) => q.status === 'active').length,
+      (sum, lesson) => sum + lesson.quizzes.filter((q: Quiz) => q.status === 'active').length,
       0,
     );
 
-    const totalDuration = allLessons.reduce((sum, lesson) => sum + lesson.duration, 0);
+    const totalDuration = allLessons.reduce(
+      (sum: number, lesson: Lesson) => sum + lesson.duration,
+      0,
+    );
     const avgLessonsPerChapter =
       totalChapters > 0 ? Math.round((totalLessons / totalChapters) * 10) / 10 : 0;
     const avgQuizzesPerLesson =

@@ -8,7 +8,7 @@ import {
   SuspendCoachRequest,
   ApiResponse,
 } from '@/types/coach';
-import coachData from '@/data/coaches.json';
+import { coachData } from '@/data/coaches';
 
 // Simulate API delay
 const simulateDelay = (ms: number = 100) => new Promise((resolve) => setTimeout(resolve, ms));

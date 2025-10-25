@@ -1,34 +1,32 @@
-// User Management Types
+import { Role } from './role';
+import { Wallet } from './wallet';
+import { Achievement } from './achievement';
+import { AchievementProgress } from './achievement-progress';
+import { LearnerAchievement } from './learner-achievement';
 
 export interface User {
-  id: string;
+  id: number;
+  fullName: string;
   email: string;
-  name: string;
-  phone?: string;
-  avatar?: string;
-  role: 'learner' | 'coach' | 'admin';
-  status: 'active' | 'blocked' | 'pending';
-  skillLevel?: 'beginner' | 'intermediate' | 'advanced';
-  location?: string;
-  joinDate: string;
-  lastLogin?: string;
-  totalSessions?: number;
-  totalSpent?: number;
-
-  // Block info
-  blockReason?: string;
-  blockedAt?: string;
-  blockedBy?: string;
-
-  // Stats
-  stats?: {
-    completedLessons: number;
-    totalLessons: number;
-    currentLevel: string;
-    achievements: string[];
-  };
+  phoneNumber?: string;
+  password?: string;
+  profilePicture?: string;
+  refreshToken?: string;
+  isEmailVerified: boolean;
+  emailVerificationToken?: string;
+  resetPasswordToken?: string;
+  isActive: boolean;
+  createdAt: Date;
+  updatedAt: Date;
+  deletedAt?: Date;
+  role: Role;
+  wallet?: Wallet;
+  achievements?: Achievement[]; // Achievements created by this user (admin/coach)
+  achievementProgresses?: AchievementProgress[]; // Progress on achievements (learner)
+  learnerAchievements?: LearnerAchievement[]; // Earned achievements (learner)
 }
 
+// API types for userApi service
 export interface UserListStats {
   total: number;
   active: number;

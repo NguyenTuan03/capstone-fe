@@ -33,7 +33,7 @@ export default function Login() {
       // Admin login - redirect to dashboard
       message.success('Đăng nhập thành công! Chào mừng Admin!');
       setTimeout(() => {
-        router.push('/(dashboard)/dashboard');
+        router.push('/dashboard');
       }, 1000);
     } else if (email === 'coach' && password === 'coach') {
       // Coach login - redirect to coach dashboard (using dashboard for now)
