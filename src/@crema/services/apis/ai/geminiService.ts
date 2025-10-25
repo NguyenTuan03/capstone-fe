@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { CombinedAnalysisResult, VideoComparisonResult } from '@/@crema/types/models/AI';
 
 const apiKey = process.env.NEXT_PUBLIC_API_KEY;
@@ -8,7 +8,7 @@ if (!apiKey) {
   );
 }
 
-const ai = new GoogleGenAI({ apiKey });
+const ai = new GoogleGenerativeAI(apiKey);
 
 const model = 'gemini-2.5-flash';
 
@@ -23,36 +23,36 @@ const parseJsonResponse = <T>(text: string): T => {
 };
 
 const analyzeVideoSchema = {
-  type: Type.OBJECT,
+  type: 'object' as const,
   properties: {
-    shotType: { type: Type.STRING },
-    confidence: { type: Type.NUMBER },
+    shotType: { type: 'string' as const },
+    confidence: { type: 'number' as const },
     pose: {
-      type: Type.OBJECT,
+      type: 'object' as const,
       properties: {
-        summary: { type: Type.STRING },
-        feedback: { type: Type.STRING },
+        summary: { type: 'string' as const },
+        feedback: { type: 'string' as const },
       },
       required: ['summary', 'feedback'],
     },
     movement: {
-      type: Type.OBJECT,
+      type: 'object' as const,
       properties: {
-        preparation: { type: Type.STRING },
-        contact: { type: Type.STRING },
-        followThrough: { type: Type.STRING },
+        preparation: { type: 'string' as const },
+        contact: { type: 'string' as const },
+        followThrough: { type: 'string' as const },
       },
       required: ['preparation', 'contact', 'followThrough'],
     },
     recommendations: {
-      type: Type.ARRAY,
-      items: { type: Type.STRING },
+      type: 'array' as const,
+      items: { type: 'string' as const },
     },
     tags: {
-      type: Type.ARRAY,
-      items: { type: Type.STRING },
+      type: 'array' as const,
+      items: { type: 'string' as const },
     },
-    description: { type: Type.STRING },
+    description: { type: 'string' as const },
   },
   required: [
     'shotType',
@@ -112,18 +112,22 @@ export const analyzeVideo = async (base64Frames: string[]): Promise<CombinedAnal
 
   return retryWithBackoff(async () => {
     try {
-      const response = await ai.models.generateContent({
-        model,
-        contents: {
-          parts: [...imageParts, { text: prompt }],
-        },
-        config: {
+      const genModel = ai.getGenerativeModel({ model });
+      const result = await genModel.generateContent({
+        contents: [
+          {
+            role: 'user',
+            parts: [...imageParts, { text: prompt }],
+          },
+        ],
+        generationConfig: {
           responseMimeType: 'application/json',
-          responseSchema: analyzeVideoSchema,
+          responseSchema: analyzeVideoSchema as any,
         },
       });
 
-      return parseJsonResponse<CombinedAnalysisResult>(response.text || '');
+      const response = await result.response;
+      return parseJsonResponse<CombinedAnalysisResult>(response.text());
     } catch (error) {
       console.error('Gemini API call failed in analyzeVideo:', error);
       throw new Error(
@@ -134,24 +138,24 @@ export const analyzeVideo = async (base64Frames: string[]): Promise<CombinedAnal
 };
 
 const comparisonDetailSchema = {
-  type: Type.OBJECT,
+  type: 'object' as const,
   properties: {
     analysis: {
-      type: Type.STRING,
+      type: 'string' as const,
       description: 'Phân tích chi tiết về kỹ thuật của người chơi trong giai đoạn này.',
     },
     strengths: {
-      type: Type.ARRAY,
-      items: { type: Type.STRING },
+      type: 'array' as const,
+      items: { type: 'string' as const },
       description: 'Danh sách các điểm mạnh cụ thể.',
     },
     weaknesses: {
-      type: Type.ARRAY,
-      items: { type: Type.STRING },
+      type: 'array' as const,
+      items: { type: 'string' as const },
       description: 'Danh sách các điểm yếu cụ thể cần cải thiện.',
     },
     timestamp: {
-      type: Type.NUMBER,
+      type: 'number' as const,
       description: 'Dấu thời gian (tính bằng giây) trong video mà phân tích này áp dụng.',
     },
   },
@@ -159,17 +163,20 @@ const comparisonDetailSchema = {
 };
 
 const keyDifferenceSchema = {
-  type: Type.OBJECT,
+  type: 'object' as const,
   properties: {
     aspect: {
-      type: Type.STRING,
+      type: 'string' as const,
       description:
         'Khía cạnh kỹ thuật được so sánh (ví dụ: Dáng đứng, Vung vợt, Chuyển động chân).',
     },
-    player1_technique: { type: Type.STRING, description: 'Mô tả kỹ thuật của Huấn luyện viên.' },
-    player2_technique: { type: Type.STRING, description: 'Mô tả kỹ thuật của Học viên.' },
+    player1_technique: {
+      type: 'string' as const,
+      description: 'Mô tả kỹ thuật của Huấn luyện viên.',
+    },
+    player2_technique: { type: 'string' as const, description: 'Mô tả kỹ thuật của Học viên.' },
     impact: {
-      type: Type.STRING,
+      type: 'string' as const,
       description: 'Phân tích tác động của sự khác biệt này đối với cú đánh.',
     },
   },
@@ -177,12 +184,15 @@ const keyDifferenceSchema = {
 };
 
 const drillSchema = {
-  type: Type.OBJECT,
+  type: 'object' as const,
   properties: {
-    title: { type: Type.STRING, description: 'Tiêu đề của bài tập.' },
-    description: { type: Type.STRING, description: 'Mô tả chi tiết về cách thực hiện bài tập.' },
+    title: { type: 'string' as const, description: 'Tiêu đề của bài tập.' },
+    description: {
+      type: 'string' as const,
+      description: 'Mô tả chi tiết về cách thực hiện bài tập.',
+    },
     practice_sets: {
-      type: Type.STRING,
+      type: 'string' as const,
       description: "Các hiệp thực hành được đề xuất (ví dụ: '3 hiệp, mỗi hiệp 10 lần lặp').",
     },
   },
@@ -190,44 +200,44 @@ const drillSchema = {
 };
 
 const recommendationWithDrillSchema = {
-  type: Type.OBJECT,
+  type: 'object' as const,
   properties: {
-    recommendation: { type: Type.STRING, description: 'Một đề xuất cụ thể để cải thiện.' },
+    recommendation: { type: 'string' as const, description: 'Một đề xuất cụ thể để cải thiện.' },
     drill: drillSchema,
   },
   required: ['recommendation', 'drill'],
 };
 
 const compareVideosSchema = {
-  type: Type.OBJECT,
+  type: 'object' as const,
   properties: {
     comparison: {
-      type: Type.OBJECT,
+      type: 'object' as const,
       properties: {
         preparation: {
-          type: Type.OBJECT,
+          type: 'object' as const,
           properties: {
             player1: comparisonDetailSchema,
             player2: comparisonDetailSchema,
-            advantage: { type: Type.STRING },
+            advantage: { type: 'string' as const },
           },
           required: ['player1', 'player2', 'advantage'],
         },
         swingAndContact: {
-          type: Type.OBJECT,
+          type: 'object' as const,
           properties: {
             player1: comparisonDetailSchema,
             player2: comparisonDetailSchema,
-            advantage: { type: Type.STRING },
+            advantage: { type: 'string' as const },
           },
           required: ['player1', 'player2', 'advantage'],
         },
         followThrough: {
-          type: Type.OBJECT,
+          type: 'object' as const,
           properties: {
             player1: comparisonDetailSchema,
             player2: comparisonDetailSchema,
-            advantage: { type: Type.STRING },
+            advantage: { type: 'string' as const },
           },
           required: ['player1', 'player2', 'advantage'],
         },
@@ -235,16 +245,16 @@ const compareVideosSchema = {
       required: ['preparation', 'swingAndContact', 'followThrough'],
     },
     keyDifferences: {
-      type: Type.ARRAY,
+      type: 'array' as const,
       items: keyDifferenceSchema,
     },
-    summary: { type: Type.STRING },
+    summary: { type: 'string' as const },
     recommendationsForPlayer2: {
-      type: Type.ARRAY,
+      type: 'array' as const,
       items: recommendationWithDrillSchema,
     },
     overallScoreForPlayer2: {
-      type: Type.NUMBER,
+      type: 'number' as const,
       description: 'Điểm tổng thể cho kỹ thuật của Học viên trên thang điểm 10.',
     },
   },
@@ -293,16 +303,22 @@ export const compareVideos = async (
 
   return retryWithBackoff(async () => {
     try {
-      const response = await ai.models.generateContent({
-        model,
-        contents: { parts },
-        config: {
+      const genModel = ai.getGenerativeModel({ model });
+      const result = await genModel.generateContent({
+        contents: [
+          {
+            role: 'user',
+            parts,
+          },
+        ],
+        generationConfig: {
           responseMimeType: 'application/json',
-          responseSchema: compareVideosSchema,
+          responseSchema: compareVideosSchema as any,
         },
       });
 
-      return parseJsonResponse<VideoComparisonResult>(response.text || '');
+      const response = await result.response;
+      return parseJsonResponse<VideoComparisonResult>(response.text());
     } catch (error) {
       console.error('Gemini API call failed in compareVideos:', error);
       throw new Error(
