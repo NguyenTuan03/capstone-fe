@@ -9,7 +9,11 @@ const client = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
 const VideoConferencePage = () => {
   const [inCall, setInCall] = useState(false);
   const [channelName, setChannelName] = useState('');
-  const [remoteUser, setRemoteUser] = useState(null);
+  const [remoteUser, setRemoteUser] = useState<{
+    uid: string | number;
+    videoTrack?: any;
+    audioTrack?: any;
+  } | null>(null);
   const [participantCount, setParticipantCount] = useState(1);
   const [someoneJoined, setSomeoneJoined] = useState<string | null>(null);
   const [hasRemoteVideo, setHasRemoteVideo] = useState(false);
