@@ -8,7 +8,6 @@ import {
   CalendarOutlined,
   TeamOutlined,
   BookOutlined,
-  ScheduleOutlined,
   BarChartOutlined,
   FileTextOutlined,
   VideoCameraOutlined,

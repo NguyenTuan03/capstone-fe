@@ -1364,7 +1364,7 @@ const CourseManagement = () => {
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <span>🏁</span>
-                        <span>Kết thúc:</span>
+                        <span>Động tác kết thúc:</span>
                         <span className="font-semibold">{calculateEndDate()}</span>
                       </div>
                       <div className="flex items-center gap-2 text-sm">
@@ -2400,6 +2400,9 @@ const CourseManagement = () => {
                               <span className="text-white text-lg">📊</span>
                             </div>
                             <h5 className="font-bold text-blue-800 text-lg">Tóm tắt tổng quan</h5>
+                            <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-semibold border border-blue-200">
+                              Tổng kết
+                            </span>
                           </div>
                           <p className="text-gray-700 text-lg leading-relaxed">
                             {aiAnalysisResults?.summary}
@@ -2421,19 +2424,30 @@ const CourseManagement = () => {
                             <h5 className="font-bold text-purple-800 text-lg">
                               Phân tích chi tiết từng giai đoạn
                             </h5>
+                            <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-semibold border border-purple-200">
+                              Chi tiết
+                            </span>
                           </div>
                           <div className="space-y-4">
                             {aiAnalysisResults?.comparison &&
                               Object.entries(aiAnalysisResults.comparison).map(
                                 ([phase, data]: [string, any], index: number) => {
                                   const phaseNames = {
-                                    preparation: { name: 'Chuẩn bị', icon: '🏃‍♂️', color: 'green' },
+                                    preparation: {
+                                      name: 'Tư thế chuẩn bị',
+                                      icon: '🏃‍♂️',
+                                      color: 'green',
+                                    },
                                     swingAndContact: {
-                                      name: 'Vung vợt & Tiếp xúc',
+                                      name: 'Tư thế vung vợt',
                                       icon: '⚡',
                                       color: 'yellow',
                                     },
-                                    followThrough: { name: 'Kết thúc', icon: '🎯', color: 'blue' },
+                                    followThrough: {
+                                      name: 'Động tác kết thúc',
+                                      icon: '🎯',
+                                      color: 'blue',
+                                    },
                                   };
                                   const phaseInfo = phaseNames[phase as keyof typeof phaseNames];
                                   const scores = [6, 5, 7]; // Example scores
@@ -2506,8 +2520,8 @@ const CourseManagement = () => {
                                         </div>
                                       </div>
 
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                                        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                                      <div className="grid w-full">
+                                        <div className="bg-green-50 border border-green-200 rounded-lg p-3 w-full">
                                           <div className="text-sm font-bold text-green-700 mb-2">
                                             👤 Học viên
                                           </div>
@@ -2550,7 +2564,7 @@ const CourseManagement = () => {
                                           )}
                                         </div>
 
-                                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                                        {/* <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                                           <div className="text-sm font-bold text-blue-700 mb-2">
                                             👨‍🏫 HLV
                                           </div>
@@ -2591,16 +2605,7 @@ const CourseManagement = () => {
                                               </ul>
                                             </div>
                                           )}
-                                        </div>
-                                      </div>
-
-                                      <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
-                                        <div className="text-sm font-bold text-orange-700 mb-2">
-                                          🏆 Lợi thế:{' '}
-                                          {data.advantage === 'player1'
-                                            ? 'Huấn luyện viên'
-                                            : 'Học viên'}
-                                        </div>
+                                        </div> */}
                                       </div>
                                     </div>
                                   );
@@ -2610,11 +2615,18 @@ const CourseManagement = () => {
                         </div>
 
                         {/* Key Differences */}
-                        <div className="space-y-4 mb-6">
-                          <h5 className="font-bold text-gray-800 text-lg flex items-center gap-3">
-                            <span className="text-xl">🔍</span>
-                            <span>Điểm khác biệt chính</span>
-                          </h5>
+                        {/* <div className="space-y-4 mb-6">
+                          <div className="flex items-center gap-3 mb-4">
+                            <div className="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center">
+                              <span className="text-white text-lg">🔍</span>
+                            </div>
+                            <h5 className="font-bold text-gray-800 text-lg">
+                              Điểm khác biệt chính
+                            </h5>
+                            <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-semibold border border-orange-200">
+                              So sánh
+                            </span>
+                          </div>
                           {aiAnalysisResults?.keyDifferences?.map((diff: any, index: number) => {
                             // Calculate score based on index (you can adjust this logic)
                             const scores = [6, 5, 7]; // Example scores for each aspect
@@ -2642,7 +2654,7 @@ const CourseManagement = () => {
                                     </span>
                                   </div>
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3" style={{ justifyContent: 'center' }}>
                                   <div className="bg-green-50 border border-green-200 rounded-lg p-3">
                                     <div className="text-sm font-bold text-green-700 mb-2">
                                       👤 Học viên
@@ -2669,7 +2681,7 @@ const CourseManagement = () => {
                               </div>
                             );
                           })}
-                        </div>
+                        </div> */}
 
                         {/* Recommendations */}
                         <div className="bg-gradient-to-br from-orange-50 to-yellow-50 border-2 border-orange-200 rounded-xl p-4">
@@ -2678,6 +2690,9 @@ const CourseManagement = () => {
                               <span className="text-white text-lg">💡</span>
                             </div>
                             <h5 className="font-bold text-orange-800 text-lg">Gợi ý cải thiện</h5>
+                            <span className="px-3 py-1 bg-orange-100 text-orange-800 rounded-full text-sm font-semibold border border-orange-200">
+                              Khuyến nghị
+                            </span>
                           </div>
                           <div className="space-y-4">
                             {aiAnalysisResults?.recommendationsForPlayer2?.map(

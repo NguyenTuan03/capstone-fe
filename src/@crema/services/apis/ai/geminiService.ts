@@ -95,7 +95,7 @@ export const analyzeVideo = async (base64Frames: string[]): Promise<CombinedAnal
   const prompt = `
     Bạn là một huấn luyện viên pickleball chuyên nghiệp với kiến thức sâu rộng về cơ sinh học.
     Phân tích chuỗi hình ảnh từ một video. Các hình ảnh được sắp xếp theo thứ tự thời gian và thể hiện một cú đánh duy nhất.
-    Nhiệm vụ của bạn là thực hiện một phân tích toàn diện và trả về một đối tượng JSON duy nhất.
+    Nhiệm vụ của bạn là thực hiện một phân tích toàn diện với huấn luyện viên, lấy huấn luyện viên làm chuẩn, phân tích kỹ thuật của huấn luyện viên và trả về một đối tượng JSON duy nhất.
     1.  **Phân tích Kỹ thuật:**
         *   Phân loại loại cú đánh (ví dụ: cú smash, cú lốp, cú vô lê, v.v.).
         *   Phân tích chi tiết tư thế và chuyển động của người chơi (chuẩn bị, tiếp xúc, kết thúc).
