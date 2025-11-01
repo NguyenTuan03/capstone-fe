@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 const StudentsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [selectedStudent, setSelectedStudent] = useState<(typeof students)[number] | null>(null);
 
   const students = [
     {

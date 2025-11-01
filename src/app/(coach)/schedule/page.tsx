@@ -44,7 +44,16 @@ const SchedulePage = () => {
     reason: '',
   });
   const [showRescheduleModal, setShowRescheduleModal] = useState<boolean>(false);
-  const [sessionManagement, setSessionManagement] = useState({
+  type SessionManagementState = {
+    assignments: any[];
+    quizzes: any[];
+    videos: any[];
+    selectedAssignments: any[];
+    selectedQuizzes: any[];
+    selectedVideos: any[];
+  };
+
+  const [sessionManagement, setSessionManagement] = useState<SessionManagementState>({
     assignments: [],
     quizzes: [],
     videos: [],
@@ -1807,26 +1816,26 @@ const SchedulePage = () => {
                                       {studentName}
                                     </h5>
                                     <button
-                                      onClick={() => {
-                                        const student = students.find(
-                                          (s) => s.name === studentName,
-                                        );
-                                        if (student) handleStudentDetail(student);
-                                      }}
-                                      title="Xem chi tiết học viên"
-                                      style={{
-                                        background: 'none',
-                                        border: 'none',
-                                        color: '#2563eb',
-                                        fontSize: '14px',
-                                        cursor: 'pointer',
-                                      }}
-                                      onMouseEnter={(e) =>
-                                        (e.currentTarget.style.color = '#1e40af')
-                                      }
-                                      onMouseLeave={(e) =>
-                                        (e.currentTarget.style.color = '#2563eb')
-                                      }
+                                    // onClick={() => {
+                                    //   const student = students.find(
+                                    //     (s: any) => s.name === studentName,
+                                    //   );
+                                    //   if (student) handleStudentDetail(student);
+                                    // }}
+                                    // title="Xem chi tiết học viên"
+                                    // style={{
+                                    //   background: 'none',
+                                    //   border: 'none',
+                                    //   color: '#2563eb',
+                                    //   fontSize: '14px',
+                                    //   cursor: 'pointer',
+                                    // }}
+                                    // onMouseEnter={(e) =>
+                                    //   (e.currentTarget.style.color = '#1e40af')
+                                    // }
+                                    // onMouseLeave={(e) =>
+                                    //   (e.currentTarget.style.color = '#2563eb')
+                                    // }
                                     >
                                       <EyeFilled size={16} />
                                     </button>
@@ -1983,7 +1992,7 @@ const SchedulePage = () => {
                       >
                         {contentLibrary.assignments.map((assignment) => {
                           const isSelected = sessionManagement.selectedAssignments.find(
-                            (a) => a.id === assignment.id,
+                            (a: any) => a.id === assignment.id,
                           );
                           return (
                             <div
@@ -2046,11 +2055,11 @@ const SchedulePage = () => {
                                       setSessionManagement((prev) => ({
                                         ...prev,
                                         selectedAssignments: prev.selectedAssignments.filter(
-                                          (a) => a.id !== assignment.id,
+                                          (a: any) => a.id !== assignment.id,
                                         ),
                                       }));
                                     } else {
-                                      setSessionManagement((prev) => ({
+                                      setSessionManagement((prev: any) => ({
                                         ...prev,
                                         selectedAssignments: [
                                           ...prev.selectedAssignments,
@@ -2130,7 +2139,7 @@ const SchedulePage = () => {
                                     setSessionManagement((prev) => ({
                                       ...prev,
                                       selectedAssignments: prev.selectedAssignments.filter(
-                                        (a) => a.id !== assignment.id,
+                                        (a: any) => a.id !== assignment.id,
                                       ),
                                     }));
                                   }}
@@ -2209,7 +2218,7 @@ const SchedulePage = () => {
                       >
                         {contentLibrary.quizzes.map((quiz) => {
                           const isSelected = sessionManagement.selectedQuizzes.find(
-                            (q) => q.id === quiz.id,
+                            (q: any) => q.id === quiz.id,
                           );
                           return (
                             <div
@@ -2396,7 +2405,7 @@ const SchedulePage = () => {
                                     setSessionManagement((prev) => ({
                                       ...prev,
                                       selectedQuizzes: prev.selectedQuizzes.filter(
-                                        (q) => q.id !== quiz.id,
+                                        (q: any) => q.id !== quiz.id,
                                       ),
                                     }));
                                   }}
@@ -2526,7 +2535,7 @@ const SchedulePage = () => {
                                     >
                                       {video.duration}
                                     </span>
-                                    <span
+                                    {/* <span
                                       style={{
                                         fontSize: '12px',
                                         backgroundColor: '#dbeafe',
@@ -2536,7 +2545,7 @@ const SchedulePage = () => {
                                       }}
                                     >
                                       {video.difficulty}
-                                    </span>
+                                    </span> */}
                                     <span style={{ fontSize: '12px', color: '#6b7280' }}>
                                       Đã dùng: {video.usageCount} lần
                                     </span>
@@ -2741,15 +2750,19 @@ const SchedulePage = () => {
                         });
                       }}
                       style={{
-                        border: '1px solid #d1d5db', // border-gray-300
+                        border: '1px solid #d1d5db',
                         padding: '8px 24px',
                         borderRadius: '8px',
                         backgroundColor: '#fff',
                         cursor: 'pointer',
                         transition: 'background-color 0.2s',
                       }}
-                      onMouseEnter={(e) => (e.target.style.backgroundColor = '#f9fafb')} // hover:bg-gray-50
-                      onMouseLeave={(e) => (e.target.style.backgroundColor = '#fff')}
+                      onMouseEnter={(e) =>
+                        ((e.target as HTMLElement).style.backgroundColor = '#f9fafb')
+                      }
+                      onMouseLeave={(e) =>
+                        ((e.target as HTMLElement).style.backgroundColor = '#fff')
+                      }
                     >
                       Hủy
                     </button>
@@ -2765,8 +2778,12 @@ const SchedulePage = () => {
                         border: 'none',
                         transition: 'background-color 0.2s',
                       }}
-                      onMouseEnter={(e) => (e.target.style.backgroundColor = '#15803d')} // hover:bg-green-700
-                      onMouseLeave={(e) => (e.target.style.backgroundColor = '#16a34a')}
+                      onMouseEnter={(e) =>
+                        ((e.target as HTMLElement).style.backgroundColor = '#15803d')
+                      } // hover:bg-green-700
+                      onMouseLeave={(e) =>
+                        ((e.target as HTMLElement).style.backgroundColor = '#16a34a')
+                      }
                     >
                       {activeSessionTab === 'attendance' ? 'Xác nhận điểm danh' : 'Lưu và tiếp tục'}
                     </button>
