@@ -3,12 +3,12 @@ import './globals.css';
 import '../styles/vietnamese-classes.css';
 import AppAuthProvider from '@/@crema/core/AppAuthProvider';
 import AppContextProvider from '@/@crema/context/AppContextProvider';
-import { ConfigProvider } from 'antd';
 import viVN from 'antd/locale/vi_VN';
 import AppLocaleProvider from '@/@crema/context/AppLocaleProvider';
 import AppQueryProvider from '@/@crema/context/AppQueryProvider';
 // import AppAuthGuard from '@/@crema/components/AppAuthGuard'; // DISABLED FOR UI DEVELOPMENT
-
+import { App as AntdApp, ConfigProvider } from 'antd';
+import AppAuthGuard from '@/@crema/components/AppAuthGuard';
 const inter = Inter({
   variable: '--font-inter',
   subsets: ['latin'],
@@ -32,14 +32,16 @@ export default function RootLayout({
       >
         <AppQueryProvider>
           <ConfigProvider locale={viVN}>
-            <AppLocaleProvider>
-              <AppContextProvider>
-                <AppAuthProvider>
-                  {children}
-                  {/* <AppAuthGuard>{children}</AppAuthGuard> DISABLED FOR UI DEVELOPMENT */}
-                </AppAuthProvider>
-              </AppContextProvider>
-            </AppLocaleProvider>
+            <AntdApp>
+              <AppLocaleProvider>
+                <AppContextProvider>
+                  <AppAuthProvider>
+                    {children}
+                    {/* <AppAuthGuard>{children}</AppAuthGuard> DISABLED FOR UI DEVELOPMENT */}
+                  </AppAuthProvider>
+                </AppContextProvider>
+              </AppLocaleProvider>
+            </AntdApp>
           </ConfigProvider>
         </AppQueryProvider>
       </body>

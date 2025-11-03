@@ -1,29 +1,14 @@
 'use client';
-/**
- * JWT Authentication Provider
- *
- * This component provides JWT (JSON Web Token) authentication functionality throughout the application.
- * It manages the authentication state, user data, and authentication-related actions using React Context.
- *
- * Features:
- * - Handles user authentication state
- * - Manages access and refresh tokens
- * - Provides sign-in and logout functionality
- * - Automatically loads user data on mount
- * - Handles token persistence based on "remember me" preference
- * - Manages user permissions
- */
 
 import React, { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 import jwtAxios, { setAuthToken, setRefreshToken } from './index';
 import { REFRESH_TOKEN_KEY, REMEMBER_ME_KEY, TOKEN_KEY } from '@/@crema/constants/AppConst';
 import { UserType } from '@/@crema/types/auth';
 import Cookies from 'universal-cookie';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
+import { useFormMutation } from '@/@crema/hooks/useApiQuery';
+import { App } from 'antd';
 import { RoleEnum } from '@/@crema/constants/AppEnums';
-import { message } from 'antd';
-import { useIntl } from 'react-intl';
-
 /**
  * Props for the authentication context
  * Contains the current authentication state and user data
@@ -94,81 +79,34 @@ interface JWTAuthAuthProviderProps {
  */
 const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) => {
   const cookies = new Cookies();
+  const { message } = App.useApp();
   const router = useRouter();
-  const pathname = usePathname();
-  const { messages: t } = useIntl();
   const [jwtAuthData, setJWTAuthData] = useState<JWTAuthContextProps>({
     user: null,
     isAuthenticated: false,
     isLoading: true,
   });
 
-  // Define public routes that don't require authentication
-  const publicRoutes = ['/signin', '/register', '/forgot-password', '/reset-password'];
-  const isPublicRoute = publicRoutes.includes(pathname);
-
   /**
    * Effect to load user data on component mount
    * Checks for existing token and fetches user data if found
    */
   useEffect(() => {
-    const getAuthUser = async () => {
-      const token = localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
-
-      // If no token and not on public route, redirect to signin
-      if (!token) {
-        setJWTAuthData({
-          user: undefined,
-          isLoading: false,
-          isAuthenticated: false,
-        });
-
-        // if (!isPublicRoute) {
-        //   router.push('/signin'); // DISABLED FOR UI DEVELOPMENT
-        // }
-        return;
-      }
-
-      // Set up token and fetch user data
-      const remember = JSON.parse(localStorage.getItem(REMEMBER_ME_KEY) || 'false');
-      setAuthToken(token, remember);
-
-      try {
-        // Simple check - if token exists and user saved, restore session
-        const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
-
-        if (savedUser && token.startsWith('admin-token-')) {
-          const user: UserType = JSON.parse(savedUser);
-
-          // Update auth state
-          setJWTAuthData({
-            user,
-            isLoading: false,
-            isAuthenticated: true,
-          });
-
-          // If on signin page, redirect to dashboard
-          if (pathname === '/signin' || pathname === '/') {
-            router.push('/dashboard');
-          }
-        } else {
-          // No valid session
-          cleanupAuthState();
-          // if (!isPublicRoute) {
-          //   router.push('/signin'); // DISABLED FOR UI DEVELOPMENT
-          // }
-        }
-      } catch (error) {
-        console.error('Auth error:', error);
-        cleanupAuthState();
-        // if (!isPublicRoute) {
-        //   router.push('/signin'); // DISABLED FOR UI DEVELOPMENT
-        // }
-      }
-    };
-
-    getAuthUser();
-  }, [pathname, isPublicRoute, router, t]);
+    const token = localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
+    const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+    if (!token || !savedUser) {
+      setJWTAuthData({ user: undefined, isAuthenticated: false, isLoading: false });
+      return;
+    }
+    const remember = JSON.parse(localStorage.getItem(REMEMBER_ME_KEY) || 'false');
+    setAuthToken(token, remember);
+    try {
+      const user: UserType = JSON.parse(savedUser);
+      setJWTAuthData({ user, isAuthenticated: true, isLoading: false });
+    } catch {
+      setJWTAuthData({ user: undefined, isAuthenticated: false, isLoading: false });
+    }
+  }, []);
 
   /**
    * Cleanup authentication state and tokens
@@ -202,68 +140,67 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
     });
   };
 
-  /**
-   * Simple fake login - just check admin/admin1 and go to dashboard
-   */
-  const signInUser = async ({ email, password, remember }: SignInProps) => {
-    removeAllXSRFTokens();
+  // TanStack mutation for login
+  const loginMutation = useFormMutation<any, SignInProps>('auth/login', {
+    method: 'POST',
+    showSuccessMessage: false,
+    // @ts-expect-error useFormMutation passes (data, variables, context)
+    onSuccess: (res: any, variables: SignInProps) => {
+      const accessToken = res?.metadata?.accessToken;
+      const refreshToken = res?.metadata?.refreshToken;
+      const user = res?.metadata?.user;
+      if (!accessToken || !user) {
+        message.error('Đăng nhập thất bại');
+        setJWTAuthData({ user: null, isAuthenticated: false, isLoading: false });
+        return;
+      }
 
-    // Set loading state
-    setJWTAuthData((prev) => ({ ...prev, isLoading: true }));
+      setAuthToken(accessToken, variables.remember);
+      setRefreshToken(refreshToken || '', variables.remember);
 
-    // Simple fake delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
-
-    // Simple check
-    if (email.toLowerCase().trim() === 'admin' && password === 'admin1') {
-      // Create simple user
-      const fakeUser: UserType = {
-        id: 'admin-001',
-        email: 'admin',
-        name: 'Admin User',
-        role: 'admin',
-        avatar:
-          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-        phone: '+84 901 234 567',
-        location: 'Hồ Chí Minh',
+      const mappedUser: UserType = {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        role: user.role?.name,
+        avatar: user.avatar,
+        phone: user.phone,
+        location: user.location,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
 
-      // Store simple token
-      const simpleToken = `admin-token-${Date.now()}`;
-      setAuthToken(simpleToken, remember);
+      setJWTAuthData({ user: mappedUser, isAuthenticated: true, isLoading: false });
 
-      // Update auth state
-      setJWTAuthData({
-        user: fakeUser,
-        isAuthenticated: true,
-        isLoading: false,
-      });
-
-      // Save user data
       try {
-        if (remember) {
-          localStorage.setItem('user', JSON.stringify(fakeUser));
+        if (variables.remember) {
+          localStorage.setItem('user', JSON.stringify(mappedUser));
           localStorage.setItem(REMEMBER_ME_KEY, 'true');
         } else {
-          sessionStorage.setItem('user', JSON.stringify(fakeUser));
+          sessionStorage.setItem('user', JSON.stringify(mappedUser));
         }
-      } catch (error) {
-        console.error('Error saving user:', error);
-      }
-
+      } catch {}
       message.success('Đăng nhập thành công!');
-      router.push('/dashboard');
-    } else {
-      // Wrong credentials
-      message.error('Sai tài khoản hoặc mật khẩu!');
-      setJWTAuthData({
-        user: null,
-        isAuthenticated: false,
-        isLoading: false,
-      });
-    }
+      setTimeout(() => {
+        if (mappedUser.role === RoleEnum.ADMIN) {
+          router.push('/dashboard');
+        } else if (mappedUser.role === RoleEnum.COACH) {
+          router.push('/summary');
+        } else {
+          router.push('/home');
+        }
+      }, 1200);
+    },
+    onError: (err: Error) => {
+      message.error(err.message || 'Sai tài khoản hoặc mật khẩu!');
+      setJWTAuthData({ user: null, isAuthenticated: false, isLoading: false });
+    },
+  });
+
+  const signInUser = async (data: SignInProps) => {
+    // removeAllXSRFTokens();
+    setJWTAuthData((prev) => ({ ...prev, isLoading: true }));
+    await loginMutation.mutateAsync(data);
   };
 
   /**

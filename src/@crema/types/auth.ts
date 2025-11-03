@@ -4,7 +4,7 @@ export interface UserType {
   id: string;
   email: string;
   name: string;
-  role: 'admin' | 'learner' | 'coach';
+  role: RoleEnum;
   avatar?: string;
   skillLevel?: 'beginner' | 'intermediate' | 'advanced';
   phone?: string;
@@ -14,7 +14,7 @@ export interface UserType {
 }
 
 export interface LearnerProfile extends UserType {
-  role: 'learner';
+  role: RoleEnum.LEARNER;
   skillLevel: 'beginner' | 'intermediate' | 'advanced';
   preferences?: {
     learningGoals: string[];
@@ -31,7 +31,7 @@ export interface LearnerProfile extends UserType {
 }
 
 export interface CoachProfile extends UserType {
-  role: 'coach';
+  role: RoleEnum.COACH;
   isVerified: boolean;
   certifications: string[];
   specialties: string[];

@@ -70,7 +70,13 @@ export default function LearnerLayout({ children }: { children: React.ReactNode 
       icon: <LogoutOutlined />,
       label: 'Đăng xuất',
       onClick: () => {
-        router.push('/(auth)/signin');
+        try {
+          if (typeof window !== 'undefined') {
+            localStorage.clear();
+            sessionStorage.clear();
+          }
+        } catch {}
+        router.push('/signin');
       },
     },
   ];

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   Table,
@@ -8,7 +8,7 @@ import {
   Space,
   Tag,
   Input,
-  Select,
+  // Select,
   Avatar,
   Modal,
   Typography,
@@ -20,7 +20,7 @@ import {
   Badge,
   Rate,
   Tabs,
-  Image,
+  // Image,
   List,
   Empty,
   Divider,
@@ -32,11 +32,11 @@ import {
   SafetyCertificateOutlined,
   CheckOutlined,
   CloseOutlined,
-  StarOutlined,
+  // StarOutlined,
   TrophyOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
-  StopOutlined,
+  // StopOutlined,
   CalendarOutlined,
   LinkOutlined,
   EnvironmentOutlined,
@@ -46,6 +46,8 @@ import {
   BookOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import { useGet } from '@/@crema/hooks/useApiQuery';
+import { useVerifyCoach, useRejectCoach } from '@/@crema/services/apis/coaches';
 
 const { Title, Text, Paragraph } = Typography;
 const { Search } = Input;
@@ -81,7 +83,6 @@ interface CredentialData {
 }
 
 export default function CoachesPage() {
-  const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('pending');
   const [pendingCoaches, setPendingCoaches] = useState<CoachData[]>([]);
   const [approvedCoaches, setApprovedCoaches] = useState<CoachData[]>([]);
@@ -98,66 +99,49 @@ export default function CoachesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  // Load coaches data from mock
-  const loadCoaches = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { coachEntities } = await import('@/data_admin/new-coaches');
+  // Fetch coaches from API
+  const { data: coachesRes, isLoading } = useGet<any>('coaches', {
+    page: currentPage,
+    size: pageSize,
+  });
 
-      // Convert to UI format
-      const coachesData = coachEntities.map((coach) => {
-        const user = coach.user;
-
-        return {
-          id: coach.id.toString(),
-          name: user.fullName,
-          email: user.email,
-          phone: user.phoneNumber || 'Chưa cập nhật',
-          avatar: user.profilePicture || '',
-          location: 'TP. HCM', // TODO: Add location to coach entity
-          yearsOfExperience: coach.yearOfExperience,
-          rating: 4 + Math.random(), // 4-5 stars
-          totalCourses: Math.floor(Math.random() * 10),
-          totalSessions: Math.floor(Math.random() * 50),
-          status:
-            coach.verificationStatus === 'PENDING'
-              ? 'pending'
-              : coach.verificationStatus === 'REJECTED'
-                ? 'rejected'
-                : 'active',
-          registrationDate: coach.createdAt.toISOString(),
-          rejectionReason: coach.rejectionReason,
-          credentials: coach.credentials.map((cred) => ({
-            id: cred.id.toString(),
-            name: cred.name,
-            type: cred.type,
-            publicUrl: cred.publicUrl,
-            issuedAt: cred.issuedAt?.toISOString(),
-            expiresAt: cred.expiresAt?.toISOString(),
-            description: cred.description,
-            status: (cred as any).status,
-          })),
-          bio: coach.bio,
-        };
-      });
-
-      // Split into pending and approved
-      const pending = coachesData.filter((c) => c.status === 'pending');
-      const approved = coachesData.filter((c) => c.status !== 'pending');
-
-      setPendingCoaches(pending as CoachData[]);
-      setApprovedCoaches(approved as CoachData[]);
-    } catch (error) {
-      console.error('Error loading coaches:', error);
-      message.error('Không thể tải danh sách huấn luyện viên');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const verifyCoachMutation = useVerifyCoach();
+  const rejectCoachMutation = useRejectCoach();
 
   useEffect(() => {
-    loadCoaches();
-  }, [loadCoaches]);
+    const items = coachesRes?.items || [];
+    const mapToCoachData = (item: any): CoachData => ({
+      id: String(item.id),
+      name: item.user?.fullName || item.user?.name || '-',
+      email: item.user?.email || '-',
+      phone: item.user?.phoneNumber || '-',
+      avatar: item.user?.profilePicture || '',
+      location: '-',
+      yearsOfExperience: item.yearOfExperience ?? 0,
+      rating: 0,
+      totalCourses: 0,
+      totalSessions: 0,
+      status: (item.user?.isActive ? 'active' : 'pending') as CoachData['status'],
+      registrationDate: item.createdAt || new Date().toISOString(),
+      credentials: Array.isArray(item.credentials)
+        ? item.credentials.map((c: any) => ({
+            id: String(c.id),
+            name: c.name,
+            type: c.type,
+            publicUrl: c.publicUrl || undefined,
+            issuedAt: c.issuedAt || undefined,
+            expiresAt: c.expiresAt || undefined,
+            description: c.description || undefined,
+          }))
+        : [],
+      bio: item.bio,
+      rejectionReason: undefined,
+    });
+
+    const mapped: CoachData[] = items.map(mapToCoachData);
+    setPendingCoaches(mapped.filter((c) => c.status === 'pending'));
+    setApprovedCoaches(mapped.filter((c) => c.status === 'active'));
+  }, [coachesRes]);
 
   // Actions
   const handleViewDetails = (coach: CoachData) => {
@@ -178,13 +162,15 @@ export default function CoachesPage() {
 
   const confirmApprove = async () => {
     if (!selectedCoach) return;
-
-    message.success(`Đã phê duyệt huấn luyện viên ${selectedCoach.name}`);
-    setIsApproveModalVisible(false);
-
-    // Move from pending to approved
-    setPendingCoaches((prev) => prev.filter((c) => c.id !== selectedCoach.id));
-    setApprovedCoaches((prev) => [...prev, { ...selectedCoach, status: 'active' }]);
+    try {
+      await verifyCoachMutation.mutateAsync(selectedCoach.id);
+      message.success(`Đã phê duyệt huấn luyện viên ${selectedCoach.name}`);
+      setIsApproveModalVisible(false);
+      setPendingCoaches((prev) => prev.filter((c) => c.id !== selectedCoach.id));
+      setApprovedCoaches((prev) => [...prev, { ...selectedCoach, status: 'active' }]);
+    } catch (error: any) {
+      message.error(error?.message || 'Phê duyệt thất bại');
+    }
   };
 
   const confirmReject = async () => {
@@ -193,55 +179,18 @@ export default function CoachesPage() {
       message.error('Vui lòng nhập lý do từ chối');
       return;
     }
-
-    message.success(`Đã từ chối huấn luyện viên ${selectedCoach.name}`);
-    setIsRejectModalVisible(false);
-    setPendingCoaches((prev) => prev.filter((c) => c.id !== selectedCoach.id));
+    try {
+      await rejectCoachMutation.mutateAsync({ id: selectedCoach.id, reason: rejectReason.trim() });
+      message.success(`Đã từ chối huấn luyện viên ${selectedCoach.name}`);
+      setIsRejectModalVisible(false);
+      setPendingCoaches((prev) => prev.filter((c) => c.id !== selectedCoach.id));
+    } catch (error: any) {
+      message.error(error?.message || 'Từ chối thất bại');
+    }
   };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('vi-VN');
-  };
-
-  // Load feedbacks for a coach
-  const loadCoachFeedbacks = async (coachId: string) => {
-    try {
-      const { feedbacks } = await import('@/data_admin/feedbacks');
-      const { courses } = await import('@/data_admin/courses');
-      const { coachEntities } = await import('@/data_admin/new-coaches');
-
-      // Find coach entity to get user id
-      const coachEntity = coachEntities.find((c) => c.id.toString() === coachId);
-      if (!coachEntity) {
-        message.warning('Không tìm thấy thông tin huấn luyện viên');
-        return;
-      }
-
-      const userId = coachEntity.user.id;
-
-      // Get all courses by this coach (using user id)
-      const coachCourses = courses.filter((c) => c.createdBy.id === userId);
-      const coachCourseIds = coachCourses.map((c) => c.id);
-
-      // Get all feedbacks for these courses
-      const coachFeedbacksList = feedbacks
-        .filter((f) => coachCourseIds.includes(f.course.id))
-        .map((f) => ({
-          id: f.id,
-          comment: f.comment,
-          rating: f.rating,
-          createdAt: f.createdAt,
-          learnerName: f.createdBy.fullName,
-          courseName: f.course.name,
-          courseId: f.course.id,
-        }));
-
-      setCoachFeedbacks(coachFeedbacksList);
-      setIsFeedbackModalVisible(true);
-    } catch (error) {
-      console.error('Error loading feedbacks:', error);
-      message.error('Không thể tải feedback');
-    }
   };
 
   // Columns for Pending Coaches
@@ -252,7 +201,7 @@ export default function CoachesPage() {
       width: 250,
       render: (_, record) => (
         <div className="flex items-center gap-3">
-          <Avatar size={48} src={record.avatar} icon={<UserOutlined />} />
+          <Avatar size={48} src={record.avatar || undefined} icon={<UserOutlined />} />
           <div className="flex-1">
             <div className="font-medium">{record.name}</div>
             <div className="text-sm text-gray-500">{record.email}</div>
@@ -315,7 +264,7 @@ export default function CoachesPage() {
       width: 250,
       render: (_, record) => (
         <div className="flex items-center gap-3">
-          <Avatar size={48} src={record.avatar} icon={<UserOutlined />} />
+          <Avatar size={48} src={record.avatar || undefined} icon={<UserOutlined />} />
           <div className="flex-1">
             <div className="flex items-center gap-2">
               <span className="font-medium">{record.name}</span>
@@ -392,15 +341,6 @@ export default function CoachesPage() {
               onClick={() => handleViewDetails(record)}
             />
           </Tooltip>
-          <Tooltip title="Xem Feedback">
-            <Button
-              icon={<MessageOutlined />}
-              onClick={() => {
-                setSelectedCoach(record);
-                loadCoachFeedbacks(record.id);
-              }}
-            />
-          </Tooltip>
         </Space>
       ),
     },
@@ -420,83 +360,131 @@ export default function CoachesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <Title level={2}>Quản lý Huấn luyện viên</Title>
-        <Text className="text-gray-600">Phê duyệt và quản lý huấn luyện viên trên nền tảng</Text>
-      </div>
+      <Card className="rounded-2xl shadow-sm border-gray-100">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800 mb-1">Quản lý Huấn luyện viên</h2>
+            <p className="text-gray-500 text-sm">
+              Phê duyệt và quản lý huấn luyện viên trong hệ thống
+            </p>
+          </div>
 
-      {/* Search */}
-      <Card className="card-3d">
-        <Search
-          placeholder="Tìm kiếm theo tên hoặc email..."
-          allowClear
-          size="large"
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          prefix={<SearchOutlined />}
-        />
+          <Search
+            placeholder="Tìm kiếm theo tên, email..."
+            allowClear
+            size="large"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            prefix={<SearchOutlined className="text-gray-400" />}
+            className="w-full sm:w-80"
+          />
+        </div>
       </Card>
 
-      {/* Tabs */}
-      <Card className="card-3d">
-        <Tabs activeKey={activeTab} onChange={setActiveTab}>
-          <Tabs.TabPane
-            tab={
-              <span>
-                <ClockCircleOutlined />
-                Chờ phê duyệt ({pendingCoaches.length})
-              </span>
-            }
-            key="pending"
-          >
-            <Table
-              columns={pendingColumns}
-              dataSource={filteredPendingCoaches}
-              rowKey="id"
-              loading={loading}
-              pagination={{
-                current: currentPage,
-                pageSize: pageSize,
-                total: filteredPendingCoaches.length,
-                showSizeChanger: true,
-                showTotal: (total) => `Tổng ${total} huấn luyện viên`,
-                onChange: (page, size) => {
-                  setCurrentPage(page);
-                  setPageSize(size || 10);
-                },
-              }}
-            />
-          </Tabs.TabPane>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Pending Card */}
+        <Card
+          className="rounded-2xl border-0 shadow-sm hover:shadow-md transition-shadow duration-300 bg-gradient-to-br from-orange-50 to-white"
+          bodyStyle={{ padding: '24px' }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-600 text-sm mb-1">Chờ phê duyệt</p>
+              <h3 className="text-3xl font-bold text-orange-600">{pendingCoaches.length}</h3>
+            </div>
+            <div className="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center">
+              <ClockCircleOutlined className="text-2xl text-orange-600" />
+            </div>
+          </div>
+        </Card>
 
-          <Tabs.TabPane
-            tab={
-              <span>
-                <CheckCircleOutlined />
-                Đã phê duyệt ({approvedCoaches.length})
-              </span>
-            }
-            key="approved"
-          >
-            <Table
-              columns={approvedColumns}
-              dataSource={filteredApprovedCoaches}
-              rowKey="id"
-              loading={loading}
-              pagination={{
-                current: currentPage,
-                pageSize: pageSize,
-                total: filteredApprovedCoaches.length,
-                showSizeChanger: true,
-                showTotal: (total) => `Tổng ${total} huấn luyện viên`,
-                onChange: (page, size) => {
-                  setCurrentPage(page);
-                  setPageSize(size || 10);
-                },
-              }}
+        {/* Approved Card */}
+        <Card
+          className="rounded-2xl border-0 shadow-sm hover:shadow-md transition-shadow duration-300 bg-gradient-to-br from-green-50 to-white"
+          bodyStyle={{ padding: '24px' }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-gray-600 text-sm mb-1">Đã phê duyệt</p>
+              <h3 className="text-3xl font-bold text-green-600">{approvedCoaches.length}</h3>
+            </div>
+            <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center">
+              <CheckCircleOutlined className="text-2xl text-green-600" />
+            </div>
+          </div>
+        </Card>
+      </div>
+
+      {/* Tabs with Tables */}
+      <Card className="rounded-2xl border-0 shadow-sm" bodyStyle={{ padding: 0 }}>
+        {(() => {
+          const tabItems = [
+            {
+              key: 'pending',
+              label: (
+                <span>
+                  <ClockCircleOutlined /> Chờ phê duyệt ({pendingCoaches.length})
+                </span>
+              ),
+              children: (
+                <Table
+                  columns={pendingColumns}
+                  dataSource={filteredPendingCoaches}
+                  rowKey="id"
+                  loading={isLoading}
+                  pagination={{
+                    current: currentPage,
+                    pageSize: pageSize,
+                    total: filteredPendingCoaches.length,
+                    showSizeChanger: true,
+                    showTotal: (total) => `Tổng ${total} huấn luyện viên`,
+                    onChange: (page, size) => {
+                      setCurrentPage(page);
+                      setPageSize(size || 10);
+                    },
+                  }}
+                />
+              ),
+            },
+            {
+              key: 'approved',
+              label: (
+                <span>
+                  <CheckCircleOutlined /> Đã phê duyệt ({approvedCoaches.length})
+                </span>
+              ),
+              children: (
+                <Table
+                  columns={approvedColumns}
+                  dataSource={filteredApprovedCoaches}
+                  rowKey="id"
+                  loading={isLoading}
+                  pagination={{
+                    current: currentPage,
+                    pageSize: pageSize,
+                    total: filteredApprovedCoaches.length,
+                    showSizeChanger: true,
+                    showTotal: (total) => `Tổng ${total} huấn luyện viên`,
+                    onChange: (page, size) => {
+                      setCurrentPage(page);
+                      setPageSize(size || 10);
+                    },
+                  }}
+                />
+              ),
+            },
+          ];
+
+          return (
+            <Tabs
+              activeKey={activeTab}
+              onChange={setActiveTab}
+              items={tabItems}
+              size="large"
+              className="px-6 pt-2"
             />
-          </Tabs.TabPane>
-        </Tabs>
+          );
+        })()}
       </Card>
 
       {/* Detail Modal */}
@@ -659,6 +647,7 @@ export default function CoachesPage() {
         onCancel={() => setIsApproveModalVisible(false)}
         okText="Phê duyệt"
         cancelText="Hủy"
+        okButtonProps={{ loading: verifyCoachMutation.isPending }}
       >
         <div>
           <Text>
@@ -683,6 +672,7 @@ export default function CoachesPage() {
         okText="Từ chối"
         okType="danger"
         cancelText="Hủy"
+        okButtonProps={{ loading: rejectCoachMutation.isPending }}
       >
         <div>
           <Text>

@@ -457,11 +457,13 @@ export const useFormMutation = <TData = unknown, TVariables = unknown>(
   return useApiMutation<TData, TVariables>({
     endpoint,
     method,
-    onSuccess: (data) => {
+    onSuccess: (data, variables, context) => {
       if (showSuccessMessage) {
         // This will be handled by global success handler in QueryProvider
       }
-      onSuccess?.(data);
+      // propagate variables and context to caller if they need them
+      // @ts-expect-error allow extra args for upstream consumers
+      onSuccess?.(data, variables, context);
     },
     onError,
     // Pass context for global handlers

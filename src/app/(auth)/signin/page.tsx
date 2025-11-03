@@ -1,60 +1,41 @@
 'use client';
-import IntlMessages from '@/@crema/helper/IntlMessages';
-import { useAuthActions, useAuthUser } from '@/@crema/hooks/useAuth';
-import { Button, Checkbox, Form, Input, Card, message } from 'antd';
-import { UserOutlined, LockOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
-import Image from 'next/image';
+import { useAuthActions } from '@/@crema/hooks/useAuth';
+import { Button, Checkbox, Form, Input } from 'antd';
+import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import React, { useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import { useRouter } from 'next/navigation';
+import { RoleEnum } from '@/@crema/constants/AppEnums';
 
 export default function Login() {
-  const { messages: t } = useIntl();
+  useIntl();
   const { signInUser } = useAuthActions();
-  const { isAuthenticated } = useAuthUser();
   const router = useRouter();
   const [form] = Form.useForm();
 
-  // useEffect(() => {
-  //   if (isAuthenticated) {
-  //     router.replace('/dashboard');
-  //   }
-  // }, [isAuthenticated, router]); // DISABLED FOR UI DEVELOPMENT
+  useEffect(() => {
+    try {
+      if (typeof window === 'undefined') return;
+      const raw = localStorage.getItem('user');
+      if (!raw) return;
+      const savedUser = JSON.parse(raw);
+      if (!savedUser?.role) return;
+      if (savedUser.role === RoleEnum.ADMIN) {
+        router.replace('/dashboard');
+      } else if (savedUser.role === RoleEnum.COACH) {
+        router.replace('/summary');
+      } else {
+        router.replace('/home');
+      }
+    } catch {}
+  }, [router]);
 
   const handleSignIn = (values: { remember: boolean; password: string; email: string }) => {
-    console.log('🔥 handleSignIn called with:', values);
-
-    // Simple fake login check
-    const email = values.email.toLowerCase().trim();
-    const password = values.password;
-
-    if (email === 'admin' && password === 'admin1') {
-      // Admin login - redirect to dashboard
-      message.success('Đăng nhập thành công! Chào mừng Admin!');
-      setTimeout(() => {
-        router.push('/dashboard');
-      }, 1000);
-    } else if (email === 'coach' && password === 'coach') {
-      // Coach login - redirect to coach dashboard (using dashboard for now)
-      message.success('Đăng nhập thành công! Chào mừng Coach!');
-      setTimeout(() => {
-        router.push('/summary');
-      }, 1000);
-    } else if (email === 'learner' && password === 'learner') {
-      // Learner login - redirect to learner dashboard
-      message.success('Đăng nhập thành công! Chào mừng Learner!');
-      setTimeout(() => {
-        router.push('/home');
-      }, 1000);
-    } else {
-      // Wrong credentials - show error
-      message.error('Sai tài khoản hoặc mật khẩu!');
-    }
+    signInUser(values);
   };
 
   const onFinish = (values: { remember: boolean; password: string; email: string }) => {
-    console.log('🎯 Form submitted with values:', values);
     handleSignIn(values);
   };
   const onFinishFailed = (errorInfo: any) => {
@@ -159,7 +140,7 @@ export default function Login() {
               <Input
                 size="large"
                 prefix={<UserOutlined className="text-gray-400" />}
-                placeholder="Enter ussername"
+                placeholder="Enter username"
                 className="h-12 rounded-xl border-gray-200 hover:border-blue-400 focus:border-blue-500 bg-gray-50/50"
                 autoComplete="email"
               />
@@ -194,8 +175,11 @@ export default function Login() {
             </Form.Item>
           </Form>
 
-          {/* Forgot Password */}
-          <div className="flex justify-end text-sm mb-6">
+          {/* Forgot Password & Register */}
+          <div className="flex justify-between items-center text-sm mb-6">
+            <Link href="/register" className="text-gray-600 hover:text-gray-800 font-medium">
+              Chưa có tài khoản? <span className="text-blue-600 hover:text-blue-700">Đăng ký</span>
+            </Link>
             <Link href="/forgot-password" className="text-blue-600 hover:text-blue-700 font-medium">
               Quên mật khẩu?
             </Link>

@@ -14,14 +14,14 @@ const CourseManagement = () => {
   const [isDetailModalVisible, setIsDetailModalVisible] = useState<any>(false);
   const [expandedSessions, setExpandedSessions] = useState<any>({});
 
-  // Video comparison states
+  // Trạng thái so sánh video
   const [coachVideo, setCoachVideo] = useState<any>(null);
   const [learnerVideo, setLearnerVideo] = useState<any>(null);
   const [comparisonResult, setComparisonResult] = useState<any>(null);
   const [isAnalyzing, setIsAnalyzing] = useState<any>(false);
   const [analysisError, setAnalysisError] = useState<any>(null);
 
-  // Exercise management states
+  // Trạng thái quản lý bài tập
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
   const [isExerciseModalVisible, setIsExerciseModalVisible] = useState<any>(false);
   const [selectedSubmission, setSelectedSubmission] = useState<any>(null);
@@ -30,8 +30,8 @@ const CourseManagement = () => {
   const [isAnalyzingAI, setIsAnalyzingAI] = useState<any>(false);
   const [aiAnalysisError, setAiAnalysisError] = useState<any>(null);
 
-  // Video comparison states (removed unused states)
-  // Mock data for exercises and submissions
+  // Trạng thái so sánh video (đã xóa các trạng thái không sử dụng)
+  // Dữ liệu mẫu cho bài tập và bài nộp
   const exercises = [
     {
       id: 1,
@@ -298,35 +298,35 @@ const CourseManagement = () => {
     setCourseForm((prev) => ({ ...prev, [field]: value }));
   };
 
-  // Video refs for timestamp navigation
+  // Refs video để điều hướng timestamp
   const coachVideoRef = React.useRef<HTMLVideoElement>(null);
   const studentVideoRef = React.useRef<HTMLVideoElement>(null);
 
-  // Function to jump to timestamp in video with synchronization
+  // Hàm nhảy đến timestamp trong video với đồng bộ hóa
   const jumpToTimestamp = (studentTimestamp: number, coachTimestamp: number) => {
-    console.log('Jumping to timestamps:', { studentTimestamp, coachTimestamp });
+    console.log('Đang nhảy đến timestamp:', { studentTimestamp, coachTimestamp });
 
-    // Jump student video to student timestamp
+    // Nhảy video học viên đến timestamp học viên
     if (studentVideoRef.current) {
       studentVideoRef.current.currentTime = studentTimestamp;
       studentVideoRef.current.play();
-      console.log('Student video jumped to:', studentTimestamp);
+      console.log('Video học viên đã nhảy đến:', studentTimestamp);
     }
 
-    // Jump coach video to coach timestamp
+    // Nhảy video HLV đến timestamp HLV
     if (coachVideoRef.current) {
       coachVideoRef.current.currentTime = coachTimestamp;
       coachVideoRef.current.play();
-      console.log('Coach video jumped to:', coachTimestamp);
+      console.log('Video HLV đã nhảy đến:', coachTimestamp);
     }
 
-    // Scroll to top of videos section
+    // Cuộn đến đầu phần video
     const videosSection = document.querySelector('.grid.grid-cols-1.lg\\:grid-cols-2.gap-6.mb-8');
     if (videosSection) {
       videosSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
-    // Pause both videos after 3 seconds to show the moment
+    // Tạm dừng cả hai video sau 3 giây để hiển thị khoảnh khắc
     setTimeout(() => {
       if (studentVideoRef.current) {
         studentVideoRef.current.pause();
@@ -337,7 +337,7 @@ const CourseManagement = () => {
     }, 3000);
   };
 
-  // AI Analysis function
+  // Hàm phân tích AI
   const handleAIAnalysis = async () => {
     if (!selectedSubmission) return;
 
@@ -346,12 +346,12 @@ const CourseManagement = () => {
     setAiAnalysisResults(null);
 
     try {
-      // Load coach video from public folder
+      // Tải video HLV từ thư mục public
       const coachVideoResponse = await fetch('/assets/videos/coach-demo.mp4');
       const coachVideoBlob = await coachVideoResponse.blob();
       const coachVideoFile = new File([coachVideoBlob], 'coach-demo.mp4', { type: 'video/mp4' });
 
-      // Load learner video from submission
+      // Tải video học viên từ bài nộp
       const learnerVideoResponse = await fetch(selectedSubmission.videoUrl);
       const learnerVideoBlob = await learnerVideoResponse.blob();
       const learnerVideoFile = new File([learnerVideoBlob], 'learner-video.mp4', {
@@ -615,6 +615,7 @@ const CourseManagement = () => {
               setIsModalVisible(false);
               setIsManageModalVisible(false);
               setIsExerciseModalVisible(false);
+              setIsAIFeedbackModalVisible(false);
               setSelectedExercise(null);
               setSelectedSubmission(null);
               setSelectedCourse(course);
@@ -652,6 +653,7 @@ const CourseManagement = () => {
               setIsModalVisible(false);
               setIsDetailModalVisible(false);
               setIsExerciseModalVisible(false);
+              setIsAIFeedbackModalVisible(false);
               setSelectedExercise(null);
               setSelectedSubmission(null);
               setSelectedCourse(course);
@@ -722,6 +724,7 @@ const CourseManagement = () => {
               setIsDetailModalVisible(false);
               setIsManageModalVisible(false);
               setIsExerciseModalVisible(false);
+              setIsAIFeedbackModalVisible(false);
               setSelectedCourse(null);
               setSelectedExercise(null);
               setSelectedSubmission(null);
@@ -992,7 +995,7 @@ const CourseManagement = () => {
         </div>
       </div>
 
-      {/* Create Course Modal */}
+      {/* Modal tạo khóa học */}
       {isModalVisible && (
         <div
           style={{
@@ -1022,7 +1025,7 @@ const CourseManagement = () => {
               boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
             }}
           >
-            {/* Modal Header */}
+            {/* Header Modal */}
             <div className="flex justify-between items-center p-6 border-b">
               <h2 className="text-2xl font-bold">Tạo Khóa Học Mới</h2>
               <button
@@ -1033,9 +1036,9 @@ const CourseManagement = () => {
               </button>
             </div>
 
-            {/* Modal Body */}
+            {/* Nội dung Modal */}
             <div className="flex-1 overflow-y-auto p-6">
-              {/* Basic Info */}
+              {/* Thông tin cơ bản */}
               <div className="grid grid-cols-4 gap-4 mb-6">
                 <div className="col-span-3">
                   <label className="block text-sm font-medium mb-2">
@@ -1402,7 +1405,7 @@ const CourseManagement = () => {
               )}
             </div>
 
-            {/* Modal Footer */}
+            {/* Footer Modal */}
             <div className="border-t p-6 flex justify-end gap-3 bg-gray-50">
               <button
                 onClick={() => setIsModalVisible(false)}
@@ -1412,8 +1415,8 @@ const CourseManagement = () => {
               </button>
               <button
                 onClick={() => {
-                  // Handle create course
-                  console.log('Creating course:', courseForm);
+                  // Xử lý tạo khóa học
+                  console.log('Đang tạo khóa học:', courseForm);
                   setIsModalVisible(false);
                 }}
                 disabled={!courseForm.name || !courseForm.price}
@@ -1430,7 +1433,7 @@ const CourseManagement = () => {
         </div>
       )}
 
-      {/* Course Detail Modal */}
+      {/* Modal chi tiết khóa học */}
       {isDetailModalVisible && selectedCourse && (
         <div
           style={{
@@ -1460,7 +1463,7 @@ const CourseManagement = () => {
               boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
             }}
           >
-            {/* Modal Header */}
+            {/* Header Modal */}
             <div className="flex justify-between items-center p-6 border-b">
               <h2 className="text-2xl font-bold">{selectedCourse.name}</h2>
               <button
@@ -1475,11 +1478,11 @@ const CourseManagement = () => {
               </button>
             </div>
 
-            {/* Modal Body */}
+            {/* Nội dung Modal */}
             <div className="flex-1 overflow-y-auto p-6">
-              {/* General Info Section */}
+              {/* Phần thông tin chung */}
               <div className="grid grid-cols-2 gap-6 mb-6">
-                {/* Left Column */}
+                {/* Cột trái */}
                 <div>
                   <h3 className="font-semibold text-lg mb-4">Thông tin chung</h3>
                   <div className="space-y-3">
@@ -1510,7 +1513,7 @@ const CourseManagement = () => {
                   </div>
                 </div>
 
-                {/* Right Column */}
+                {/* Cột phải */}
                 <div>
                   <h3 className="font-semibold text-lg mb-4">Thông tin lớp học</h3>
                   <div className="space-y-3">
@@ -1560,7 +1563,7 @@ const CourseManagement = () => {
                 <p className="text-gray-600">{selectedCourse.description}</p>
               </div>
 
-              {/* Course Content */}
+              {/* Nội dung khóa học */}
               <div className="mb-6">
                 <h3 className="font-semibold text-lg mb-3">Nội dung khóa học</h3>
                 <div className="grid grid-cols-2 gap-3">
@@ -1591,7 +1594,7 @@ const CourseManagement = () => {
                 </div>
               </div>
 
-              {/* Student Info */}
+              {/* Thông tin học viên */}
               <div className="mb-6">
                 <h3 className="font-semibold text-lg mb-3">Thông tin học viên</h3>
                 <div className="grid grid-cols-2 gap-4">
@@ -1627,7 +1630,7 @@ const CourseManagement = () => {
                 </div>
               </div>
 
-              {/* Session Details */}
+              {/* Chi tiết các buổi học */}
               <div className="mb-6">
                 <h3 className="font-semibold text-lg mb-3">Chi tiết các buổi học</h3>
                 <div className="space-y-3">
@@ -1702,7 +1705,7 @@ const CourseManagement = () => {
                 </div>
               </div>
 
-              {/* Revenue */}
+              {/* Doanh thu */}
               <div className="mb-6">
                 <h3 className="font-semibold text-lg mb-3">Doanh thu</h3>
                 <div className="bg-green-50 p-6 rounded-lg text-center">
@@ -1712,7 +1715,7 @@ const CourseManagement = () => {
                 </div>
               </div>
 
-              {/* Student Reviews */}
+              {/* Đánh giá từ học viên */}
               <div className="mb-6">
                 <h3 className="font-semibold text-lg mb-3">Đánh giá từ học viên</h3>
                 <div className="bg-gray-50 p-8 rounded-lg text-center">
@@ -1725,7 +1728,7 @@ const CourseManagement = () => {
               </div>
             </div>
 
-            {/* Modal Footer */}
+            {/* Footer Modal */}
             <div className="border-t p-6 flex justify-end bg-gray-50">
               <button
                 onClick={() => {
@@ -1742,7 +1745,7 @@ const CourseManagement = () => {
         </div>
       )}
 
-      {/* Exercise Submissions Modal */}
+      {/* Modal bài nộp bài tập */}
       {isExerciseModalVisible && selectedExercise && (
         <div
           style={{
@@ -1808,7 +1811,7 @@ const CourseManagement = () => {
 
             <div className="flex-1 overflow-y-auto p-6">
               {!selectedSubmission ? (
-                /* List of submissions */
+                /* Danh sách bài nộp */
                 <div className="space-y-3">
                   {submissions[selectedExercise.id]?.map((submission: any) => (
                     <div
@@ -1885,7 +1888,7 @@ const CourseManagement = () => {
                   )}
                 </div>
               ) : (
-                /* Video comparison view */
+                /* Xem so sánh video */
                 <div className="space-y-6">
                   <button
                     onClick={() => setSelectedSubmission(null)}
@@ -2070,7 +2073,7 @@ const CourseManagement = () => {
                     </div>
                   )}
 
-                  {/* Coach Feedback Results - Only show for reviewed submissions */}
+                  {/* Kết quả feedback HLV - Chỉ hiển thị cho bài đã chấm */}
                   {selectedSubmission.status === 'reviewed' && (
                     <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
                       <div className="bg-gradient-to-r from-emerald-500 to-teal-600 px-8 py-6">
@@ -2161,7 +2164,7 @@ const CourseManagement = () => {
                     </div>
                   )}
 
-                  {/* Coach Feedback - Only show for pending submissions */}
+                  {/* Feedback HLV - Chỉ hiển thị cho bài chờ chấm */}
                   {selectedSubmission.status === 'pending' && (
                     <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
                       <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-8 py-6">
@@ -2213,7 +2216,7 @@ const CourseManagement = () => {
                     </div>
                   )}
 
-                  {/* Action Buttons */}
+                  {/* Nút hành động */}
                   <div className="flex gap-4">
                     <button className="flex-1 px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl hover:from-green-600 hover:to-green-700 transition-all font-bold text-lg shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center justify-center gap-3">
                       <span className="text-xl">✓</span>
@@ -2231,7 +2234,7 @@ const CourseManagement = () => {
         </div>
       )}
 
-      {/* AI Feedback Modal */}
+      {/* Modal feedback AI */}
       {isAIFeedbackModalVisible && selectedSubmission && (
         <div
           style={{
@@ -2261,7 +2264,7 @@ const CourseManagement = () => {
               boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
             }}
           >
-            {/* Modal Header */}
+            {/* Header Modal */}
             <div className="flex justify-between items-center p-6 border-b">
               <div className="flex items-center gap-4">
                 <button
@@ -2280,7 +2283,7 @@ const CourseManagement = () => {
                 <div>
                   <h2 className="text-2xl font-bold flex items-center gap-3">
                     <span className="text-3xl">🤖</span>
-                    <span>AI Coach Analysis</span>
+                    <span>Phân tích AI Coach</span>
                   </h2>
                   <p className="text-gray-600 mt-1">
                     Phân tích kỹ thuật cho {selectedSubmission.studentName}
@@ -2300,9 +2303,9 @@ const CourseManagement = () => {
               </button>
             </div>
 
-            {/* Modal Body */}
+            {/* Nội dung Modal */}
             <div className="flex-1 overflow-y-auto p-6">
-              {/* Videos Section - Side by Side */}
+              {/* Phần video - Cạnh nhau */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                 {/* Student Video */}
                 <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
@@ -2364,7 +2367,7 @@ const CourseManagement = () => {
                 </button>
               </div>
 
-              {/* Analysis Results Section - Full Width */}
+              {/* Phần kết quả phân tích - Full width */}
               <div className="space-y-6">
                 {isAnalyzingAI && (
                   <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-8 text-center">
@@ -2415,7 +2418,7 @@ const CourseManagement = () => {
                           </div>
                         </div>
 
-                        {/* Detailed Phase Analysis */}
+                        {/* Phân tích chi tiết từng giai đoạn */}
                         <div className="bg-gradient-to-br from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl p-4 mb-6">
                           <div className="flex items-center gap-3 mb-4">
                             <div className="w-10 h-10 bg-purple-500 rounded-xl flex items-center justify-center">
@@ -2723,7 +2726,7 @@ const CourseManagement = () => {
                       </div>
                     </div>
 
-                    {/* Coach Feedback Section */}
+                    {/* Phần feedback HLV */}
                     <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
                       <div className="bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-4">
                         <h4 className="font-bold text-white text-xl flex items-center gap-3">
@@ -2787,7 +2790,7 @@ const CourseManagement = () => {
                 {!isAnalyzingAI && !aiAnalysisResults && !aiAnalysisError && (
                   <div className="bg-gray-50 rounded-2xl p-12 text-center">
                     <div className="text-8xl mb-6">🤖</div>
-                    <h3 className="text-2xl font-bold text-gray-700 mb-4">AI Coach Analysis</h3>
+                    <h3 className="text-2xl font-bold text-gray-700 mb-4">Phân tích AI Coach</h3>
                     <p className="text-gray-600 text-lg mb-6">
                       Nhấn &quot;Phân tích với AI Coach&quot; để bắt đầu phân tích kỹ thuật
                     </p>
@@ -2801,7 +2804,7 @@ const CourseManagement = () => {
               </div>
             </div>
 
-            {/* Modal Footer */}
+            {/* Footer Modal */}
             <div className="border-t p-6 flex justify-end gap-3 bg-gray-50">
               <button
                 onClick={() => {
@@ -2825,7 +2828,7 @@ const CourseManagement = () => {
         </div>
       )}
 
-      {/* Manage Course Modal */}
+      {/* Modal quản lý khóa học */}
       {isManageModalVisible && selectedCourse && (
         <div
           style={{
@@ -2855,7 +2858,7 @@ const CourseManagement = () => {
               boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
             }}
           >
-            {/* Modal Header */}
+            {/* Header Modal */}
             <div className="flex justify-between items-center p-6 border-b">
               <div>
                 <h2 className="text-2xl font-bold">{selectedCourse.name}</h2>
@@ -2882,7 +2885,7 @@ const CourseManagement = () => {
               </button>
             </div>
 
-            {/* Tabs */}
+            {/* Tab */}
             <div className="flex border-b px-6 bg-gray-50">
               <button
                 onClick={() => setManageTab('overview')}
@@ -2936,12 +2939,12 @@ const CourseManagement = () => {
               </button>
             </div>
 
-            {/* Modal Body */}
+            {/* Nội dung Modal */}
             <div className="flex-1 overflow-y-auto p-6">
-              {/* Overview Tab */}
+              {/* Tab tổng quan */}
               {manageTab === 'overview' && (
                 <div>
-                  {/* Stats */}
+                  {/* Thống kê */}
                   <div className="grid grid-cols-4 gap-4 mb-6">
                     <div className="bg-blue-50 p-4 rounded-lg">
                       <div className="text-3xl mb-2">👥</div>
@@ -2998,7 +3001,7 @@ const CourseManagement = () => {
                 </div>
               )}
 
-              {/* Students Tab */}
+              {/* Tab học viên */}
               {manageTab === 'students' && (
                 <div>
                   <div className="mb-4 flex justify-between items-center">
@@ -3061,7 +3064,7 @@ const CourseManagement = () => {
                 </div>
               )}
 
-              {/* Schedule Tab */}
+              {/* Tab lịch học */}
               {manageTab === 'schedule' && (
                 <div>
                   <div className="mb-4 flex justify-between items-center">
@@ -3110,7 +3113,7 @@ const CourseManagement = () => {
                 </div>
               )}
 
-              {/* Exercises Tab */}
+              {/* Tab bài tập */}
               {manageTab === 'exercises' && (
                 <div>
                   <div className="flex justify-between items-center mb-8">
@@ -3212,7 +3215,7 @@ const CourseManagement = () => {
                 </div>
               )}
 
-              {/* Edit Tab */}
+              {/* Tab so sánh */}
               {manageTab === 'comparison' && (
                 <div>
                   <h3 className="font-semibold text-lg mb-4">So sánh Kỹ thuật Video</h3>
@@ -3221,7 +3224,7 @@ const CourseManagement = () => {
                     thuật
                   </p>
 
-                  {/* Upload Areas */}
+                  {/* Khu vực tải lên */}
                   <div>
                     <h3 className="font-semibold text-lg mb-4">So sánh Kỹ thuật Video</h3>
                     <p className="text-gray-600 mb-6">
@@ -3392,7 +3395,7 @@ const CourseManagement = () => {
                       </button>
                     </div>
 
-                    {/* Loading State */}
+                    {/* Trạng thái đang tải */}
                     {isAnalyzing && (
                       <div className="bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-200 rounded-xl p-10 text-center">
                         <div className="relative inline-block">
@@ -3410,7 +3413,7 @@ const CourseManagement = () => {
                       </div>
                     )}
 
-                    {/* Error State */}
+                    {/* Trạng thái lỗi */}
                     {analysisError && (
                       <div className="bg-red-50 border-2 border-red-300 rounded-xl p-6 text-center">
                         <div className="text-6xl mb-4">⚠️</div>
@@ -3418,10 +3421,10 @@ const CourseManagement = () => {
                       </div>
                     )}
 
-                    {/* Analysis Results - Feedback Section Below */}
+                    {/* Kết quả phân tích - Phần feedback bên dưới */}
                     {comparisonResult && !isAnalyzing && (
                       <div className="space-y-6">
-                        {/* Summary Card */}
+                        {/* Card tóm tắt */}
                         <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-300 rounded-xl p-6 shadow-lg">
                           <h4 className="font-bold text-green-800 text-lg mb-3 flex items-center gap-2">
                             <span className="text-2xl">✨</span>
@@ -3432,7 +3435,7 @@ const CourseManagement = () => {
                           </p>
                         </div>
 
-                        {/* Detailed Comparison */}
+                        {/* So sánh chi tiết */}
                         <div className="bg-white border-2 border-gray-200 rounded-xl overflow-hidden shadow-lg">
                           <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-b-2 border-gray-200">
                             <h4 className="font-bold text-gray-800 text-lg flex items-center gap-2">
@@ -3492,7 +3495,7 @@ const CourseManagement = () => {
                           </div>
                         </div>
 
-                        {/* Action Buttons */}
+                        {/* Nút hành động */}
                         <div className="flex gap-3">
                           <button className="flex-1 px-6 py-4 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all font-semibold shadow-lg transform hover:scale-[1.02]">
                             💾 Lưu Phân tích
@@ -3514,7 +3517,7 @@ const CourseManagement = () => {
                       </div>
                     )}
 
-                    {/* Empty State */}
+                    {/* Trạng thái trống */}
                     {!coachVideo && !learnerVideo && !comparisonResult && !isAnalyzing && (
                       <div className="bg-gradient-to-br from-gray-50 to-blue-50 rounded-xl p-12 text-center border-2 border-dashed border-gray-300">
                         <div className="text-7xl mb-6">🎾</div>
@@ -3543,7 +3546,7 @@ const CourseManagement = () => {
                     )}
                   </div>
 
-                  {/* Upload Areas */}
+                  {/* Khu vực tải lên */}
                   <div className="grid grid-cols-2 gap-6 mb-6">
                     {/* Learner Video */}
                     <div>
@@ -3682,7 +3685,7 @@ const CourseManagement = () => {
                     </button>
                   </div>
 
-                  {/* Loading */}
+                  {/* Đang tải */}
                   {isAnalyzing && (
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-8 text-center">
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
@@ -3693,14 +3696,14 @@ const CourseManagement = () => {
                     </div>
                   )}
 
-                  {/* Error */}
+                  {/* Lỗi */}
                   {analysisError && (
                     <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                       <p className="text-red-700">{analysisError}</p>
                     </div>
                   )}
 
-                  {/* Results */}
+                  {/* Kết quả */}
                   {comparisonResult && !isAnalyzing && (
                     <div className="space-y-6">
                       <div className="bg-green-50 border border-green-200 rounded-lg p-6">
@@ -3744,7 +3747,7 @@ const CourseManagement = () => {
                         </div>
                       </div>
 
-                      {/* Action Buttons */}
+                      {/* Nút hành động */}
                       <div className="flex gap-3">
                         <button className="flex-1 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                           💾 Lưu Phân tích
@@ -3766,7 +3769,7 @@ const CourseManagement = () => {
                     </div>
                   )}
 
-                  {/* Empty State */}
+                  {/* Trạng thái trống */}
                   {!coachVideo && !learnerVideo && !comparisonResult && !isAnalyzing && (
                     <div className="bg-gray-50 rounded-lg p-12 text-center">
                       <div className="text-6xl mb-4">🎥</div>
@@ -3786,7 +3789,7 @@ const CourseManagement = () => {
                 </div>
               )}
 
-              {/* Edit Tab */}
+              {/* Tab chỉnh sửa */}
               {manageTab === 'edit' && (
                 <div>
                   <h3 className="font-semibold text-lg mb-4">Chỉnh sửa thông tin khóa học</h3>
@@ -3864,7 +3867,7 @@ const CourseManagement = () => {
               )}
             </div>
 
-            {/* Modal Footer */}
+            {/* Footer Modal */}
             <div className="border-t p-6 flex justify-end gap-3 bg-gray-50">
               <button
                 onClick={() => {
