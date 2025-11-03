@@ -4,7 +4,6 @@ import React from 'react';
 import { Layout } from 'antd';
 import Header from '@/modules/auth/header';
 import AdminTabs from '@/components/admin/AdminTabs';
-import AdminHeader from '@/components/admin/AdminHeader';
 
 const { Content } = Layout;
 
@@ -14,15 +13,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       <Header />
       <Content className="bg-gray-50 p-8 pt-6">
         {/* Stats Cards - động dựa trên route */}
-        <AdminHeader />
-        
+        {/* <AdminHeader /> */}
+
         {/* Tab Navigation */}
         <AdminTabs />
-        
+
         {/* Page Content */}
-        <div className="mt-6">
-          {children}
-        </div>
+        <div className="mt-6">{children}</div>
       </Content>
     </Layout>
   );
