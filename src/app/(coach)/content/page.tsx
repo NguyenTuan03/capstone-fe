@@ -11,22 +11,23 @@ import {
   Col,
   Space,
   Tag,
-  Radio,
-  Upload,
-  DatePicker,
   message,
+  Skeleton,
 } from 'antd';
 import {
   PlusOutlined,
   FileTextOutlined,
-  VideoCameraOutlined,
   EditOutlined,
   EyeOutlined,
   PlayCircleOutlined,
 } from '@ant-design/icons';
+import CreateQuizModal from '@/components/coach/content/createQuizModal';
+import CreateLessonModal from '@/components/coach/content/createLessonModal';
+import { useCreateLesson, useGetLessons } from '@/@crema/services/apis/lessons';
 
 const ContentLibrary = () => {
   const [isQuizModalVisible, setIsQuizModalVisible] = useState(false);
+  const [isLessonModalVisible, setIsLessonModalVisible] = useState(false);
   const [isExerciseModalVisible, setIsExerciseModalVisible] = useState(false);
   const [isCourseModalVisible, setIsCourseModalVisible] = useState(false);
   const [isSessionModalVisible, setIsSessionModalVisible] = useState(false);
@@ -39,6 +40,10 @@ const ContentLibrary = () => {
 
   // Forms
   const [quizForm] = Form.useForm();
+  const [lessonLoading, setLessonLoading] = useState(false);
+  const createLessonMutation = useCreateLesson();
+  const { data: lessonsRes, isLoading: isLoadingLessons } = useGetLessons({ page: 1, size: 3 });
+  const lessons = (lessonsRes?.items as any[]) || [];
   const [exerciseForm] = Form.useForm();
 
   // Mock data for courses and sessions
@@ -197,6 +202,31 @@ const ContentLibrary = () => {
     },
   ];
 
+  const handleCreateLesson = async (_values: {
+    subjectId: string | number;
+    name: string;
+    description?: string;
+    duration?: number;
+  }) => {
+    setLessonLoading(true);
+    try {
+      await createLessonMutation.mutateAsync({
+        subjectId: _values.subjectId,
+        data: {
+          name: _values.name,
+          description: _values.description,
+          duration: _values.duration,
+        },
+      });
+      message.success('Tạo bài học thành công!');
+      setIsLessonModalVisible(false);
+    } catch (e: any) {
+      message.error(e?.message || 'Tạo bài học thất bại');
+    } finally {
+      setLessonLoading(false);
+    }
+  };
+
   const videos = [
     {
       id: 1,
@@ -227,55 +257,6 @@ const ContentLibrary = () => {
       videoUrl: 'return-practice-demo.mp4',
       thumbnail: 'return-thumbnail.jpg',
       tags: ['return', 'practice', 'reflex'],
-    },
-  ];
-
-  const exercises = [
-    {
-      id: 1,
-      title: 'Luyện serve 100 quả',
-      type: 'practice',
-      typeText: 'practice',
-      typeColor: 'bg-green-100 text-green-800',
-      level: 'Beginner',
-      used: 5,
-      createdDate: '2025-01-03',
-      description: 'Bài tập luyện serve cơ bản với 100 quả bóng',
-      instructions: [
-        'Đứng ở vị trí serve chuẩn',
-        'Thực hiện 100 quả serve liên tục',
-        'Ghi lại số quả serve thành công',
-        'Tập trung vào độ chính xác hơn là tốc độ',
-      ],
-      duration: 30, // minutes
-      equipment: ['Vợt Pickleball', 'Bóng Pickleball', 'Court'],
-      difficulty: 'Beginner',
-      objectives: [
-        'Cải thiện độ chính xác serve',
-        'Tăng cường sức mạnh cánh tay',
-        'Luyện tập tư thế chuẩn',
-      ],
-    },
-    {
-      id: 2,
-      title: 'Video thực hành return',
-      type: 'video',
-      typeText: 'video',
-      typeColor: 'bg-green-100 text-green-800',
-      level: 'Intermediate',
-      used: 1,
-      createdDate: '2025-01-07',
-      description: 'Bài tập quay video thực hành kỹ thuật return',
-      instructions: [
-        'Quay video thực hiện 20 quả return',
-        'Thể hiện các kỹ thuật return khác nhau',
-        'Video phải rõ nét và đầy đủ góc nhìn',
-        'Thời lượng video: 3-5 phút',
-      ],
-      duration: 45,
-      equipment: ['Vợt Pickleball', 'Bóng Pickleball', 'Camera/Điện thoại', 'Court'],
-      difficulty: 'Intermediate',
-      objectives: ['Thực hành kỹ thuật return', 'Cải thiện phản xạ', 'Luyện tập với video'],
     },
   ];
 
@@ -477,6 +458,14 @@ const ContentLibrary = () => {
             >
               Tạo Bài tập
             </Button>
+            <Button
+              type="primary"
+              icon={<PlusOutlined />}
+              onClick={() => setIsLessonModalVisible(true)}
+              style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
+            >
+              Tạo bài học
+            </Button>
           </Space>
         </div>
 
@@ -510,149 +499,56 @@ const ContentLibrary = () => {
           </Row>
         </div>
 
-        {/* Exercise Section */}
+        {/* Lessons Section */}
         <div style={{ marginBottom: 32 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-            <span style={{ fontSize: '24px' }}>📝</span>
-            <h3 style={{ fontSize: '20px', fontWeight: '600' }}>Bài tập ({exercises.length})</h3>
+            <span style={{ fontSize: '24px' }}>📚</span>
+            <h3 style={{ fontSize: '20px', fontWeight: '600' }}>Bài học ({lessons.length})</h3>
           </div>
-          <Row gutter={16}>
-            {exercises.map((exercise) => (
-              <Col span={8} key={exercise.id}>
-                <ContentCard item={exercise} type="exercise" />
-              </Col>
-            ))}
-          </Row>
-        </div>
-      </div>
-
-      {/* Create Quiz Modal */}
-      <Modal
-        title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <FileTextOutlined style={{ color: '#52c41a' }} />
-            <span>Tạo Quiz mới</span>
-          </div>
-        }
-        open={isQuizModalVisible}
-        onOk={handleCreateQuiz}
-        onCancel={() => {
-          setIsQuizModalVisible(false);
-          quizForm.resetFields();
-        }}
-        width={800}
-        okText="Tạo Quiz"
-        cancelText="Hủy"
-        okButtonProps={{
-          style: { backgroundColor: '#52c41a', borderColor: '#52c41a' },
-        }}
-      >
-        <Form
-          form={quizForm}
-          layout="vertical"
-          initialValues={{
-            questions: [
-              {
-                question: '',
-                answers: ['', '', '', ''],
-                correctAnswer: 0,
-              },
-            ],
-          }}
-        >
-          <Form.Item
-            label="Tiêu đề Quiz"
-            name="title"
-            rules={[{ required: true, message: 'Vui lòng nhập tiêu đề quiz!' }]}
-          >
-            <Input placeholder="VD: Quiz kỹ thuật serve cơ bản" size="large" />
-          </Form.Item>
-
-          <Form.List name="questions">
-            {(fields, { add, remove }) => (
-              <>
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginBottom: 16,
-                  }}
-                >
-                  <h3 style={{ fontSize: '16px', fontWeight: '600' }}>Câu hỏi ({fields.length})</h3>
-                  <Button type="dashed" onClick={() => add()} icon={<PlusOutlined />}>
-                    Thêm câu hỏi
-                  </Button>
-                </div>
-
-                {fields.map(({ key, name, ...restField }) => (
-                  <Card
-                    key={key}
-                    size="small"
-                    style={{ marginBottom: 16, backgroundColor: '#fafafa' }}
-                  >
+          {isLoadingLessons ? (
+            <Skeleton active paragraph={{ rows: 4 }} />
+          ) : (
+            <Row gutter={16}>
+              {lessons.map((lesson) => (
+                <Col span={8} key={lesson.id}>
+                  <Card hoverable style={{ marginBottom: 16 }}>
                     <div
                       style={{
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        marginBottom: 16,
                       }}
                     >
-                      <h4 style={{ fontSize: '14px', fontWeight: '600', margin: 0 }}>
-                        Câu {name + 1}
-                      </h4>
-                      <Button type="text" danger onClick={() => remove(name)} size="small">
-                        Xóa
-                      </Button>
+                      <div style={{ fontWeight: 600 }}>{lesson.name}</div>
+                      {lesson.duration ? <Tag color="blue">{lesson.duration} phút</Tag> : null}
                     </div>
-
-                    <Form.Item
-                      {...restField}
-                      name={[name, 'question']}
-                      label="Nội dung câu hỏi"
-                      rules={[{ required: true, message: 'Vui lòng nhập câu hỏi!' }]}
-                    >
-                      <Input placeholder="Nhập câu hỏi..." />
-                    </Form.Item>
-
-                    <Form.Item
-                      {...restField}
-                      name={[name, 'correctAnswer']}
-                      label="Đáp án đúng"
-                      rules={[{ required: true, message: 'Vui lòng chọn đáp án đúng!' }]}
-                    >
-                      <Radio.Group>
-                        <Space direction="vertical">
-                          {[0, 1, 2, 3].map((index) => (
-                            <div
-                              key={index}
-                              style={{ display: 'flex', alignItems: 'center', gap: 8 }}
-                            >
-                              <Radio value={index} />
-                              <Form.Item
-                                {...restField}
-                                name={[name, 'answers', index]}
-                                rules={[{ required: true, message: 'Vui lòng nhập đáp án!' }]}
-                                style={{ margin: 0, flex: 1 }}
-                              >
-                                <Input placeholder={`Đáp án ${index + 1}`} />
-                              </Form.Item>
-                            </div>
-                          ))}
-                        </Space>
-                      </Radio.Group>
-                    </Form.Item>
+                    <div style={{ color: '#666', marginTop: 8 }}>
+                      {lesson.description || 'Chưa có mô tả'}
+                    </div>
                   </Card>
-                ))}
-              </>
-            )}
-          </Form.List>
-        </Form>
-      </Modal>
+                </Col>
+              ))}
+            </Row>
+          )}
+        </div>
+      </div>
 
+      {/* Create Quiz Modal */}
+      <CreateQuizModal
+        isQuizModalVisible={isQuizModalVisible}
+        setIsQuizModalVisible={setIsQuizModalVisible}
+        handleCreateQuiz={handleCreateQuiz}
+        quizForm={quizForm}
+      />
+      {/* Create Lesson Modal */}
+      <CreateLessonModal
+        open={isLessonModalVisible}
+        onClose={() => setIsLessonModalVisible(false)}
+        onSubmit={handleCreateLesson}
+        loading={lessonLoading}
+      />
       {/* Create Exercise Modal */}
-      <Modal
+      {/* <Modal
         title={
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <PlusOutlined style={{ color: '#52c41a' }} />
@@ -739,7 +635,7 @@ const ContentLibrary = () => {
             <DatePicker style={{ width: '100%' }} size="large" placeholder="Chọn ngày hạn nộp" />
           </Form.Item>
         </Form>
-      </Modal>
+      </Modal> */}
 
       {/* Course Selection Modal */}
       <Modal
