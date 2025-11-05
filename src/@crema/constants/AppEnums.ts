@@ -27,8 +27,8 @@ export enum FormInputPicker {
 
 export enum RoleEnum {
   ADMIN = 'ADMIN',
-  CUSTOMER = 'CUSTOMER',
   COACH = 'COACH',
+  LEARNER = 'LEARNER',
 }
 
 export enum BaseApiENUM {

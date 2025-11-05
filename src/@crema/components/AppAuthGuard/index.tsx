@@ -54,7 +54,7 @@ const AppAuthGuard: React.FC<AppAuthGuardProps> = ({ children }) => {
   }
 
   // Check if user exists and is Admin
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === RoleEnum.ADMIN;
 
   // For protected routes, only render if authenticated AND user is Admin
   if (isAuthenticated && user && isAdmin) {
@@ -81,7 +81,7 @@ const AppAuthGuard: React.FC<AppAuthGuardProps> = ({ children }) => {
     );
   }
 
-  // If not authenticated and not on public route,
+  // If not authenticated and not npmon public route,
   // the JWT Provider will handle redirect to signin
   return (
     <div

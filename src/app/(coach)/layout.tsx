@@ -8,7 +8,6 @@ import {
   CalendarOutlined,
   TeamOutlined,
   BookOutlined,
-  ScheduleOutlined,
   BarChartOutlined,
   FileTextOutlined,
   VideoCameraOutlined,
@@ -17,6 +16,7 @@ import {
   BellOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  DollarCircleOutlined,
 } from '@ant-design/icons';
 
 const { Sider, Content } = Layout;
@@ -49,14 +49,19 @@ const CoachLayout = ({ children }: { children: React.ReactNode }) => {
       label: 'Học viên',
     },
     {
-      key: 'course-manage',
-      icon: <BookOutlined />,
-      label: 'Khóa học',
-    },
-    {
       key: 'analytics',
       icon: <BarChartOutlined />,
       label: 'Phân tích học viên',
+    },
+    {
+      key: 'subject-manage',
+      icon: <FileTextOutlined />,
+      label: 'Môn học',
+    },
+    {
+      key: 'course-manage',
+      icon: <BookOutlined />,
+      label: 'Khóa học',
     },
     {
       key: 'content',
@@ -67,16 +72,6 @@ const CoachLayout = ({ children }: { children: React.ReactNode }) => {
       key: 'video-conference',
       icon: <VideoCameraOutlined />,
       label: 'Video Conference',
-    },
-    {
-      key: 'income',
-      icon: <DollarOutlined />,
-      label: 'Thu nhập',
-    },
-    {
-      key: 'settings',
-      icon: <SettingOutlined />,
-      label: 'Cài đặt',
     },
   ];
 
@@ -344,6 +339,52 @@ const CoachLayout = ({ children }: { children: React.ReactNode }) => {
             boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
           }}
         >
+          {/* Earnings */}
+          <div
+            style={{
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '8px',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 8,
+            }}
+            onClick={() => router.push('/earnings')}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#f5f5f5';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+            }}
+          >
+            <DollarCircleOutlined style={{ fontSize: 20 }} />
+          </div>
+
+          {/* Settings */}
+          <div
+            style={{
+              cursor: 'pointer',
+              padding: '8px',
+              borderRadius: '8px',
+              transition: 'all 0.2s',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginRight: 8,
+            }}
+            onClick={() => router.push('/settings')}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = '#f5f5f5';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+            }}
+          >
+            <SettingOutlined style={{ fontSize: 20 }} />
+          </div>
+
           <Badge count={3} offset={[-5, 5]}>
             <div
               style={{
@@ -372,6 +413,7 @@ const CoachLayout = ({ children }: { children: React.ReactNode }) => {
             margin: 0,
             background: '#f5f5f5',
             minHeight: 'calc(100vh - 64px)',
+            padding: '24px',
           }}
         >
           {children}
