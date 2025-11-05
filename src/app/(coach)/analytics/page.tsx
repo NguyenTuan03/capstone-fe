@@ -22,8 +22,14 @@ import {
   AimOutlined,
   CalendarOutlined,
 } from '@ant-design/icons';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
 const AnalyticsPage = () => {
+  const { isAuthorized, isChecking } = useRoleGuard(['COACH'], {
+    unauthenticated: '/signin',
+    ADMIN: '/dashboard',
+    LEARNER: '/home',
+  });
   const [activeTab, setActiveTab] = useState('overview');
   const [timeRange, setTimeRange] = useState('6');
 
@@ -138,6 +144,12 @@ const AnalyticsPage = () => {
     return `${(value / 1000000).toFixed(0)}M`;
   };
 
+  if (isChecking) {
+    return <div>Đang tải...</div>;
+  }
+  if (!isAuthorized) {
+    return <div>Bạn không có quyền truy cập trang này</div>;
+  }
   return (
     <div
       style={{

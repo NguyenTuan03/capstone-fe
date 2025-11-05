@@ -32,6 +32,7 @@ import {
   UserOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -58,6 +59,11 @@ interface CourseData {
 }
 
 export default function CurriculumPage() {
+  const { isAuthorized, isChecking } = useRoleGuard(['ADMIN'], {
+    unauthenticated: '/signin',
+    COACH: '/summary',
+    LEARNER: '/home',
+  });
   const [courses, setCourses] = useState<CourseData[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<CourseData | null>(null);
@@ -343,7 +349,12 @@ export default function CurriculumPage() {
       ),
     },
   ];
-
+  if (isChecking) {
+    return <div>Đang tải...</div>;
+  }
+  if (!isAuthorized) {
+    return <div>Bạn không có quyền truy cập trang này</div>;
+  }
   return (
     <div className="space-y-6">
       {/* Header */}

@@ -46,6 +46,7 @@ import type { ColumnsType } from 'antd/es/table';
 import { useGet } from '@/@crema/hooks/useApiQuery';
 import { useVerifyCoach, useRejectCoach } from '@/@crema/services/apis/coaches';
 import { CoachVerificationStatus } from '@/types/enums';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
 const { Title, Text, Paragraph } = Typography;
 const { Search } = Input;
@@ -121,6 +122,7 @@ const statusLabel: Record<CoachVerificationStatus | 'UNKNOWN', string> = {
  * MAIN PAGE
  */
 export default function CoachesPage() {
+  useRoleGuard(['ADMIN'], { unauthenticated: '/signin', COACH: '/summary', LEARNER: '/home' });
   const [activeTab, setActiveTab] = useState<'pending' | 'approved'>('pending');
   const [selectedCoach, setSelectedCoach] = useState<CoachData | null>(null);
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);

@@ -4,10 +4,16 @@ import React from 'react';
 import { Card, Row, Col, Button, Progress, Typography, List, Avatar, Tag } from 'antd';
 import { PlayCircleOutlined, CheckCircleOutlined, TrophyOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
 const { Title, Text } = Typography;
 
 const MyCoursesPage = () => {
+  const { isAuthorized, isChecking } = useRoleGuard(['LEARNER'], {
+    unauthenticated: '/signin',
+    ADMIN: '/dashboard',
+    COACH: '/summary',
+  });
   const router = useRouter();
   const myCourses = [
     {
@@ -94,6 +100,12 @@ const MyCoursesPage = () => {
     }
   };
 
+  if (isChecking) {
+    return <div>Đang tải...</div>;
+  }
+  if (!isAuthorized) {
+    return <div>Bạn không có quyền truy cập trang này</div>;
+  }
   return (
     <div>
       <Title level={2}>Khóa học của tôi</Title>

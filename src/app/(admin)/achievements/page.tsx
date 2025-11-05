@@ -36,6 +36,7 @@ import {
   FireOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -73,6 +74,11 @@ interface AchievementData {
 }
 
 export default function AchievementsPage() {
+  const { isAuthorized, isChecking } = useRoleGuard(['ADMIN'], {
+    unauthenticated: '/signin',
+    COACH: '/summary',
+    LEARNER: '/home',
+  });
   const [achievements, setAchievements] = useState<AchievementData[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedAchievement, setSelectedAchievement] = useState<AchievementData | null>(null);
@@ -105,7 +111,6 @@ export default function AchievementsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
-
   // Load achievements data
   const loadAchievements = useCallback(async () => {
     setLoading(true);
@@ -496,7 +501,12 @@ export default function AchievementsPage() {
       ),
     },
   ];
-
+  if (isChecking) {
+    return <div>Đang tải...</div>;
+  }
+  if (!isAuthorized) {
+    return <div>Bạn không có quyền truy cập trang này</div>;
+  }
   return (
     <div className="space-y-6">
       {/* Header */}

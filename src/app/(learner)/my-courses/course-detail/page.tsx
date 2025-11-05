@@ -4,11 +4,17 @@ import React, { useState } from 'react';
 import { Card, Button, Typography, Tag, Progress, List, Avatar, Badge } from 'antd';
 import { ArrowLeftOutlined, CheckCircleOutlined, CalendarOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
 const { Title, Text } = Typography;
 
 const CourseDetailPage = () => {
   const router = useRouter();
+  const { isAuthorized, isChecking } = useRoleGuard(['LEARNER'], {
+    unauthenticated: '/signin',
+    ADMIN: '/dashboard',
+    COACH: '/summary',
+  });
   const [selectedSession, setSelectedSession] = useState<any>(null);
 
   // Mock data - in real app, this would come from props or API
@@ -215,6 +221,13 @@ const CourseDetailPage = () => {
         <Button onClick={() => router.back()}>Quay lại</Button>
       </div>
     );
+  }
+
+  if (isChecking) {
+    return <div>Đang tải...</div>;
+  }
+  if (!isAuthorized) {
+    return <div>Bạn không có quyền truy cập trang này</div>;
   }
 
   return (

@@ -3,7 +3,13 @@ import { extractFrames } from '@/@crema/utils/video';
 import React, { useState } from 'react';
 import * as geminiService from '@/@crema/services/apis/ai/geminiService';
 import { CombinedAnalysisResult } from '@/@crema/types/models/AI';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 const LearnerVideoAnalysis = () => {
+  const { isAuthorized, isChecking } = useRoleGuard(['LEARNER'], {
+    unauthenticated: '/signin',
+    ADMIN: '/dashboard',
+    COACH: '/summary',
+  });
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -92,6 +98,12 @@ const LearnerVideoAnalysis = () => {
     }
   };
 
+  if (isChecking) {
+    return <div>Đang tải...</div>;
+  }
+  if (!isAuthorized) {
+    return <div>Bạn không có quyền truy cập trang này</div>;
+  }
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
       {/* Main Content */}

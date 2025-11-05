@@ -2,8 +2,14 @@
 import { extractFrames } from '@/@crema/utils/video';
 import React, { useState } from 'react';
 import * as geminiService from '@/@crema/services/apis/ai/geminiService';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
 const CourseManagement = () => {
+  const { isAuthorized, isChecking } = useRoleGuard(['COACH'], {
+    unauthenticated: '/signin',
+    ADMIN: '/dashboard',
+    LEARNER: '/home',
+  });
   const [activeTab, setActiveTab] = useState('all');
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
@@ -689,6 +695,12 @@ const CourseManagement = () => {
     </div>
   );
 
+  if (isChecking) {
+    return <div>Đang tải...</div>;
+  }
+  if (!isAuthorized) {
+    return <div>Bạn không có quyền truy cập trang này</div>;
+  }
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f5f5f5' }}>
       {/* Content */}
