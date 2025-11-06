@@ -29,6 +29,4 @@ export * from './withdrawal-requests';
 export * from './payments';
 
 // Gamification
-export * from './achievements';
-export * from './achievement-progresses';
-export * from './learner-achievements';
+// Achievement mock data removed - now using API

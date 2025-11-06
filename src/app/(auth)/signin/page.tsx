@@ -1,12 +1,13 @@
 'use client';
 import { useAuthActions } from '@/@crema/hooks/useAuth';
-import { Button, Checkbox, Form, Input } from 'antd';
+import { Button, Checkbox, Form, Input, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import React, { useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import { useRouter } from 'next/navigation';
 import { RoleEnum } from '@/@crema/constants/AppEnums';
+import { clearAllAuthData } from '@/@crema/utils/clearAuth';
 
 export default function Login() {
   useIntl();
@@ -61,6 +62,12 @@ export default function Login() {
 
     return () => clearInterval(interval);
   }, [backgroundImages.length]);
+
+  // Clear all auth data on mount (for API integration)
+  React.useEffect(() => {
+    // Auto clear all tokens on signin page load
+    clearAllAuthData();
+  }, []);
 
   return (
     <div className="min-h-screen relative flex items-center justify-center overflow-hidden">
@@ -190,6 +197,23 @@ export default function Login() {
             <p className="text-gray-500 text-xs">
               © 2024 PICKLE-LEARN. Hệ thống quản lý Pickle Ball chuyên nghiệp.
             </p>
+
+            {/* Dev Only: Clear Auth Button */}
+            {process.env.NODE_ENV === 'development' && (
+              <Button
+                type="link"
+                size="small"
+                danger
+                onClick={() => {
+                  clearAllAuthData();
+                  message.success('Đã xóa tất cả token!');
+                  setTimeout(() => window.location.reload(), 500);
+                }}
+                className="mt-2"
+              >
+                🧹 Clear All Tokens (Dev Only)
+              </Button>
+            )}
           </div>
         </div>
       </div>
