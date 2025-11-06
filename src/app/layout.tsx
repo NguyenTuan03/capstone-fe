@@ -6,9 +6,8 @@ import AppContextProvider from '@/@crema/context/AppContextProvider';
 import viVN from 'antd/locale/vi_VN';
 import AppLocaleProvider from '@/@crema/context/AppLocaleProvider';
 import AppQueryProvider from '@/@crema/context/AppQueryProvider';
-// import AppAuthGuard from '@/@crema/components/AppAuthGuard'; // DISABLED FOR UI DEVELOPMENT
-import { App as AntdApp, ConfigProvider } from 'antd';
 import AppAuthGuard from '@/@crema/components/AppAuthGuard';
+import { App as AntdApp, ConfigProvider } from 'antd';
 const inter = Inter({
   variable: '--font-inter',
   subsets: ['latin'],
@@ -36,8 +35,7 @@ export default function RootLayout({
               <AppLocaleProvider>
                 <AppContextProvider>
                   <AppAuthProvider>
-                    {children}
-                    {/* <AppAuthGuard>{children}</AppAuthGuard> DISABLED FOR UI DEVELOPMENT */}
+                    <AppAuthGuard>{children}</AppAuthGuard>
                   </AppAuthProvider>
                 </AppContextProvider>
               </AppLocaleProvider>

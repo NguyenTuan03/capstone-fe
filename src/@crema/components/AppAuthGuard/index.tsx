@@ -28,6 +28,19 @@ const AppAuthGuard: React.FC<AppAuthGuardProps> = ({ children }) => {
   const publicRoutes = ['/signin', '/register', '/forgot-password', '/reset-password'];
   const isPublicRoute = publicRoutes.includes(pathname);
 
+  // Handle redirects in useEffect to avoid conditional hook calls
+  React.useEffect(() => {
+    // Don't redirect on public routes or while loading
+    if (isPublicRoute || isLoading) return;
+
+    const isAdmin = user?.role === RoleEnum.ADMIN;
+
+    // Redirect if not authenticated or not admin
+    if (!isAuthenticated || (user && !isAdmin)) {
+      router.replace('/signin');
+    }
+  }, [isAuthenticated, isLoading, user, isPublicRoute, router]);
+
   // Show loading spinner while checking authentication
   if (isLoading) {
     return (
@@ -61,9 +74,8 @@ const AppAuthGuard: React.FC<AppAuthGuardProps> = ({ children }) => {
     return <>{children}</>;
   }
 
-  // If user exists but is not Admin, redirect to signin
+  // If user exists but is not Admin, show loading while redirecting
   if (user && !isAdmin) {
-    router.replace('/signin');
     return (
       <div
         style={{
@@ -74,15 +86,34 @@ const AppAuthGuard: React.FC<AppAuthGuardProps> = ({ children }) => {
           backgroundColor: '#f5f5f5',
         }}
       >
-        <Spin size="large" tip={t['common.redirecting'] as string}>
+        <Spin size="large" tip="Đang chuyển hướng...">
           <div style={{ height: '200px', width: '200px' }} />
         </Spin>
       </div>
     );
   }
 
-  // If not authenticated and not npmon public route,
-  // the JWT Provider will handle redirect to signin
+  // If not authenticated, show loading while redirecting
+  if (!isAuthenticated) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          backgroundColor: '#f5f5f5',
+        }}
+      >
+        <Spin size="large" tip="Đang chuyển hướng đến trang đăng nhập...">
+          <div style={{ height: '200px', width: '200px' }} />
+        </Spin>
+      </div>
+    );
+  }
+
+  // Fallback: show loading
   return (
     <div
       style={{
@@ -94,7 +125,7 @@ const AppAuthGuard: React.FC<AppAuthGuardProps> = ({ children }) => {
         backgroundColor: '#f5f5f5',
       }}
     >
-      <Spin size="large" tip={t['common.redirecting'] as string}>
+      <Spin size="large" tip="Đang chuyển hướng...">
         <div style={{ height: '200px', width: '200px' }} />
       </Spin>
     </div>
