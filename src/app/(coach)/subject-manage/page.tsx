@@ -123,7 +123,7 @@ export default function SubjectsList() {
             <Card
               hoverable
               className="h-full shadow-sm hover:shadow-lg transition-all duration-300"
-              bodyStyle={{ padding: '20px' }}
+              styles={{ body: { padding: '20px' } }}
             >
               {/* Header */}
               <div className="flex justify-between items-start mb-3">

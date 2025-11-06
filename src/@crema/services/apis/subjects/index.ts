@@ -126,6 +126,7 @@ export interface GetSubjectsParams {
   search?: string;
   level?: string; // BEGINNER | INTERMEDIATE | ADVANCED
   status?: string; // DRAFT | PUBLISHED | ARCHIVED
+  filter?: string; // e.g., status_eq_PUBLISHED
 }
 
 export const useGetSubjects = (params?: GetSubjectsParams) => {

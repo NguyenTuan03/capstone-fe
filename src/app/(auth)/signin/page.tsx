@@ -39,8 +39,8 @@ export default function Login() {
   const onFinish = (values: { remember: boolean; password: string; email: string }) => {
     handleSignIn(values);
   };
-  const onFinishFailed = (errorInfo: any) => {
-    console.error('❌ Form validation failed:', errorInfo);
+  const onFinishFailed = () => {
+    message.error('Vui lòng kiểm tra lại các trường đã nhập.');
   };
 
   const backgroundImages = [

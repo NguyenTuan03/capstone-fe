@@ -7,6 +7,7 @@ import {
   UseQueryOptions,
   UseMutationOptions,
 } from '@tanstack/react-query';
+import axios from '@/@crema/axios/ApiConfig';
 
 /* =========================
    URL builder (Cách 1)
@@ -76,23 +77,20 @@ const apiCall = async <TData = unknown>(
   const { method = 'GET', data, params } = options;
   const url = buildUrl(endpoint, params);
 
-  // DEBUG khi cần:
-  // console.log('[fetch]', { endpoint, built: url, envUrl: process.env.NEXT_PUBLIC_API_URL, ver: process.env.NEXT_PUBLIC_VERSION });
-
-  const res = await fetch(url, {
-    method,
-    headers: { 'Content-Type': 'application/json', ...getAuthHeader() },
-    ...(data && { body: JSON.stringify(data) }),
-  });
-
-  if (!res.ok) {
-    const err = await res.json().catch(() => ({}));
-    throw new Error(err.message || `HTTP ${res.status}: ${res.statusText}`);
+  try {
+    const response = await axios.request<TData>({
+      url,
+      method,
+      headers: { ...getAuthHeader() },
+      ...(data && { data }),
+    });
+    return response.data;
+  } catch (error: any) {
+    const message =
+      error?.response?.data?.message || error?.message || `Request failed for ${method} ${url}`;
+    throw new Error(message);
   }
-  return res.json();
 };
-
-/* === phần dưới GIỮ NGUYÊN như bạn, dùng apiCall mới === */
 
 // Generic API hook types
 interface ApiQueryOptions<TData = unknown, TError = Error>

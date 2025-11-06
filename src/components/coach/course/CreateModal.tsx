@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Modal,
   Form,
@@ -12,15 +12,20 @@ import {
   Space,
   TimePicker,
 } from 'antd';
-import { CourseLearningFormat, DayOfWeek } from '@/types/enums';
+import { message } from 'antd';
+import { CourseLearningFormat } from '@/types/enums';
+import { useGetSubjects } from '@/@crema/services/apis/subjects';
+import { useCreateCourse } from '@/@crema/services/apis/courses';
+import { useApiQuery } from '@/@crema/hooks/useApiQuery';
 
-type CreateScheduleDto = {
+export interface CreateScheduleDto {
   dayOfWeek: string;
-  startTime: string; // HH:mm:ss
-  endTime: string; // HH:mm:ss
-};
+  startTime: string;
+  endTime: string;
+}
 
-export type CreateCourseRequestDto = {
+export interface CreateCourseRequestDto {
+  subjectId: number;
   learningFormat: CourseLearningFormat;
   minParticipants: number;
   maxParticipants: number;
@@ -30,49 +35,95 @@ export type CreateCourseRequestDto = {
   province: number;
   district: number;
   schedules?: CreateScheduleDto[];
-};
+}
+
+export interface UpdateCourseDto extends Partial<CreateCourseRequestDto> {
+  schedules?: CreateScheduleDto[];
+}
 
 interface CreateCourseModalProps {
   open: boolean;
   onClose: () => void;
-  onSubmit: (values: CreateCourseRequestDto) => Promise<void> | void;
+  onSubmit?: (values: CreateCourseRequestDto) => Promise<void> | void;
   loading?: boolean;
   initialValues?: Partial<CreateCourseRequestDto>;
+  subjects?: { label: string; value: number }[]; // Optional override
 }
 
 const dayOfWeekOptions = [
-  DayOfWeek.MONDAY,
-  DayOfWeek.TUESDAY,
-  DayOfWeek.WEDNESDAY,
-  DayOfWeek.THURSDAY,
-  DayOfWeek.FRIDAY,
-  DayOfWeek.SATURDAY,
-  DayOfWeek.SUNDAY,
-].map((d) => ({ label: d, value: d }));
+  { label: 'Thứ hai', value: 'Monday' },
+  { label: 'Thứ ba', value: 'Tuesday' },
+  { label: 'Thứ tư', value: 'Wednesday' },
+  { label: 'Thứ năm', value: 'Thursday' },
+  { label: 'Thứ sáu', value: 'Friday' },
+  { label: 'Thứ bảy', value: 'Saturday' },
+  { label: 'Chủ nhật', value: 'Sunday' },
+];
 
 const learningFormatOptions = [
   { label: 'Cá nhân', value: CourseLearningFormat.INDIVIDUAL },
   { label: 'Nhóm', value: CourseLearningFormat.GROUP },
 ];
 
-export default function CreateModal({
+export default function CreateCourseModal({
   open,
   onClose,
   onSubmit,
   loading = false,
   initialValues,
+  subjects,
 }: CreateCourseModalProps) {
   const [form] = Form.useForm<CreateCourseRequestDto>();
+  const [selectedProvince, setSelectedProvince] = useState<number | undefined>(
+    initialValues?.province,
+  );
+  const { data: subjectsRes, isLoading: isLoadingSubjects } = useGetSubjects({
+    page: 1,
+    size: 100,
+    filter: 'status_eq_PUBLISHED',
+  });
+  const createCourseMutation = useCreateCourse();
+  const subjectOptions =
+    subjects || ((subjectsRes?.items as any[]) || []).map((s) => ({ label: s.name, value: s.id }));
+
+  // Provinces and districts
+  const { data: provincesRes, isLoading: loadingProvinces } = useApiQuery<any>({
+    endpoint: 'provinces',
+    params: { page: 1, size: 100 },
+    staleTime: 5 * 60 * 1000,
+  });
+  const { data: districtsRes, isLoading: loadingDistricts } = useApiQuery<any>({
+    endpoint: selectedProvince
+      ? `provinces/${selectedProvince}/districts`
+      : 'provinces/0/districts',
+    enabled: !!selectedProvince,
+    params: { page: 1, size: 1000 },
+  });
+  const provincesArray = Array.isArray(provincesRes)
+    ? (provincesRes as any[])
+    : (provincesRes?.items as any[]) || [];
+  const districtsArray = Array.isArray(districtsRes)
+    ? (districtsRes as any[])
+    : (districtsRes?.items as any[]) || [];
+  const provinceOptions = provincesArray.map((p) => ({ label: p.name, value: p.id }));
+  const districtOptions = districtsArray.map((d) => ({ label: d.name, value: d.id }));
 
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
 
       const payload: CreateCourseRequestDto = {
-        ...values,
+        subjectId: values.subjectId,
+        learningFormat: values.learningFormat,
+        minParticipants: values.minParticipants,
+        maxParticipants: values.maxParticipants,
+        pricePerParticipant: values.pricePerParticipant,
         startDate: values.startDate
-          ? new Date(values.startDate.toISOString())
-          : (undefined as unknown as Date),
+          ? new Date((values.startDate as any).toISOString())
+          : new Date(),
+        address: values.address,
+        province: values.province,
+        district: values.district,
         schedules: values.schedules?.map((s) => ({
           dayOfWeek: s.dayOfWeek,
           startTime:
@@ -84,12 +135,34 @@ export default function CreateModal({
               ? (s as any).endTime.format('HH:mm:ss')
               : s.endTime,
         })),
-      } as CreateCourseRequestDto;
+      };
 
-      await onSubmit(payload);
-      onClose();
+      if (onSubmit) {
+        await onSubmit(payload);
+      } else {
+        await createCourseMutation.mutateAsync({
+          subjectId: payload.subjectId,
+          data: {
+            learningFormat: payload.learningFormat,
+            minParticipants: payload.minParticipants,
+            maxParticipants: payload.maxParticipants,
+            pricePerParticipant: payload.pricePerParticipant,
+            startDate: payload.startDate,
+            address: payload.address,
+            province: payload.province,
+            district: payload.district,
+            schedules: payload.schedules,
+          },
+        });
+        message.success('Tạo khóa học thành công');
+      }
       form.resetFields();
-    } catch {}
+      onClose();
+    } catch (error) {
+      console.error('Validation failed:', error);
+      message.error('Tạo khóa học thất bại');
+      throw error;
+    }
   };
 
   return (
@@ -99,14 +172,18 @@ export default function CreateModal({
       onCancel={onClose}
       onOk={handleOk}
       okText="Tạo"
+      cancelText="Hủy"
       confirmLoading={loading}
       width={800}
       destroyOnHidden
+      maskClosable={false}
+      keyboard={false}
     >
       <Form
         form={form}
         layout="vertical"
         initialValues={{
+          subjectId: undefined,
           learningFormat: CourseLearningFormat.GROUP,
           minParticipants: 1,
           maxParticipants: 10,
@@ -118,6 +195,23 @@ export default function CreateModal({
           ...initialValues,
         }}
       >
+        {/* THÊM FIELD MÔN HỌC */}
+        <Form.Item
+          name="subjectId"
+          label="Môn học"
+          rules={[{ required: true, message: 'Chọn môn học' }]}
+        >
+          <Select
+            placeholder="Chọn môn học"
+            options={subjectOptions}
+            loading={isLoadingSubjects}
+            showSearch
+            filterOption={(input, option) =>
+              (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+            }
+          />
+        </Form.Item>
+
         <Form.Item
           name="learningFormat"
           label="Hình thức học"
@@ -160,7 +254,7 @@ export default function CreateModal({
           label="Ngày bắt đầu"
           rules={[{ required: true, message: 'Chọn ngày bắt đầu' }]}
         >
-          <DatePicker style={{ width: '100%' }} />
+          <DatePicker style={{ width: '100%' }} format="YYYY-MM-DD" />
         </Form.Item>
 
         <Form.Item
@@ -175,16 +269,39 @@ export default function CreateModal({
           <Form.Item
             name="province"
             label="Tỉnh/TP"
-            rules={[{ required: true, message: 'Nhập ID tỉnh/TP' }]}
+            rules={[{ required: true, message: 'Chọn tỉnh/thành phố' }]}
           >
-            <InputNumber min={1} style={{ width: 200 }} />
+            <Select
+              placeholder="Chọn tỉnh/thành phố"
+              options={provinceOptions}
+              loading={loadingProvinces}
+              showSearch
+              filterOption={(input, option) =>
+                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+              }
+              style={{ width: 260 }}
+              onChange={(val) => {
+                setSelectedProvince(val as number);
+                form.setFieldsValue({ district: undefined });
+              }}
+            />
           </Form.Item>
           <Form.Item
             name="district"
             label="Quận/Huyện"
-            rules={[{ required: true, message: 'Nhập ID quận/huyện' }]}
+            rules={[{ required: true, message: 'Chọn quận/huyện' }]}
           >
-            <InputNumber min={1} style={{ width: 200 }} />
+            <Select
+              placeholder={selectedProvince ? 'Chọn quận/huyện' : 'Chọn tỉnh trước'}
+              options={districtOptions}
+              loading={loadingDistricts}
+              disabled={!selectedProvince}
+              showSearch
+              filterOption={(input, option) =>
+                (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+              }
+              style={{ width: 260 }}
+            />
           </Form.Item>
         </Space>
 
