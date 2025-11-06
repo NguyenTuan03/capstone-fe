@@ -29,11 +29,17 @@ import {
   CheckCircleOutlined,
   ClockCircleOutlined,
 } from '@ant-design/icons';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
 
 const ProfilePage = () => {
+  const { isAuthorized, isChecking } = useRoleGuard(['LEARNER'], {
+    unauthenticated: '/signin',
+    ADMIN: '/dashboard',
+    COACH: '/summary',
+  });
   const [form] = Form.useForm();
   const [editing, setEditing] = useState(false);
 
@@ -113,6 +119,13 @@ const ProfilePage = () => {
         return '#d9d9d9';
     }
   };
+
+  if (isChecking) {
+    return <div>Đang tải...</div>;
+  }
+  if (!isAuthorized) {
+    return <div>Bạn không có quyền truy cập trang này</div>;
+  }
 
   return (
     <div>

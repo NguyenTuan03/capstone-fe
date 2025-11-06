@@ -9,10 +9,16 @@ import {
   StarOutlined,
   PlayCircleOutlined,
 } from '@ant-design/icons';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
 const { Title, Text } = Typography;
 
 const HomePage = () => {
+  const { isAuthorized, isChecking } = useRoleGuard(['LEARNER'], {
+    unauthenticated: '/signin',
+    ADMIN: '/dashboard',
+    COACH: '/summary',
+  });
   // Mock data
   const stats = {
     totalCourses: 12,
@@ -48,6 +54,12 @@ const HomePage = () => {
     { title: 'Tham gia 10 buổi học', icon: '📚', date: '2024-01-05' },
   ];
 
+  if (isChecking) {
+    return <div>Đang tải...</div>;
+  }
+  if (!isAuthorized) {
+    return <div>Bạn không có quyền truy cập trang này</div>;
+  }
   return (
     <div>
       <Title level={2}>Chào mừng trở lại, Learner! 👋</Title>

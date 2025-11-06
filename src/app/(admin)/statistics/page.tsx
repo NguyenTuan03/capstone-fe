@@ -37,12 +37,18 @@ import { StatisticsData, GetStatisticsParams } from '@/types/statistics';
 // Import Chart Components
 import UserGrowthChart from '@/modules/dashboard/statistics/components/UserGrowthChart';
 import UserDistributionChart from '@/modules/dashboard/statistics/components/UserDistributionChart';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
 const { Title, Text } = Typography;
 const { RangePicker } = DatePicker;
 const { Option } = Select;
 
 const StatisticsPage: React.FC = () => {
+  const { isAuthorized, isChecking } = useRoleGuard(['ADMIN'], {
+    unauthenticated: '/signin',
+    COACH: '/summary',
+    LEARNER: '/home',
+  });
   // States
   const [statistics, setStatistics] = useState<StatisticsData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -146,7 +152,12 @@ const StatisticsPage: React.FC = () => {
       </div>
     );
   }
-
+  if (isChecking) {
+    return <div>Đang tải...</div>;
+  }
+  if (!isAuthorized) {
+    return <div>Bạn không có quyền truy cập trang này</div>;
+  }
   return (
     <div
       style={{

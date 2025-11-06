@@ -35,6 +35,7 @@ import {
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import type { MenuProps } from 'antd';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -73,6 +74,11 @@ interface UserStats {
 }
 
 export default function UsersPage() {
+  const { isAuthorized, isChecking } = useRoleGuard(['ADMIN'], {
+    unauthenticated: '/signin',
+    COACH: '/summary',
+    LEARNER: '/home',
+  });
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -100,12 +106,12 @@ export default function UsersPage() {
     try {
       // Import mock data
       const { users: mockUsers } = await import('@/data_admin/users');
-      
+
       // Convert mock users to UI format
       let filteredUsers = mockUsers.map((user) => {
         const isCoach = user.role.name === 'COACH';
         const isLearner = user.role.name === 'LEARNER';
-        
+
         // Generate skill level based on role
         let skillLevel = 'beginner';
         if (isCoach) {
@@ -115,7 +121,7 @@ export default function UsersPage() {
           const levels = ['beginner', 'intermediate', 'advanced'];
           skillLevel = levels[user.id % 3];
         }
-        
+
         return {
           id: user.id.toString(),
           email: user.email,
@@ -143,9 +149,7 @@ export default function UsersPage() {
       if (searchText) {
         const search = searchText.toLowerCase();
         filteredUsers = filteredUsers.filter(
-          (u) =>
-            u.name.toLowerCase().includes(search) ||
-            u.email.toLowerCase().includes(search)
+          (u) => u.name.toLowerCase().includes(search) || u.email.toLowerCase().includes(search),
         );
       }
 
@@ -335,7 +339,15 @@ export default function UsersPage() {
             <div style={{ fontWeight: 500, fontSize: '14px', marginBottom: '4px' }}>
               {record.name}
             </div>
-            <div style={{ fontSize: '13px', color: '#666', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div
+              style={{
+                fontSize: '13px',
+                color: '#666',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
               {record.email}
             </div>
           </div>
@@ -347,9 +359,7 @@ export default function UsersPage() {
       dataIndex: 'role',
       key: 'role',
       width: 120,
-      render: (role: string) => (
-        <Tag color="blue">{getRoleText(role)}</Tag>
-      ),
+      render: (role: string) => <Tag color="blue">{getRoleText(role)}</Tag>,
     },
     {
       title: 'Trạng thái',
@@ -396,14 +406,18 @@ export default function UsersPage() {
     },
   ];
 
+  if (isChecking) {
+    return <div>Đang tải...</div>;
+  }
+  if (!isAuthorized) {
+    return <div>Bạn không có quyền truy cập trang này</div>;
+  }
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <Title level={2}>Quản lý người dùng</Title>
-        <Text className="text-gray-600">
-          Quản lý tất cả người dùng trên nền tảng
-        </Text>
+        <Text className="text-gray-600">Quản lý tất cả người dùng trên nền tảng</Text>
       </div>
 
       {/* Main Table Card */}
@@ -536,7 +550,7 @@ export default function UsersPage() {
               <Title level={5}>Tiến độ học tập</Title>
               <Progress
                 percent={Math.round(
-                  (selectedUser.stats.completedLessons / selectedUser.stats.totalLessons) * 100
+                  (selectedUser.stats.completedLessons / selectedUser.stats.totalLessons) * 100,
                 )}
                 format={(percent) =>
                   `${selectedUser.stats.completedLessons}/${selectedUser.stats.totalLessons} bài`
@@ -592,4 +606,3 @@ export default function UsersPage() {
     </div>
   );
 }
-

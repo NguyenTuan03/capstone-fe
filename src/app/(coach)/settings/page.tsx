@@ -13,8 +13,14 @@ import {
   CalendarOutlined,
   CheckCircleFilled,
 } from '@ant-design/icons';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
 const SettingsPage = () => {
+  const { isAuthorized, isChecking } = useRoleGuard(['COACH'], {
+    unauthenticated: '/signin',
+    ADMIN: '/dashboard',
+    LEARNER: '/home',
+  });
   const [activeTab, setActiveTab] = useState('profile');
   const [formData, setFormData] = useState({
     name: 'Lại Đức Hùng',
@@ -415,6 +421,12 @@ const SettingsPage = () => {
     },
   ];
 
+  if (isChecking) {
+    return <div>Đang tải...</div>;
+  }
+  if (!isAuthorized) {
+    return <div>Bạn không có quyền truy cập trang này</div>;
+  }
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
       {/* Content */}

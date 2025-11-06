@@ -12,6 +12,7 @@ import {
   TeamOutlined,
 } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -19,6 +20,11 @@ const { Option } = Select;
 
 const CoursesPage = () => {
   const router = useRouter();
+  const { isAuthorized, isChecking } = useRoleGuard(['LEARNER'], {
+    unauthenticated: '/signin',
+    ADMIN: '/dashboard',
+    COACH: '/summary',
+  });
   const [selectedStatusFilter, setSelectedStatusFilter] = useState('all');
   const [selectedTypeFilter, setSelectedTypeFilter] = useState('all');
   const [selectedLevelFilter, setSelectedLevelFilter] = useState('all');
@@ -139,6 +145,12 @@ const CoursesPage = () => {
     }
   };
 
+  if (isChecking) {
+    return <div>Đang tải...</div>;
+  }
+  if (!isAuthorized) {
+    return <div>Bạn không có quyền truy cập trang này</div>;
+  }
   return (
     <div>
       <Title level={2}>Khóa học Pickleball</Title>

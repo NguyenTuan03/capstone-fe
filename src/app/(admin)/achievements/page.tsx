@@ -46,6 +46,7 @@ import {
   useUpdateStreakAchievement,
   useUpdatePropertyCheckAchievement,
 } from '@/@crema/services/apis/achievements';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -81,8 +82,15 @@ interface AchievementData {
 export default function AchievementsPage() {
   // Use Ant Design App context for modal
   const { modal } = App.useApp();
-
   const [selectedAchievementId, setSelectedAchievementId] = useState<string | null>(null);
+  const { isAuthorized, isChecking } = useRoleGuard(['ADMIN'], {
+    unauthenticated: '/signin',
+    COACH: '/summary',
+    LEARNER: '/home',
+  });
+  const [achievements, setAchievements] = useState<AchievementData[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [selectedAchievement, setSelectedAchievement] = useState<AchievementData | null>(null);
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -147,13 +155,59 @@ export default function AchievementsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-
   // Build API params
   const apiParams = useMemo(() => {
     const params: any = {
       page: currentPage,
       pageSize: pageSize,
     };
+  const [total, setTotal] = useState(0);
+  // Load achievements data
+  const loadAchievements = useCallback(async () => {
+    setLoading(true);
+    try {
+      const { achievements: mockAchievements } = await import('@/data_admin/achievements');
+      const { learnerAchievements } = await import('@/data_admin/learner-achievements');
+      const { achievementProgresses } = await import('@/data_admin/achievement-progresses');
+
+      // Count earned and in-progress for each achievement
+      let filteredAchievements = mockAchievements.map((achievement) => {
+        const earnedCount = learnerAchievements.filter(
+          (la) => la.achievement.id === achievement.id,
+        ).length;
+
+        const progressCount = achievementProgresses.filter(
+          (ap) => ap.achievement.id === achievement.id && ap.currentProgress < 100,
+        ).length;
+
+        const data: AchievementData = {
+          id: achievement.id.toString(),
+          type: achievement.type,
+          name: achievement.name,
+          description: achievement.description || '',
+          iconUrl: achievement.iconUrl || '',
+          isActive: achievement.isActive,
+          createdAt: achievement.createdAt.toISOString(),
+          createdBy: achievement.createdBy.fullName,
+          earnedCount,
+          progressCount,
+        };
+
+        // Add type-specific fields
+        if (achievement.type === 'EVENT_COUNT') {
+          data.eventName = (achievement as any).eventName;
+          data.targetCount = (achievement as any).targetCount;
+        } else if (achievement.type === 'PROPERTY_CHECK') {
+          data.eventName = (achievement as any).eventName;
+          data.entityName = (achievement as any).entityName;
+          data.propertyName = (achievement as any).propertyName;
+          data.comparisonOperator = (achievement as any).comparisonOperator;
+          data.targetValue = (achievement as any).targetValue;
+        } else if (achievement.type === 'STREAK') {
+          data.eventName = (achievement as any).eventName;
+          data.targetStreakLength = (achievement as any).targetStreakLength;
+          data.streakUnit = (achievement as any).streakUnit;
+        }
 
     // Add isActive filter if needed
     if (statusFilter === 'active') {
@@ -775,7 +829,12 @@ export default function AchievementsPage() {
       ),
     },
   ];
-
+  if (isChecking) {
+    return <div>Đang tải...</div>;
+  }
+  if (!isAuthorized) {
+    return <div>Bạn không có quyền truy cập trang này</div>;
+  }
   return (
     <div className="space-y-6">
       {/* Header */}

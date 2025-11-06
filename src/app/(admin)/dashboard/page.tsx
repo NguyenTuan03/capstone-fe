@@ -1,29 +1,22 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {
-  Row,
-  Col,
-  Card,
-  Typography,
-  Space,
-  Button,
-  message,
-  Spin,
-  Timeline,
-} from 'antd';
+import { Row, Col, Card, Typography, Space, Button, message, Spin, Timeline } from 'antd';
 
-import {
-  TeamOutlined,
-  ClockCircleOutlined,
-} from '@ant-design/icons';
+import { TeamOutlined, ClockCircleOutlined } from '@ant-design/icons';
 
 import DashboardApiService from '@/services/dashboardApi';
 import { DashboardStats, DashboardFilters } from '@/types/dashboard';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
 const { Text, Title } = Typography;
 
 export default function DashboardPage() {
+  const { isAuthorized, isChecking } = useRoleGuard(['ADMIN'], {
+    unauthenticated: '/signin',
+    COACH: '/summary',
+    LEARNER: '/home',
+  });
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -32,33 +25,12 @@ export default function DashboardPage() {
     userType: 'all',
     sessionType: 'all',
   });
-
-  const loadDashboardData = async (showLoading = true) => {
-    if (showLoading) setLoading(true);
-
-    try {
-      const response = await DashboardApiService.getDashboardStats({
-        filters,
-        includeCharts: true,
-        includeActivities: true,
-      });
-
-      if (response.success) {
-        setStats(response.data);
-      } else {
-        message.error('Không thể tải dữ liệu dashboard');
-      }
-    } catch (error) {
-      console.error('Error loading dashboard:', error);
-      message.error('Có lỗi xảy ra khi tải dữ liệu');
-    } finally {
-      if (showLoading) setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadDashboardData();
-  }, []);
+  if (isChecking) {
+    return <div>Loading...</div>;
+  }
+  if (!isAuthorized) {
+    return <div>Unauthorized</div>;
+  }
 
   if (loading) {
     return (
@@ -103,7 +75,6 @@ export default function DashboardPage() {
 
   return (
     <div>
-
       {/* Main Content */}
       <Row gutter={[24, 24]}>
         {/* Recent Activities */}

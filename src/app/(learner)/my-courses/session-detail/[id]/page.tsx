@@ -1,7 +1,13 @@
 'use client';
 import React, { useState } from 'react';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
 const LearnerExercises = () => {
+  const { isAuthorized, isChecking } = useRoleGuard(['LEARNER'], {
+    unauthenticated: '/signin',
+    ADMIN: '/dashboard',
+    COACH: '/summary',
+  });
   const [selectedExercise, setSelectedExercise] = useState<any>(null);
   const [uploadedVideo, setUploadedVideo] = useState<any>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -480,6 +486,13 @@ const LearnerExercises = () => {
       </div>
     );
   };
+
+  if (isChecking) {
+    return <div>Đang tải...</div>;
+  }
+  if (!isAuthorized) {
+    return <div>Bạn không có quyền truy cập trang này</div>;
+  }
 
   return (
     <div className="min-h-screen">

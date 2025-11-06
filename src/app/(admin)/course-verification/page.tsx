@@ -33,6 +33,7 @@ import {
   ClockCircleOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -69,6 +70,11 @@ interface QuizData {
 }
 
 export default function CourseVerificationPage() {
+  const { isAuthorized, isChecking } = useRoleGuard(['ADMIN'], {
+    unauthenticated: '/signin',
+    COACH: '/summary',
+    LEARNER: '/home',
+  });
   const [activeTab, setActiveTab] = useState('videos');
 
   // Videos state
@@ -506,7 +512,12 @@ export default function CourseVerificationPage() {
       ),
     },
   ];
-
+  if (isChecking) {
+    return <div>Đang tải...</div>;
+  }
+  if (!isAuthorized) {
+    return <div>Bạn không có quyền truy cập trang này</div>;
+  }
   return (
     <div className="space-y-6">
       {/* Header */}

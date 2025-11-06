@@ -1,5 +1,6 @@
 'use client';
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Modal,
   Form,
@@ -11,9 +12,10 @@ import {
   Col,
   Space,
   Tag,
-  message,
   Skeleton,
+  App,
 } from 'antd';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 import {
   PlusOutlined,
   FileTextOutlined,
@@ -26,6 +28,13 @@ import CreateLessonModal from '@/components/coach/content/createLessonModal';
 import { useCreateLesson, useGetLessons } from '@/@crema/services/apis/lessons';
 
 const ContentLibrary = () => {
+  const router = useRouter();
+  const { message } = App.useApp();
+  const { isAuthorized, isChecking } = useRoleGuard(['COACH'], {
+    unauthenticated: '/signin',
+    ADMIN: '/dashboard',
+    LEARNER: '/home',
+  });
   const [isQuizModalVisible, setIsQuizModalVisible] = useState(false);
   const [isLessonModalVisible, setIsLessonModalVisible] = useState(false);
   const [isExerciseModalVisible, setIsExerciseModalVisible] = useState(false);
@@ -426,7 +435,12 @@ const ContentLibrary = () => {
       </div>
     </Card>
   );
-
+  if (isChecking) {
+    return <div>Đang tải...</div>;
+  }
+  if (!isAuthorized) {
+    return <div>Bạn không có quyền truy cập trang này</div>;
+  }
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Content */}

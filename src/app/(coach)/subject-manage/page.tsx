@@ -9,6 +9,7 @@ import {
   useGetSubjects,
   useUpdateSubject,
 } from '@/@crema/services/apis/subjects';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
 enum PickleballLevel {
   BEGINNER = 'beginner',
@@ -34,6 +35,11 @@ interface Subject {
 // No external props; data loads via API
 
 export default function SubjectsList() {
+  const { isAuthorized, isChecking } = useRoleGuard(['COACH'], {
+    unauthenticated: '/signin',
+    ADMIN: '/dashboard',
+    LEARNER: '/home',
+  });
   const [modalOpen, setModalOpen] = useState(false);
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
   const [page, setPage] = useState(1);
@@ -88,6 +94,12 @@ export default function SubjectsList() {
     }
   };
 
+  if (isChecking) {
+    return <div>Đang tải...</div>;
+  }
+  if (!isAuthorized) {
+    return <div>Bạn không có quyền truy cập trang này</div>;
+  }
   return (
     <div className="mb-8">
       {/* Header */}

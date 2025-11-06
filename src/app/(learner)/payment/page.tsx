@@ -29,11 +29,17 @@ import {
 } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
 const { Title, Text } = Typography;
 
 export default function PaymentPage() {
   const router = useRouter();
+  const { isAuthorized, isChecking } = useRoleGuard(['LEARNER'], {
+    unauthenticated: '/signin',
+    ADMIN: '/dashboard',
+    COACH: '/summary',
+  });
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'card' | 'momo' | 'bank'>(
     'card',
   );
@@ -374,6 +380,12 @@ export default function PaymentPage() {
   const totalSteps = 2;
   const progressPercentage = (paymentStep / totalSteps) * 100;
 
+  if (isChecking) {
+    return <div>Đang tải...</div>;
+  }
+  if (!isAuthorized) {
+    return <div>Bạn không có quyền truy cập trang này</div>;
+  }
   return (
     <div style={{ minHeight: '100vh', background: 'linear-gradient(135deg,#f6ffed,#e6fffb)' }}>
       <div style={{ background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>

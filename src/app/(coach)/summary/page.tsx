@@ -15,10 +15,16 @@ import {
   ArrowRightOutlined,
   ArrowUpOutlined,
 } from '@ant-design/icons';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
 const { Title, Text } = Typography;
 
 const CoachOverview = () => {
+  const { isAuthorized, isChecking } = useRoleGuard(['COACH'], {
+    unauthenticated: '/signin',
+    ADMIN: '/dashboard',
+    LEARNER: '/home',
+  });
   const todaySessions = [
     {
       id: 1,
@@ -81,6 +87,12 @@ const CoachOverview = () => {
     { label: 'Học viên mới', value: '+5', highlight: true },
   ];
 
+  if (isChecking) {
+    return <div>Đang tải...</div>;
+  }
+  if (!isAuthorized) {
+    return <div>Bạn không có quyền truy cập trang này</div>;
+  }
   return (
     <div style={{ padding: 24, background: '#f5f5f5', minHeight: '100vh' }}>
       <Title level={3} style={{ marginBottom: 24, marginTop: 0 }}>
