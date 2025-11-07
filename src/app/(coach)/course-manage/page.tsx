@@ -1,10 +1,12 @@
 'use client';
 import { extractFrames } from '@/@crema/utils/video';
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import CreateCourseModal from '@/components/coach/course/CreateModal';
 import * as geminiService from '@/@crema/services/apis/ai/geminiService';
 import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 import { CourseCard } from '@/components/coach/course/CourseCard';
+import { useGetCourses } from '@/@crema/services/apis/courses';
+import { Pagination } from 'antd';
 
 const CourseManagement = () => {
   const { isAuthorized, isChecking } = useRoleGuard(['COACH'], {
@@ -21,6 +23,8 @@ const CourseManagement = () => {
   const [manageTab, setManageTab] = useState('overview');
   const [isDetailModalVisible, setIsDetailModalVisible] = useState<any>(false);
   const [expandedSessions, setExpandedSessions] = useState<any>({});
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Trạng thái so sánh video
   const [coachVideo, setCoachVideo] = useState<any>(null);
@@ -114,157 +118,6 @@ const CourseManagement = () => {
     { title: 'Đã hoàn thành', value: '3', icon: '✓', color: 'bg-gray-50 text-gray-600' },
     { title: 'Tổng học viên', value: '21', icon: '👥', color: 'bg-purple-50 text-purple-600' },
     { title: 'Doanh thu', value: '57.800.000đ', icon: '📈', color: 'bg-orange-50 text-orange-600' },
-  ];
-
-  const courses = [
-    {
-      id: 1,
-      name: 'Pickleball cơ bản - Khóa 1',
-      level: 'Beginner',
-      levelColor: 'bg-green-100 text-green-800',
-      status: 'ongoing',
-      statusText: 'Đang diễn ra',
-      statusBadge: 'Đã đủ',
-      description:
-        'Khóa học offline dành cho người mới bắt đầu, tập trung vào các kỹ thuật cơ bản và luật chơi',
-      sessions: 4,
-      schedule: 'Thứ 2, 4, 6 - 14:00-15:30',
-      location: 'Sân Pickleball Quận 7',
-      coach: 'Huấn luyện viên Nguyễn Văn A',
-      currentStudents: 4,
-      maxStudents: 4,
-      progress: 100,
-      sessionsCompleted: 8,
-      fee: '500.000đ/người',
-      feeDetail: '≈ 62.500đ/buổi',
-      discount: '65%',
-    },
-    {
-      id: 2,
-      name: 'Kỹ thuật nâng cao - Khóa 1',
-      level: 'Intermediate',
-      levelColor: 'bg-blue-100 text-blue-800',
-      status: 'ongoing',
-      statusText: 'Đang diễn ra',
-      statusBadge: 'Đã đủ',
-      description: 'Nâng cao kỹ năng serve và return, chiến thuật thi đấu chuyên nghiệp',
-      sessions: 5,
-      schedule: 'Thứ 3, 5, 7 - 16:00-17:30',
-      location: 'Sân Pickleball Bình Thạnh',
-      coach: 'Huấn luyện viên Trần Thị B',
-      currentStudents: 2,
-      maxStudents: 2,
-      progress: 40,
-      sessionsCompleted: 10,
-      fee: '800.000đ/người',
-      feeDetail: '≈ 80.000đ/buổi',
-      discount: '40%',
-    },
-    {
-      id: 3,
-      name: 'Pickleball thiếu nhi - Khóa 2',
-      level: 'Beginner',
-      levelColor: 'bg-green-100 text-green-800',
-      status: 'ongoing',
-      statusText: 'Đang diễn ra',
-      statusBadge: 'Còn chỗ',
-      description: 'Khóa học vui nhộn cho trẻ em 8-14 tuổi, phát triển thể chất và kỹ năng',
-      sessions: 6,
-      schedule: 'Thứ 7, CN - 09:00-10:30',
-      location: 'Sân Pickleball Quận 1',
-      coach: 'Huấn luyện viên Lê Văn C',
-      currentStudents: 6,
-      maxStudents: 8,
-      progress: 75,
-      sessionsCompleted: 12,
-      fee: '600.000đ/người',
-      feeDetail: '≈ 50.000đ/buổi',
-      discount: '25%',
-    },
-    {
-      id: 4,
-      name: 'Chiến thuật đôi - Khóa 3',
-      level: 'Advanced',
-      levelColor: 'bg-purple-100 text-purple-800',
-      status: 'ongoing',
-      statusText: 'Đang diễn ra',
-      statusBadge: 'Còn chỗ',
-      description: 'Tập trung vào chiến thuật thi đấu đôi và phối hợp nhóm',
-      sessions: 3,
-      schedule: 'Thứ 2, 4 - 18:00-19:30',
-      location: 'Sân Pickleball Quận 3',
-      coach: 'Huấn luyện viên Phạm Thị D',
-      currentStudents: 4,
-      maxStudents: 6,
-      progress: 67,
-      sessionsCompleted: 6,
-      fee: '900.000đ/người',
-      feeDetail: '≈ 150.000đ/buổi',
-      discount: '50%',
-    },
-    {
-      id: 5,
-      name: 'Pickleball cơ bản - Khóa 0',
-      level: 'Beginner',
-      levelColor: 'bg-green-100 text-green-800',
-      status: 'completed',
-      statusText: 'Đã hoàn thành',
-      statusBadge: '',
-      description: 'Khóa học đầu tiên cho người mới bắt đầu',
-      sessions: 8,
-      schedule: 'Thứ 2, 4, 6 - 14:00-15:30',
-      location: 'Sân Pickleball Quận 7',
-      coach: 'Huấn luyện viên Nguyễn Văn A',
-      currentStudents: 5,
-      maxStudents: 5,
-      progress: 100,
-      sessionsCompleted: 8,
-      fee: '450.000đ/người',
-      feeDetail: '≈ 56.250đ/buổi',
-      discount: '100%',
-    },
-    {
-      id: 6,
-      name: 'Kỹ thuật serve - Workshop',
-      level: 'Intermediate',
-      levelColor: 'bg-blue-100 text-blue-800',
-      status: 'completed',
-      statusText: 'Đã hoàn thành',
-      statusBadge: '',
-      description: 'Workshop chuyên sâu về kỹ thuật serve',
-      sessions: 4,
-      schedule: 'Thứ 7 - 15:00-17:00',
-      location: 'Sân Pickleball Quận 2',
-      coach: 'Huấn luyện viên Trần Thị B',
-      currentStudents: 8,
-      maxStudents: 8,
-      progress: 100,
-      sessionsCompleted: 4,
-      fee: '300.000đ/người',
-      feeDetail: '≈ 75.000đ/buổi',
-      discount: '100%',
-    },
-    {
-      id: 7,
-      name: 'Pickleball nâng cao - Khóa 0',
-      level: 'Advanced',
-      levelColor: 'bg-purple-100 text-purple-800',
-      status: 'completed',
-      statusText: 'Đã hoàn thành',
-      statusBadge: '',
-      description: 'Khóa học nâng cao cho học viên có kinh nghiệm',
-      sessions: 10,
-      schedule: 'Thứ 3, 5, 7 - 17:00-18:30',
-      location: 'Sân Pickleball Tân Bình',
-      coach: 'Huấn luyện viên Lại Đức Hùng',
-      currentStudents: 3,
-      maxStudents: 4,
-      progress: 100,
-      sessionsCompleted: 10,
-      fee: '1.000.000đ/người',
-      feeDetail: '≈ 100.000đ/buổi',
-      discount: '100%',
-    },
   ];
 
   // Refs video để điều hướng timestamp
@@ -371,14 +224,46 @@ const CourseManagement = () => {
     }
   };
 
-  const filteredCourses = courses.filter((course) => {
-    const matchesTab =
-      activeTab === 'all' ||
-      (activeTab === 'ongoing' && course.status === 'ongoing') ||
-      (activeTab === 'completed' && course.status === 'completed');
-    const matchesSearch = course.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesTab && matchesSearch;
+  // API: Get courses with pagination
+  // Map tab to status for API filter
+  const getStatusFromTab = (tab: string): string | undefined => {
+    const statusMap: Record<string, string> = {
+      ongoing: 'APPROVED', // Courses that are approved and ongoing
+      completed: 'COMPLETED',
+    };
+    return tab === 'all' ? undefined : statusMap[tab] || undefined;
+  };
+
+  const { data: coursesRes, isLoading: isLoadingCourses } = useGetCourses({
+    page,
+    pageSize,
+    search: searchQuery || undefined,
+    status: getStatusFromTab(activeTab),
   });
+
+  // Map course data to add levelColor based on level
+  const courses = useMemo(() => {
+    const rawCourses = (coursesRes?.items as any[]) || [];
+    return rawCourses.map((course: any) => {
+      const levelColorMap: Record<string, string> = {
+        BEGINNER: 'green',
+        INTERMEDIATE: 'blue',
+        ADVANCED: 'purple',
+      };
+      const level = course.level?.toUpperCase() || '';
+      return {
+        ...course,
+        levelColor: levelColorMap[level] || 'default',
+      };
+    });
+  }, [coursesRes?.items]);
+  const totalCourses = coursesRes?.total || 0;
+  const filteredCourses = courses; // API already filters by status, so use courses directly
+
+  // Reset page to 1 when search query or activeTab changes
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, activeTab]);
 
   if (isChecking) {
     return <div>Đang tải...</div>;
@@ -496,22 +381,22 @@ const CourseManagement = () => {
                     justifyContent: 'center',
                     margin: '0 auto 16px',
                     fontSize: '28px',
-                    backgroundColor: stat.color.includes('blue')
+                    backgroundColor: stat.color?.includes('blue')
                       ? '#e6f7ff'
-                      : stat.color.includes('green')
+                      : stat.color?.includes('green')
                         ? '#f6ffed'
-                        : stat.color.includes('purple')
+                        : stat.color?.includes('purple')
                           ? '#f9f0ff'
-                          : stat.color.includes('orange')
+                          : stat.color?.includes('orange')
                             ? '#fff7e6'
                             : '#f5f5f5',
-                    color: stat.color.includes('blue')
+                    color: stat.color?.includes('blue')
                       ? '#1890ff'
-                      : stat.color.includes('green')
+                      : stat.color?.includes('green')
                         ? '#52c41a'
-                        : stat.color.includes('purple')
+                        : stat.color?.includes('purple')
                           ? '#722ed1'
-                          : stat.color.includes('orange')
+                          : stat.color?.includes('orange')
                             ? '#fa8c16'
                             : '#666',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
@@ -685,22 +570,50 @@ const CourseManagement = () => {
         </div>
 
         {/* Course List */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
-          {filteredCourses.map((course) => (
-            <CourseCard
-              key={course.id}
-              course={course}
-              setIsModalVisible={setIsModalVisible}
-              setIsManageModalVisible={setIsManageModalVisible}
-              setIsExerciseModalVisible={setIsExerciseModalVisible}
-              setIsAIFeedbackModalVisible={setIsAIFeedbackModalVisible}
-              setSelectedExercise={setSelectedExercise}
-              setSelectedSubmission={setSelectedSubmission}
-              setSelectedCourse={setSelectedCourse}
-              setIsDetailModalVisible={setIsDetailModalVisible}
-            />
-          ))}
-        </div>
+        {isLoadingCourses ? (
+          <div style={{ textAlign: 'center', padding: '40px' }}>Đang tải...</div>
+        ) : filteredCourses.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
+            Chưa có khóa học nào
+          </div>
+        ) : (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
+              {filteredCourses.map((course) => (
+                <CourseCard
+                  key={course.id}
+                  course={course}
+                  setIsModalVisible={setIsModalVisible}
+                  setIsManageModalVisible={setIsManageModalVisible}
+                  setIsExerciseModalVisible={setIsExerciseModalVisible}
+                  setIsAIFeedbackModalVisible={setIsAIFeedbackModalVisible}
+                  setSelectedExercise={setSelectedExercise}
+                  setSelectedSubmission={setSelectedSubmission}
+                  setSelectedCourse={setSelectedCourse}
+                  setIsDetailModalVisible={setIsDetailModalVisible}
+                />
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalCourses > pageSize && (
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '32px' }}>
+                <Pagination
+                  current={page}
+                  pageSize={pageSize}
+                  total={totalCourses}
+                  onChange={(newPage, newPageSize) => {
+                    setPage(newPage);
+                    if (newPageSize) setPageSize(newPageSize);
+                  }}
+                  showSizeChanger
+                  pageSizeOptions={['10', '20', '50', '100']}
+                  showTotal={(total, range) => `${range[0]}-${range[1]} của ${total} khóa học`}
+                />
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* Modal tạo khóa học */}
@@ -801,7 +714,11 @@ const CourseManagement = () => {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Giá cơ bản:</span>
                       <span className="font-medium text-green-600">
-                        {selectedCourse.fee.split('/')[0]}
+                        {selectedCourse.fee
+                          ? selectedCourse.fee.split('/')[0]
+                          : selectedCourse.pricePerParticipant
+                            ? `${Number(selectedCourse.pricePerParticipant).toLocaleString('vi-VN')}đ`
+                            : 'N/A'}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">

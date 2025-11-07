@@ -146,3 +146,45 @@ export const useGetSubjects = (params?: GetSubjectsParams) => {
     },
   });
 };
+
+export const useDeleteSubject = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string | number) => {
+      const url = buildUrl(`subjects/${id}`);
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
+      try {
+        const res = await axios.delete(url, {
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+        return res.data;
+      } catch (err: any) {
+        const resData = err?.response?.data || {};
+        const apiMsg = resData.message;
+        const errors = resData.errors || resData.error || {};
+
+        let msg = '';
+        if (typeof apiMsg === 'string') {
+          msg = apiMsg;
+        } else if (Array.isArray(apiMsg)) {
+          msg = apiMsg.join(', ');
+        } else if (errors && typeof errors === 'object') {
+          try {
+            msg = Object.values(errors as Record<string, any>)
+              .flat()
+              .join(', ');
+          } catch {}
+        }
+
+        if (!msg) msg = 'Xóa môn học thất bại';
+        throw new Error(msg);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subjects', 'list'] });
+    },
+  });
+};

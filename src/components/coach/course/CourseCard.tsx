@@ -97,17 +97,25 @@ export const CourseCard = ({
             borderRadius: '20px',
             fontSize: '12px',
             fontWeight: '500',
-            backgroundColor: course.levelColor.includes('green')
-              ? '#f6ffed'
-              : course.levelColor.includes('blue')
-                ? '#e6f7ff'
-                : '#f9f0ff',
-            color: course.levelColor.includes('green')
-              ? '#52c41a'
-              : course.levelColor.includes('blue')
-                ? '#1890ff'
-                : '#722ed1',
-            border: `1px solid ${course.levelColor.includes('green') ? '#b7eb8f' : course.levelColor.includes('blue') ? '#91d5ff' : '#d3adf7'}`,
+            backgroundColor:
+              course.levelColor && course.levelColor.includes('green')
+                ? '#f6ffed'
+                : course.levelColor && course.levelColor.includes('blue')
+                  ? '#e6f7ff'
+                  : '#f9f0ff',
+            color:
+              course.levelColor && course.levelColor.includes('green')
+                ? '#52c41a'
+                : course.levelColor && course.levelColor.includes('blue')
+                  ? '#1890ff'
+                  : '#722ed1',
+            border: `1px solid ${
+              course.levelColor && course.levelColor.includes('green')
+                ? '#b7eb8f'
+                : course.levelColor && course.levelColor.includes('blue')
+                  ? '#91d5ff'
+                  : '#d3adf7'
+            }`,
           }}
         >
           {course.level}

@@ -34,3 +34,15 @@ export enum RoleEnum {
 export enum BaseApiENUM {
   BASE_API = '/api/v1',
 }
+
+export enum PickleballLevel {
+  BEGINNER = 'BEGINNER',
+  INTERMEDIATE = 'INTERMEDIATE',
+  ADVANCED = 'ADVANCED',
+}
+
+export enum SubjectStatus {
+  DRAFT = 'DRAFT',
+  PUBLISHED = 'PUBLISHED',
+  ARCHIVED = 'ARCHIVED',
+}

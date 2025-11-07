@@ -85,7 +85,7 @@ const CoachLayout = ({ children }: { children: React.ReactNode }) => {
       label: 'Video Conference',
     },
     {
-      key: 'logout',
+      key: 'signin',
       icon: <LogoutOutlined />,
       label: 'Đăng xuất',
       onClick: handleLogout,

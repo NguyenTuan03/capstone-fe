@@ -1,236 +1,211 @@
 'use client';
 
-import React from 'react';
-import {
-  Modal,
-  Form,
-  Input,
-  InputNumber,
-  Select,
-  DatePicker,
-  Button,
-  Space,
-  TimePicker,
-} from 'antd';
-import { CourseLearningFormat, DayOfWeek } from '@/types/enums';
+import React, { useEffect, useMemo } from 'react';
+import { Modal, Form, Input, Select } from 'antd';
+import { PickleballLevel } from '@/types/enums';
 
-type CreateScheduleDto = {
-  dayOfWeek: string;
-  startTime: string; // HH:mm:ss
-  endTime: string; // HH:mm:ss
-};
+const { TextArea } = Input;
 
-export type CreateCourseRequestDto = {
-  learningFormat: CourseLearningFormat;
-  minParticipants: number;
-  maxParticipants: number;
-  pricePerParticipant: number;
-  startDate: Date;
-  address: string;
-  province: number;
-  district: number;
-  schedules?: CreateScheduleDto[];
-};
-
-interface CreateCourseModalProps {
-  open: boolean;
-  onClose: () => void;
-  onSubmit: (values: CreateCourseRequestDto) => Promise<void> | void;
-  loading?: boolean;
-  initialValues?: Partial<CreateCourseRequestDto>;
+export enum SubjectStatus {
+  DRAFT = 'DRAFT',
+  PUBLISHED = 'PUBLISHED',
 }
 
-const dayOfWeekOptions = [
-  DayOfWeek.MONDAY,
-  DayOfWeek.TUESDAY,
-  DayOfWeek.WEDNESDAY,
-  DayOfWeek.THURSDAY,
-  DayOfWeek.FRIDAY,
-  DayOfWeek.SATURDAY,
-  DayOfWeek.SUNDAY,
-].map((d) => ({ label: d, value: d }));
+type SubjectFormShape = {
+  name: string;
+  description?: string;
+  level: PickleballLevel | string;
+  status?: SubjectStatus | string;
+};
 
-const learningFormatOptions = [
-  { label: 'Cá nhân', value: CourseLearningFormat.INDIVIDUAL },
-  { label: 'Nhóm', value: CourseLearningFormat.GROUP },
+export type CreateSubjectRequestDto = {
+  name: string;
+  description?: string;
+  level: PickleballLevel;
+  status?: SubjectStatus;
+};
+
+interface CreateSubjectModalProps {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (values: CreateSubjectRequestDto) => Promise<void> | void;
+  loading?: boolean;
+  initialValues?: Partial<SubjectFormShape>;
+}
+
+const levelOptions = [
+  {
+    label: 'Cơ bản',
+    value: PickleballLevel.BEGINNER,
+  },
+  {
+    label: 'Trung cấp',
+    value: PickleballLevel.INTERMEDIATE,
+  },
+  {
+    label: 'Nâng cao',
+    value: PickleballLevel.ADVANCED,
+  },
 ];
 
-export default function CreateModal({
+const normalizeLevel = (value: unknown): PickleballLevel | undefined => {
+  if (!value) return undefined;
+  const normalized = value.toString().toUpperCase();
+  return Object.values(PickleballLevel).includes(normalized as PickleballLevel)
+    ? (normalized as PickleballLevel)
+    : undefined;
+};
+
+const normalizeStatus = (value: unknown): SubjectStatus | undefined => {
+  if (!value) return undefined;
+  const normalized = value.toString().toUpperCase();
+  return Object.values(SubjectStatus).includes(normalized as SubjectStatus)
+    ? (normalized as SubjectStatus)
+    : undefined;
+};
+
+const emptyInitialValues: SubjectFormShape = {
+  name: '',
+  description: undefined,
+  level: PickleballLevel.BEGINNER,
+  status: SubjectStatus.DRAFT,
+};
+
+const CreateModal: React.FC<CreateSubjectModalProps> = ({
   open,
   onClose,
   onSubmit,
   loading = false,
   initialValues,
-}: CreateCourseModalProps) {
-  const [form] = Form.useForm<CreateCourseRequestDto>();
+}) => {
+  const [form] = Form.useForm<SubjectFormShape>();
+
+  const memoizedInitialValues = useMemo(() => {
+    const merged = {
+      ...emptyInitialValues,
+      ...initialValues,
+    };
+
+    return {
+      name: merged.name ?? '',
+      description: merged.description ?? undefined,
+      level: normalizeLevel(merged.level) ?? PickleballLevel.BEGINNER,
+      status: normalizeStatus(merged.status) ?? SubjectStatus.DRAFT,
+    } satisfies SubjectFormShape;
+  }, [initialValues]);
+
+  useEffect(() => {
+    if (open) {
+      form.setFieldsValue(memoizedInitialValues);
+    } else {
+      form.resetFields();
+    }
+  }, [form, memoizedInitialValues, open]);
+
+  const handleClose = () => {
+    form.resetFields();
+    onClose();
+  };
 
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
 
-      const payload: CreateCourseRequestDto = {
-        ...values,
-        startDate: values.startDate
-          ? new Date(values.startDate.toISOString())
-          : (undefined as unknown as Date),
-        schedules: values.schedules?.map((s) => ({
-          dayOfWeek: s.dayOfWeek,
-          startTime:
-            typeof (s as any).startTime?.format === 'function'
-              ? (s as any).startTime.format('HH:mm:ss')
-              : s.startTime,
-          endTime:
-            typeof (s as any).endTime?.format === 'function'
-              ? (s as any).endTime.format('HH:mm:ss')
-              : s.endTime,
-        })),
-      } as CreateCourseRequestDto;
+      const normalizedLevel = normalizeLevel(values.level);
+      if (!normalizedLevel) {
+        throw new Error('Trình độ không hợp lệ');
+      }
+
+      const payload: CreateSubjectRequestDto = {
+        name: values.name.trim(),
+        description: values.description?.trim() || undefined,
+        level: normalizedLevel,
+      };
+
+      const finalStatus = normalizeStatus(values.status) ?? SubjectStatus.DRAFT;
+      payload.status = finalStatus;
 
       await onSubmit(payload);
-      onClose();
-      form.resetFields();
-    } catch {}
+      handleClose();
+    } catch (error) {
+      // Validation errors are handled by Form.Item
+      if (error instanceof Error && error.message === 'Trình độ không hợp lệ') {
+        form.setFields([
+          {
+            name: 'level',
+            errors: ['Trình độ không hợp lệ'],
+          },
+        ]);
+      }
+    }
   };
 
   return (
     <Modal
-      title={<div className="text-xl font-semibold">➕ Tạo khóa học</div>}
+      title={<div className="text-xl font-semibold">➕ Tạo môn học</div>}
       open={open}
-      onCancel={onClose}
+      onCancel={handleClose}
       onOk={handleOk}
-      okText="Tạo"
+      okText={initialValues ? 'Cập nhật' : 'Tạo mới'}
       confirmLoading={loading}
-      width={800}
-      destroyOnHidden
+      width={600}
     >
-      <Form
-        form={form}
-        layout="vertical"
-        initialValues={{
-          learningFormat: CourseLearningFormat.GROUP,
-          minParticipants: 1,
-          maxParticipants: 10,
-          pricePerParticipant: 0,
-          address: '',
-          province: undefined,
-          district: undefined,
-          schedules: [],
-          ...initialValues,
-        }}
-      >
+      <Form form={form} layout="vertical" preserve={false}>
         <Form.Item
-          name="learningFormat"
-          label="Hình thức học"
-          rules={[{ required: true, message: 'Chọn hình thức học' }]}
+          name="name"
+          label="Tên môn học"
+          rules={[
+            { required: true, message: 'Vui lòng nhập tên môn học' },
+            { max: 100, message: 'Tên môn học không vượt quá 100 ký tự' },
+            {
+              validator: (_, value) =>
+                value && !value.trim()
+                  ? Promise.reject(new Error('Tên môn học không được để trống'))
+                  : Promise.resolve(),
+            },
+          ]}
         >
-          <Select options={learningFormatOptions} />
+          <Input placeholder="Ví dụ: Cơ bản môn Pickleball" showCount maxLength={100} />
         </Form.Item>
 
-        <Space size={16} style={{ width: '100%' }} wrap>
-          <Form.Item
-            name="minParticipants"
-            label="Số người tối thiểu"
-            rules={[{ required: true, message: 'Nhập số người tối thiểu' }]}
-          >
-            <InputNumber min={1} style={{ width: 180 }} />
-          </Form.Item>
-          <Form.Item
-            name="maxParticipants"
-            label="Số người tối đa"
-            rules={[{ required: true, message: 'Nhập số người tối đa' }]}
-          >
-            <InputNumber min={1} style={{ width: 180 }} />
-          </Form.Item>
-          <Form.Item
-            name="pricePerParticipant"
-            label="Giá / học viên"
-            rules={[{ required: true, message: 'Nhập giá' }]}
-          >
-            <InputNumber
-              min={0}
-              style={{ width: 200 }}
-              formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-              parser={(v) => (v ? v.replace(/,/g, '') : '') as any}
+        <Form.Item
+          name="description"
+          label="Mô tả"
+          rules={[
+            { max: 500, message: 'Mô tả không vượt quá 500 ký tự' },
+            {
+              validator: (_, value) =>
+                value && !value.trim()
+                  ? Promise.reject(new Error('Mô tả không được để trống'))
+                  : Promise.resolve(),
+            },
+          ]}
+        >
+          <TextArea rows={4} placeholder="Nhập mô tả về môn học" showCount maxLength={500} />
+        </Form.Item>
+
+        <Form.Item
+          name="level"
+          label="Trình độ"
+          rules={[{ required: true, message: 'Vui lòng chọn trình độ' }]}
+        >
+          <Select options={levelOptions} placeholder="Chọn trình độ" />
+        </Form.Item>
+
+        {initialValues && (
+          <Form.Item name="status" label="Trạng thái" rules={[{ required: false }]}>
+            <Select
+              options={[
+                { label: 'Nháp', value: SubjectStatus.DRAFT },
+                { label: 'Đã xuất bản', value: SubjectStatus.PUBLISHED },
+              ]}
+              placeholder="Chọn trạng thái"
             />
           </Form.Item>
-        </Space>
-
-        <Form.Item
-          name="startDate"
-          label="Ngày bắt đầu"
-          rules={[{ required: true, message: 'Chọn ngày bắt đầu' }]}
-        >
-          <DatePicker style={{ width: '100%' }} />
-        </Form.Item>
-
-        <Form.Item
-          name="address"
-          label="Địa chỉ"
-          rules={[{ required: true, message: 'Nhập địa chỉ' }]}
-        >
-          <Input placeholder="123 Main St, City, Country" />
-        </Form.Item>
-
-        <Space size={16} style={{ width: '100%' }} wrap>
-          <Form.Item
-            name="province"
-            label="Tỉnh/TP"
-            rules={[{ required: true, message: 'Nhập ID tỉnh/TP' }]}
-          >
-            <InputNumber min={1} style={{ width: 200 }} />
-          </Form.Item>
-          <Form.Item
-            name="district"
-            label="Quận/Huyện"
-            rules={[{ required: true, message: 'Nhập ID quận/huyện' }]}
-          >
-            <InputNumber min={1} style={{ width: 200 }} />
-          </Form.Item>
-        </Space>
-
-        <Form.List name="schedules">
-          {(fields, { add, remove }) => (
-            <div>
-              <div className="mb-2 font-medium">Lịch học</div>
-              {fields.map(({ key, name, ...restField }) => (
-                <Space key={key} style={{ display: 'flex', marginBottom: 8 }} align="baseline" wrap>
-                  <Form.Item
-                    {...restField}
-                    name={[name, 'dayOfWeek']}
-                    rules={[{ required: true, message: 'Chọn ngày' }]}
-                  >
-                    <Select
-                      options={dayOfWeekOptions}
-                      style={{ width: 170 }}
-                      placeholder="Ngày trong tuần"
-                    />
-                  </Form.Item>
-                  <Form.Item
-                    {...restField}
-                    name={[name, 'startTime']}
-                    rules={[{ required: true, message: 'Chọn giờ bắt đầu' }]}
-                  >
-                    <TimePicker format="HH:mm:ss" style={{ width: 140 }} placeholder="Bắt đầu" />
-                  </Form.Item>
-                  <Form.Item
-                    {...restField}
-                    name={[name, 'endTime']}
-                    rules={[{ required: true, message: 'Chọn giờ kết thúc' }]}
-                  >
-                    <TimePicker format="HH:mm:ss" style={{ width: 140 }} placeholder="Kết thúc" />
-                  </Form.Item>
-                  <Button danger onClick={() => remove(name)}>
-                    Xóa
-                  </Button>
-                </Space>
-              ))}
-              <Button type="dashed" onClick={() => add()} block>
-                + Thêm lịch học
-              </Button>
-            </div>
-          )}
-        </Form.List>
+        )}
       </Form>
     </Modal>
   );
-}
+};
+
+export default CreateModal;

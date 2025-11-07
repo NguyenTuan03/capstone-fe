@@ -1,5 +1,5 @@
 import { buildUrl } from '@/@crema/helper/BuildUrl';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 
 export interface CreateScheduleDto {
@@ -35,7 +35,44 @@ export const useCreateCourse = () => {
       return res.data;
     },
     onSuccess: () => {
+      // Invalidate all courses queries to refetch the list
       queryClient.invalidateQueries({ queryKey: ['courses', 'list'] });
+      // Also invalidate any specific course queries if needed
+      queryClient.invalidateQueries({ queryKey: ['courses'] });
+    },
+  });
+};
+
+export interface GetCoursesParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+  level?: string;
+  learningFormat?: string;
+  status?: string;
+}
+
+export const useGetCourses = (params?: GetCoursesParams) => {
+  return useQuery({
+    queryKey: ['courses', 'list', params],
+    queryFn: async () => {
+      const url = buildUrl('courses');
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
+      const res = await axios.get(url, {
+        params: {
+          page: params?.page || 1,
+          pageSize: params?.pageSize || 10,
+          ...(params?.search && { search: params.search }),
+          ...(params?.level && { level: params.level }),
+          ...(params?.learningFormat && { learningFormat: params.learningFormat }),
+          ...(params?.status && { status: params.status }),
+        },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      return res.data;
     },
   });
 };
