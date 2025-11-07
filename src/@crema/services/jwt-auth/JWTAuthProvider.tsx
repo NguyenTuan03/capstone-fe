@@ -94,32 +94,16 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
   useEffect(() => {
     const token = localStorage.getItem(TOKEN_KEY) || sessionStorage.getItem(TOKEN_KEY);
     const savedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
-
-    // If no token or user, clear everything and mark as not authenticated
     if (!token || !savedUser) {
-      cleanupAuthState();
       setJWTAuthData({ user: undefined, isAuthenticated: false, isLoading: false });
       return;
     }
-
     const remember = JSON.parse(localStorage.getItem(REMEMBER_ME_KEY) || 'false');
     setAuthToken(token, remember);
-
     try {
       const user: UserType = JSON.parse(savedUser);
-
-      // Validate user data - must have role
-      if (!user.role) {
-        console.warn('Invalid user data: missing role');
-        cleanupAuthState();
-        setJWTAuthData({ user: undefined, isAuthenticated: false, isLoading: false });
-        return;
-      }
-
       setJWTAuthData({ user, isAuthenticated: true, isLoading: false });
-    } catch (error) {
-      console.error('Error parsing user data:', error);
-      cleanupAuthState();
+    } catch {
       setJWTAuthData({ user: undefined, isAuthenticated: false, isLoading: false });
     }
   }, []);
@@ -251,7 +235,7 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
       } catch {}
 
       // Redirect to signin page
-      router.push('/signin');
+      // router.push('/signin'); // DISABLED FOR UI DEVELOPMENT
     }
   };
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Layout, Menu, Avatar, Rate, Badge, Tooltip } from 'antd';
+import { Layout, Menu, Avatar, Rate, Badge, Tooltip, Button } from 'antd';
 import { useRouter, usePathname } from 'next/navigation';
 import {
   LineChartOutlined,
@@ -17,6 +17,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   DollarCircleOutlined,
+  LogoutOutlined,
 } from '@ant-design/icons';
 
 const { Sider, Content } = Layout;
@@ -31,7 +32,17 @@ const CoachLayout = ({ children }: { children: React.ReactNode }) => {
     if (pathname === '/coach' || pathname === '/coach/summary') return 'overview';
     return pathname.split('/').pop() || 'overview';
   };
-
+  const handleLogout = () => {
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        localStorage.removeItem('remember');
+        localStorage.removeItem('refresh_token');
+      }
+    } catch {}
+    router.push('/signin');
+  };
   const menuItems = [
     {
       key: 'overview',
@@ -72,6 +83,12 @@ const CoachLayout = ({ children }: { children: React.ReactNode }) => {
       key: 'video-conference',
       icon: <VideoCameraOutlined />,
       label: 'Video Conference',
+    },
+    {
+      key: 'logout',
+      icon: <LogoutOutlined />,
+      label: 'Đăng xuất',
+      onClick: handleLogout,
     },
   ];
 

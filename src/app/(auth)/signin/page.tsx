@@ -1,33 +1,58 @@
 'use client';
 import { useAuthActions } from '@/@crema/hooks/useAuth';
-import { Button, Checkbox, Form, Input, message } from 'antd';
+import { Button, Checkbox, Form, Input } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import Link from 'next/link';
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useIntl } from 'react-intl';
 import { useRouter } from 'next/navigation';
 import { RoleEnum } from '@/@crema/constants/AppEnums';
-import { clearAllAuthData } from '@/@crema/utils/clearAuth';
 
 export default function Login() {
   useIntl();
   const { signInUser } = useAuthActions();
   const router = useRouter();
   const [form] = Form.useForm();
+  const hasRedirected = useRef(false);
 
   useEffect(() => {
     try {
       if (typeof window === 'undefined') return;
-      const raw = localStorage.getItem('user');
-      if (!raw) return;
-      const savedUser = JSON.parse(raw);
-      if (!savedUser?.role) return;
-      if (savedUser.role === RoleEnum.ADMIN) {
-        router.replace('/dashboard');
-      } else if (savedUser.role === RoleEnum.COACH) {
-        router.replace('/summary');
-      } else {
-        router.replace('/home');
+      if (hasRedirected.current) return;
+
+      const token = localStorage.getItem('token') || sessionStorage.getItem('token');
+      const rawUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+
+      if (!token || !rawUser) {
+        if (!token) {
+          localStorage.removeItem('user');
+          sessionStorage.removeItem('user');
+        }
+        return;
+      }
+
+      const savedUser = JSON.parse(rawUser);
+      const rawRole = typeof savedUser?.role === 'string' ? savedUser.role : savedUser?.role?.name;
+      const normalizedRole = typeof rawRole === 'string' ? rawRole.toUpperCase() : undefined;
+
+      if (!normalizedRole) {
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('user');
+        return;
+      }
+
+      hasRedirected.current = true;
+
+      switch (normalizedRole) {
+        case RoleEnum.ADMIN:
+          router.replace('/dashboard');
+          break;
+        case RoleEnum.COACH:
+          router.replace('/summary');
+          break;
+        default:
+          router.replace('/home');
+          break;
       }
     } catch {}
   }, [router]);
@@ -39,8 +64,8 @@ export default function Login() {
   const onFinish = (values: { remember: boolean; password: string; email: string }) => {
     handleSignIn(values);
   };
-  const onFinishFailed = () => {
-    message.error('Vui lòng kiểm tra lại các trường đã nhập.');
+  const onFinishFailed = (errorInfo: any) => {
+    console.error('❌ Form validation failed:', errorInfo);
   };
 
   const backgroundImages = [
@@ -62,12 +87,6 @@ export default function Login() {
 
     return () => clearInterval(interval);
   }, [backgroundImages.length]);
-
-  // Clear all auth data on mount (for API integration)
-  React.useEffect(() => {
-    // Auto clear all tokens on signin page load
-    clearAllAuthData();
-  }, []);
 
   return (
     <div className="min-h-screen relative flex items-center justify-center overflow-hidden">
@@ -197,23 +216,6 @@ export default function Login() {
             <p className="text-gray-500 text-xs">
               © 2024 PICKLE-LEARN. Hệ thống quản lý Pickle Ball chuyên nghiệp.
             </p>
-
-            {/* Dev Only: Clear Auth Button */}
-            {process.env.NODE_ENV === 'development' && (
-              <Button
-                type="link"
-                size="small"
-                danger
-                onClick={() => {
-                  clearAllAuthData();
-                  message.success('Đã xóa tất cả token!');
-                  setTimeout(() => window.location.reload(), 500);
-                }}
-                className="mt-2"
-              >
-                🧹 Clear All Tokens (Dev Only)
-              </Button>
-            )}
           </div>
         </div>
       </div>

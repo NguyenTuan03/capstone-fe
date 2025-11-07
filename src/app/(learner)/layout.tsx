@@ -72,8 +72,10 @@ export default function LearnerLayout({ children }: { children: React.ReactNode 
       onClick: () => {
         try {
           if (typeof window !== 'undefined') {
-            localStorage.clear();
-            sessionStorage.clear();
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            localStorage.removeItem('remember');
+            localStorage.removeItem('refresh_token');
           }
         } catch {}
         router.push('/signin');
