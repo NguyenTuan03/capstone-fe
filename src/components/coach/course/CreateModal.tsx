@@ -74,6 +74,8 @@ export default function CreateCourseModal({
   subjects,
 }: CreateCourseModalProps) {
   const [form] = Form.useForm<CreateCourseRequestDto>();
+  const learningFormat = Form.useWatch('learningFormat', form);
+  const isIndividual = learningFormat === CourseLearningFormat.INDIVIDUAL;
   const [selectedProvince, setSelectedProvince] = useState<number | undefined>(
     initialValues?.province,
   );
@@ -111,12 +113,13 @@ export default function CreateCourseModal({
   const handleOk = async () => {
     try {
       const values = await form.validateFields();
+      const isIndividualFormat = values.learningFormat === CourseLearningFormat.INDIVIDUAL;
 
       const payload: CreateCourseRequestDto = {
         subjectId: values.subjectId,
         learningFormat: values.learningFormat,
-        minParticipants: values.minParticipants,
-        maxParticipants: values.maxParticipants,
+        minParticipants: isIndividualFormat ? 1 : values.minParticipants,
+        maxParticipants: isIndividualFormat ? 1 : values.maxParticipants,
         pricePerParticipant: values.pricePerParticipant,
         startDate: values.startDate
           ? new Date((values.startDate as any).toISOString())
@@ -144,8 +147,8 @@ export default function CreateCourseModal({
           subjectId: payload.subjectId,
           data: {
             learningFormat: payload.learningFormat,
-            minParticipants: payload.minParticipants,
-            maxParticipants: payload.maxParticipants,
+            minParticipants: isIndividualFormat ? 1 : payload.minParticipants,
+            maxParticipants: isIndividualFormat ? 1 : payload.maxParticipants,
             pricePerParticipant: payload.pricePerParticipant,
             startDate: payload.startDate,
             address: payload.address,
@@ -217,24 +220,38 @@ export default function CreateCourseModal({
           label="Hình thức học"
           rules={[{ required: true, message: 'Chọn hình thức học' }]}
         >
-          <Select options={learningFormatOptions} />
+          <Select
+            options={learningFormatOptions}
+            onChange={(value) => {
+              if (value === CourseLearningFormat.INDIVIDUAL) {
+                form.setFieldsValue({
+                  minParticipants: 1,
+                  maxParticipants: 1,
+                });
+              }
+            }}
+          />
         </Form.Item>
 
         <Space size={16} style={{ width: '100%' }} wrap>
-          <Form.Item
-            name="minParticipants"
-            label="Số người tối thiểu"
-            rules={[{ required: true, message: 'Nhập số người tối thiểu' }]}
-          >
-            <InputNumber min={1} style={{ width: 180 }} />
-          </Form.Item>
-          <Form.Item
-            name="maxParticipants"
-            label="Số người tối đa"
-            rules={[{ required: true, message: 'Nhập số người tối đa' }]}
-          >
-            <InputNumber min={1} style={{ width: 180 }} />
-          </Form.Item>
+          {!isIndividual && (
+            <>
+              <Form.Item
+                name="minParticipants"
+                label="Số người tối thiểu"
+                rules={[{ required: true, message: 'Nhập số người tối thiểu' }]}
+              >
+                <InputNumber min={1} style={{ width: 180 }} />
+              </Form.Item>
+              <Form.Item
+                name="maxParticipants"
+                label="Số người tối đa"
+                rules={[{ required: true, message: 'Nhập số người tối đa' }]}
+              >
+                <InputNumber min={1} style={{ width: 180 }} />
+              </Form.Item>
+            </>
+          )}
           <Form.Item
             name="pricePerParticipant"
             label="Giá / học viên"
@@ -242,6 +259,7 @@ export default function CreateCourseModal({
           >
             <InputNumber
               min={0}
+              step={10000}
               style={{ width: 200 }}
               formatter={(v) => `${v}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
               parser={(v) => (v ? v.replace(/,/g, '') : '') as any}

@@ -147,6 +147,27 @@ export const useGetSubjects = (params?: GetSubjectsParams) => {
   });
 };
 
+export const useGetSubjectById = (subjectId: string | number | null | undefined) => {
+  return useQuery({
+    queryKey: ['subjects', 'detail', subjectId],
+    queryFn: async () => {
+      if (!subjectId) {
+        return null;
+      }
+      const url = buildUrl(`subjects/${subjectId}`);
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
+      const res = await axios.get(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      return res.data;
+    },
+    enabled: !!subjectId,
+  });
+};
+
 export const useDeleteSubject = () => {
   const queryClient = useQueryClient();
   return useMutation({

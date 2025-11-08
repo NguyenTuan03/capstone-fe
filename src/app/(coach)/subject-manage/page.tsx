@@ -1,20 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import {
-  Card,
-  Button,
-  Tag,
-  Row,
-  Col,
-  Popconfirm,
-  Pagination,
-  Modal,
-  Descriptions,
-  App,
-} from 'antd';
+import { Card, Button, Tag, Row, Col, Popconfirm, Pagination, App } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, EyeOutlined } from '@ant-design/icons';
 import SubjectModal from '@/components/coach/subject/createModal';
+import ViewDetail from '@/components/coach/subject/ViewDetail';
 import {
   useCreateSubject,
   useGetSubjects,
@@ -250,128 +240,14 @@ export default function SubjectsList() {
       />
 
       {/* View Detail Modal */}
-      <Modal
-        title={
-          <div className="flex items-center gap-2">
-            <EyeOutlined />
-            <span>Chi tiết môn học</span>
-          </div>
-        }
+      <ViewDetail
         open={viewModalOpen}
-        onCancel={() => {
+        subject={viewingSubject}
+        onClose={() => {
           setViewModalOpen(false);
           setViewingSubject(null);
         }}
-        footer={[
-          <Button
-            key="close"
-            onClick={() => {
-              setViewModalOpen(false);
-              setViewingSubject(null);
-            }}
-          >
-            Đóng
-          </Button>,
-          viewingSubject && (
-            <Button
-              key="edit"
-              type="primary"
-              icon={<EditOutlined />}
-              onClick={() => {
-                setViewModalOpen(false);
-                handleEdit(viewingSubject);
-              }}
-            >
-              Chỉnh sửa
-            </Button>
-          ),
-        ]}
-        width={700}
-        centered
-      >
-        {viewingSubject && (
-          <Descriptions column={1} bordered>
-            <Descriptions.Item label="Tên môn học">{viewingSubject.name}</Descriptions.Item>
-            <Descriptions.Item label="Mô tả">
-              {viewingSubject.description || 'Chưa có mô tả'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Trình độ">
-              <Tag color={getLevelConfig(viewingSubject.level).color}>
-                {getLevelConfig(viewingSubject.level).label}
-              </Tag>
-            </Descriptions.Item>
-            <Descriptions.Item label="Trạng thái">
-              <Tag color={statusConfig[viewingSubject.status]?.color}>
-                {statusConfig[viewingSubject.status]?.label}
-              </Tag>
-            </Descriptions.Item>
-            {viewingSubject.createdBy && (
-              <Descriptions.Item label="Người tạo">
-                {viewingSubject.createdBy.fullName || viewingSubject.createdBy.email}
-              </Descriptions.Item>
-            )}
-            {viewingSubject.createdAt && (
-              <Descriptions.Item label="Ngày tạo">
-                {new Date(viewingSubject.createdAt).toLocaleString('vi-VN')}
-              </Descriptions.Item>
-            )}
-            {viewingSubject.updatedAt && (
-              <Descriptions.Item label="Ngày cập nhật">
-                {new Date(viewingSubject.updatedAt).toLocaleString('vi-VN')}
-              </Descriptions.Item>
-            )}
-            {viewingSubject.lessons && (
-              <Descriptions.Item label="Số bài học">
-                {viewingSubject.lessons.length || 0} bài học
-              </Descriptions.Item>
-            )}
-          </Descriptions>
-        )}
-
-        {/* Lessons List */}
-        {viewingSubject && viewingSubject.lessons && viewingSubject.lessons.length > 0 && (
-          <div className="mt-6">
-            <h4 className="text-base font-semibold mb-4">Danh sách bài học</h4>
-            <div className="space-y-3">
-              {viewingSubject.lessons.map((lesson) => (
-                <Card
-                  key={lesson.id}
-                  size="small"
-                  className="shadow-sm hover:shadow-md transition-all"
-                  styles={{ body: { padding: '16px' } }}
-                >
-                  <div className="flex justify-between items-start">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <Tag color="blue">Bài {lesson.lessonNumber}</Tag>
-                        <h5 className="text-base font-semibold text-gray-800 m-0">{lesson.name}</h5>
-                      </div>
-                      {lesson.description && (
-                        <p className="text-sm text-gray-600 mb-2 line-clamp-2">
-                          {lesson.description}
-                        </p>
-                      )}
-                      <div className="flex items-center gap-4 text-xs text-gray-500">
-                        <span>⏱️ {lesson.duration} phút</span>
-                        {lesson.createdAt && (
-                          <span>📅 {new Date(lesson.createdAt).toLocaleDateString('vi-VN')}</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {viewingSubject && viewingSubject.lessons && viewingSubject.lessons.length === 0 && (
-          <div className="mt-6 text-center py-8 text-gray-400">
-            <div className="text-lg mb-2">📚</div>
-            <div>Chưa có bài học nào</div>
-          </div>
-        )}
-      </Modal>
+      />
     </div>
   );
 }

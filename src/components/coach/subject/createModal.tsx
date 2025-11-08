@@ -142,7 +142,7 @@ const CreateModal: React.FC<CreateSubjectModalProps> = ({
 
   return (
     <Modal
-      title={<div className="text-xl font-semibold">➕ Tạo môn học</div>}
+      title={initialValues ? '✏️ Sửa môn học' : '➕ Tạo môn học'}
       open={open}
       onCancel={handleClose}
       onOk={handleOk}

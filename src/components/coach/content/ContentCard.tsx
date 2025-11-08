@@ -35,14 +35,33 @@ export const formatDuration = (seconds: number): string => {
   return `${minutes}:${secs.toString().padStart(2, '0')}`;
 };
 
+export const formatDateTime = (dateString: string | null | undefined): string => {
+  if (!dateString) return '—';
+  try {
+    const date = new Date(dateString);
+    return date.toLocaleString('vi-VN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+  } catch {
+    return dateString;
+  }
+};
+
 export const ContentCard = ({
   item,
   type,
   onView,
+  onEdit,
 }: {
   item: any;
   type: 'quiz' | 'video' | 'lesson';
   onView?: (item: any) => void;
+  onEdit?: (item: any) => void;
 }) => {
   const { message } = App.useApp();
   const cardActions = [
@@ -62,7 +81,13 @@ export const ContentCard = ({
       key: 'edit',
       icon: <EditOutlined />,
       label: 'Sửa',
-      onClick: () => message.info(`Sửa ${item.title || item.name}`),
+      onClick: () => {
+        if (onEdit) {
+          onEdit(item);
+        } else {
+          message.info(`Sửa ${item.title || item.name}`);
+        }
+      },
     },
     {
       key: 'delete',
@@ -209,14 +234,27 @@ export const ContentCard = ({
 
       {/* Description */}
       {item.description && (
-        <p className="text-sm text-gray-500 mt-2 mb-0 line-clamp-2">{item.description}</p>
+        <div className="flex items-center gap-2">
+          <FileTextOutlined />
+          <span>Mô tả: {item.description}</span>
+        </div>
       )}
 
       {/* Footer */}
-      <div className="flex justify-between items-center mt-4 pt-3 border-t border-gray-100">
-        <span className="text-xs text-gray-400">
-          {item.createdAt || new Date().toISOString().split('T')[0]}
-        </span>
+      <div className="mt-4 pt-3 border-t border-gray-100 space-y-1">
+        {item.createdAt && (
+          <div className="flex items-center gap-1 text-xs text-gray-400">
+            <span className="font-medium">Tạo lúc:</span>
+            <span>{formatDateTime(item.createdAt)}</span>
+          </div>
+        )}
+        {item.updatedAt && (
+          <div className="flex items-center gap-1 text-xs text-gray-400">
+            <span className="font-medium">Cập nhật lúc:</span>
+            <span>{formatDateTime(item.updatedAt)}</span>
+          </div>
+        )}
+        {!item.createdAt && !item.updatedAt && <div className="text-xs text-gray-400">—</div>}
       </div>
     </Card>
   );

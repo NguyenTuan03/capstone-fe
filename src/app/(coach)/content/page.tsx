@@ -33,7 +33,13 @@ import CreateVideoModal, {
 } from '@/components/coach/content/createVideoModal';
 import VideoDetailModal from '@/components/coach/content/VideoDetailModal';
 import QuizDetailModal from '@/components/coach/content/QuizDetailModal';
-import { useCreateLesson, useGetLessons } from '@/@crema/services/apis/lessons';
+import LessonDetailModal from '@/components/coach/content/LessonDetailModal';
+import {
+  useCreateLesson,
+  useUpdateLesson,
+  useGetLessonsBySubject,
+} from '@/@crema/services/apis/lessons';
+import { useGetSubjects } from '@/@crema/services/apis/subjects';
 import { ContentCard } from '@/components/coach/content/ContentCard';
 import {
   useCreateQuizForLesson,
@@ -72,6 +78,12 @@ const ContentLibrary = () => {
   const [isVideoDetailModalVisible, setIsVideoDetailModalVisible] = useState(false);
   const [selectedQuiz, setSelectedQuiz] = useState<any>(null);
   const [isQuizDetailModalVisible, setIsQuizDetailModalVisible] = useState(false);
+  const [selectedLesson, setSelectedLesson] = useState<any>(null);
+  const [isLessonDetailModalVisible, setIsLessonDetailModalVisible] = useState(false);
+  const [selectedLessonForEdit, setSelectedLessonForEdit] = useState<any>(null);
+  const [selectedSubjectForLesson, setSelectedSubjectForLesson] = useState<
+    string | number | undefined
+  >(undefined);
 
   // Modals
   const [isQuizModalVisible, setIsQuizModalVisible] = useState(false);
@@ -83,8 +95,33 @@ const ContentLibrary = () => {
 
   // API
   const createLessonMutation = useCreateLesson();
-  const { data: lessonsRes, isLoading: isLoadingLessons } = useGetLessons({ page: 1, size: 10 });
-  const lessons = useMemo(() => (lessonsRes?.items as any[]) || [], [lessonsRes?.items]);
+  const updateLessonMutation = useUpdateLesson();
+
+  // Fetch subjects for dropdown
+  const { data: subjectsRes } = useGetSubjects({ page: 1, size: 100 });
+  const subjects = useMemo(() => (subjectsRes?.items as any[]) || [], [subjectsRes?.items]);
+  const subjectsOptions = useMemo(
+    () => subjects.map((s) => ({ value: s.id, label: s.name })),
+    [subjects],
+  );
+
+  // Fetch lessons by subject or all lessons
+  const { data: lessonsRes, isLoading: isLoadingLessons } =
+    useGetLessonsBySubject(selectedSubjectForLesson);
+  const rawLessons = useMemo(() => {
+    if (Array.isArray(lessonsRes)) {
+      return lessonsRes;
+    }
+    return (lessonsRes?.items as any[]) || [];
+  }, [lessonsRes]);
+
+  // Map lessons to include original data
+  const lessons = useMemo(() => {
+    return rawLessons.map((lesson: any) => ({
+      ...lesson,
+      _original: lesson, // Keep original data for detail modal
+    }));
+  }, [rawLessons]);
   const createQuizForLessonMutation = useCreateQuizForLesson();
   const { data: quizzesRes, isLoading: isLoadingQuizzes } = useGetQuizzesByLesson({
     lessonId: selectedLessonForQuiz ?? 0,
@@ -242,6 +279,29 @@ const ContentLibrary = () => {
     }
   };
 
+  const handleEditLesson = async (values: any) => {
+    if (!selectedLessonForEdit) return;
+
+    setLessonLoading(true);
+    try {
+      await updateLessonMutation.mutateAsync({
+        lessonId: selectedLessonForEdit.id,
+        data: {
+          name: values.name,
+          description: values.description,
+          duration: values.duration,
+        },
+      });
+      message.success('Cập nhật bài học thành công!');
+      setIsLessonModalVisible(false);
+      setSelectedLessonForEdit(null);
+    } catch (e: any) {
+      message.error(e?.message || 'Cập nhật bài học thất bại');
+    } finally {
+      setLessonLoading(false);
+    }
+  };
+
   const isCreatingQuiz = createQuizForLessonMutation.isPending;
 
   const handleCreateQuiz = async () => {
@@ -385,6 +445,26 @@ const ContentLibrary = () => {
   const handleViewVideo = (video: any) => {
     setSelectedVideo(video);
     setIsVideoDetailModalVisible(true);
+  };
+
+  const handleViewLesson = (lesson: any) => {
+    // Merge mapped data with original data for full information
+    const fullLessonData = {
+      ...lesson,
+      ...(lesson._original || {}),
+    };
+    setSelectedLesson(fullLessonData);
+    setIsLessonDetailModalVisible(true);
+  };
+
+  const handleEditLessonClick = (lesson: any) => {
+    // Merge mapped data with original data for full information
+    const fullLessonData = {
+      ...lesson,
+      ...(lesson._original || {}),
+    };
+    setSelectedLessonForEdit(fullLessonData);
+    setIsLessonModalVisible(true);
   };
 
   const handleViewQuiz = (quiz: any) => {
@@ -535,7 +615,50 @@ const ContentLibrary = () => {
               ),
               children: (
                 <div>
-                  {isLoadingLessons ? (
+                  {/* Subject Filter for Lesson Tab */}
+                  <Card className="mb-4" styles={{ body: { padding: '16px' } }}>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="text-sm font-medium text-gray-700">Lọc theo môn học:</span>
+                      <Select
+                        placeholder="Chọn môn học để xem bài học"
+                        size="large"
+                        style={{ width: 300 }}
+                        value={selectedSubjectForLesson}
+                        onChange={(value) => setSelectedSubjectForLesson(value)}
+                        allowClear
+                        onClear={() => setSelectedSubjectForLesson(undefined)}
+                        options={[
+                          { value: undefined, label: 'Tất cả môn học', disabled: true },
+                          ...subjectsOptions,
+                        ]}
+                        optionFilterProp="label"
+                      />
+                      {selectedSubjectForLesson && (
+                        <Button
+                          onClick={() => {
+                            setSelectedSubjectForLesson(undefined);
+                          }}
+                        >
+                          Xóa bộ lọc
+                        </Button>
+                      )}
+                    </div>
+                  </Card>
+
+                  {!selectedSubjectForLesson ? (
+                    <Empty
+                      image={Empty.PRESENTED_IMAGE_SIMPLE}
+                      description="Vui lòng chọn môn học để xem bài học"
+                    >
+                      <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={() => setIsLessonModalVisible(true)}
+                      >
+                        Tạo bài học mới
+                      </Button>
+                    </Empty>
+                  ) : isLoadingLessons ? (
                     <Row gutter={[16, 16]}>
                       {[1, 2, 3].map((i) => (
                         <Col xs={24} sm={12} lg={8} key={i}>
@@ -546,20 +669,28 @@ const ContentLibrary = () => {
                       ))}
                     </Row>
                   ) : lessons.length === 0 ? (
-                    <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description="Chưa có bài học nào">
+                    <Empty
+                      image={Empty.PRESENTED_IMAGE_SIMPLE}
+                      description={`Chưa có bài học nào cho môn học đã chọn`}
+                    >
                       <Button
                         type="primary"
                         icon={<PlusOutlined />}
                         onClick={() => setIsLessonModalVisible(true)}
                       >
-                        Tạo bài học đầu tiên
+                        Tạo bài học cho môn học này
                       </Button>
                     </Empty>
                   ) : (
                     <Row gutter={[16, 16]}>
                       {lessons.map((lesson) => (
                         <Col xs={24} sm={12} lg={8} key={lesson.id}>
-                          <ContentCard item={lesson} type="lesson" />
+                          <ContentCard
+                            item={lesson}
+                            type="lesson"
+                            onView={handleViewLesson}
+                            onEdit={handleEditLessonClick}
+                          />
                         </Col>
                       ))}
                     </Row>
@@ -767,8 +898,22 @@ const ContentLibrary = () => {
 
       <CreateLessonModal
         open={isLessonModalVisible}
-        onClose={() => setIsLessonModalVisible(false)}
-        onSubmit={handleCreateLesson}
+        onClose={() => {
+          setIsLessonModalVisible(false);
+          setSelectedLessonForEdit(null);
+        }}
+        onSubmit={selectedLessonForEdit ? handleEditLesson : handleCreateLesson}
+        initialValues={
+          selectedLessonForEdit
+            ? {
+                subjectId:
+                  selectedLessonForEdit.subjectId || selectedLessonForEdit.subject?.id || '',
+                name: selectedLessonForEdit.name || '',
+                description: selectedLessonForEdit.description || '',
+                duration: selectedLessonForEdit.duration || undefined,
+              }
+            : undefined
+        }
         loading={lessonLoading}
       />
 
@@ -796,6 +941,15 @@ const ContentLibrary = () => {
         onClose={() => {
           setIsQuizDetailModalVisible(false);
           setSelectedQuiz(null);
+        }}
+      />
+
+      <LessonDetailModal
+        open={isLessonDetailModalVisible}
+        lesson={selectedLesson}
+        onClose={() => {
+          setIsLessonDetailModalVisible(false);
+          setSelectedLesson(null);
         }}
       />
 

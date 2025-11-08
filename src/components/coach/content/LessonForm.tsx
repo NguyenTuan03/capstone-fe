@@ -1,6 +1,7 @@
 import { Form, Input, InputNumber, Button, message, Select } from 'antd';
 import { SaveOutlined, ClockCircleOutlined } from '@ant-design/icons';
 import { useGetSubjects } from '@/@crema/services/apis/subjects';
+import { useEffect } from 'react';
 
 const { TextArea } = Input;
 
@@ -31,12 +32,21 @@ export default function LessonForm({
   });
   const subjects = (subjectsRes?.items as any[]) || [];
 
+  // Update form values when initialValues change
+  useEffect(() => {
+    if (initialValues) {
+      form.setFieldsValue(initialValues);
+    } else {
+      form.resetFields();
+    }
+  }, [initialValues, form]);
+
   const handleSubmit = async (values: LessonFormData) => {
     try {
       await onSubmit(values);
       message.success('Lưu bài học thành công!');
       form.resetFields();
-    } catch (error) {
+    } catch {
       message.error('Có lỗi xảy ra, vui lòng thử lại!');
     }
   };

@@ -7,6 +7,7 @@ import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 import { CourseCard } from '@/components/coach/course/CourseCard';
 import { useGetCourses } from '@/@crema/services/apis/courses';
 import { Pagination } from 'antd';
+import { mapCoursesWithPagination } from '@/@crema/utils/courseCard';
 
 const CourseManagement = () => {
   const { isAuthorized, isChecking } = useRoleGuard(['COACH'], {
@@ -241,23 +242,11 @@ const CourseManagement = () => {
     status: getStatusFromTab(activeTab),
   });
 
-  // Map course data to add levelColor based on level
-  const courses = useMemo(() => {
-    const rawCourses = (coursesRes?.items as any[]) || [];
-    return rawCourses.map((course: any) => {
-      const levelColorMap: Record<string, string> = {
-        BEGINNER: 'green',
-        INTERMEDIATE: 'blue',
-        ADVANCED: 'purple',
-      };
-      const level = course.level?.toUpperCase() || '';
-      return {
-        ...course,
-        levelColor: levelColorMap[level] || 'default',
-      };
-    });
-  }, [coursesRes?.items]);
-  const totalCourses = coursesRes?.total || 0;
+  // Map course data với helper function (bao gồm phân trang)
+  const { courses, total: totalCourses } = useMemo(() => {
+    return mapCoursesWithPagination(coursesRes);
+  }, [coursesRes]);
+
   const filteredCourses = courses; // API already filters by status, so use courses directly
 
   // Reset page to 1 when search query or activeTab changes
