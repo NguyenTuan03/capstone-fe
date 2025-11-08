@@ -1,230 +1,273 @@
 'use client';
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useMemo, useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import {
-  Modal,
-  Form,
-  Input,
-  Select,
-  Button,
+  Tabs,
   Card,
   Row,
   Col,
+  Button,
+  Input,
+  Select,
   Space,
-  Tag,
   Skeleton,
   App,
+  Badge,
+  Empty,
+  Form,
 } from 'antd';
-import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 import {
   PlusOutlined,
+  SearchOutlined,
+  FilterOutlined,
   FileTextOutlined,
-  EditOutlined,
-  EyeOutlined,
-  PlayCircleOutlined,
+  VideoCameraOutlined,
+  QuestionCircleOutlined,
 } from '@ant-design/icons';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 import CreateQuizModal from '@/components/coach/content/createQuizModal';
+import { CreateQuizFormValues } from '@/@crema/types/quiz';
 import CreateLessonModal from '@/components/coach/content/createLessonModal';
-import { useCreateLesson, useGetLessons } from '@/@crema/services/apis/lessons';
+import CreateVideoModal, {
+  CreateVideoFormValues,
+} from '@/components/coach/content/createVideoModal';
+import VideoDetailModal from '@/components/coach/content/VideoDetailModal';
+import QuizDetailModal from '@/components/coach/content/QuizDetailModal';
+import LessonDetailModal from '@/components/coach/content/LessonDetailModal';
+import {
+  useCreateLesson,
+  useUpdateLesson,
+  useGetLessonsBySubject,
+} from '@/@crema/services/apis/lessons';
+import { useGetSubjects } from '@/@crema/services/apis/subjects';
+import { ContentCard } from '@/components/coach/content/ContentCard';
+import {
+  useCreateQuizForLesson,
+  CreateQuizDto,
+  useGetQuizzesByLesson,
+} from '@/@crema/services/apis/quizzes';
+import {
+  useCreateVideoForLesson,
+  useGetVideosByLesson,
+  CreateVideoDto,
+} from '@/@crema/services/apis/videos';
+
+const { Search } = Input;
 
 const ContentLibrary = () => {
-  const router = useRouter();
   const { message } = App.useApp();
+  const queryClient = useQueryClient();
   const { isAuthorized, isChecking } = useRoleGuard(['COACH'], {
     unauthenticated: '/signin',
     ADMIN: '/dashboard',
     LEARNER: '/home',
   });
+
+  // States
+  const [activeTab, setActiveTab] = useState('lesson');
+  const [searchText, setSearchText] = useState('');
+  const [filterLevel, setFilterLevel] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [selectedLessonForQuiz, setSelectedLessonForQuiz] = useState<string | number | undefined>(
+    undefined,
+  );
+  const [selectedLessonForVideo, setSelectedLessonForVideo] = useState<string | number | undefined>(
+    undefined,
+  );
+  const [selectedVideo, setSelectedVideo] = useState<any>(null);
+  const [isVideoDetailModalVisible, setIsVideoDetailModalVisible] = useState(false);
+  const [selectedQuiz, setSelectedQuiz] = useState<any>(null);
+  const [isQuizDetailModalVisible, setIsQuizDetailModalVisible] = useState(false);
+  const [selectedLesson, setSelectedLesson] = useState<any>(null);
+  const [isLessonDetailModalVisible, setIsLessonDetailModalVisible] = useState(false);
+  const [selectedLessonForEdit, setSelectedLessonForEdit] = useState<any>(null);
+  const [selectedSubjectForLesson, setSelectedSubjectForLesson] = useState<
+    string | number | undefined
+  >(undefined);
+
+  // Modals
   const [isQuizModalVisible, setIsQuizModalVisible] = useState(false);
   const [isLessonModalVisible, setIsLessonModalVisible] = useState(false);
-  const [isExerciseModalVisible, setIsExerciseModalVisible] = useState(false);
-  const [isCourseModalVisible, setIsCourseModalVisible] = useState(false);
-  const [isSessionModalVisible, setIsSessionModalVisible] = useState(false);
-  const [isViewModalVisible, setIsViewModalVisible] = useState(false);
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-  const [selectedContent, setSelectedContent] = useState<any>(null);
-  const [selectedCourse, setSelectedCourse] = useState<any>(null);
-  const [viewingContent, setViewingContent] = useState<any>(null);
-  const [editingContent, setEditingContent] = useState<any>(null);
-
-  // Forms
-  const [quizForm] = Form.useForm();
+  const [isVideoModalVisible, setIsVideoModalVisible] = useState(false);
   const [lessonLoading, setLessonLoading] = useState(false);
+  const [quizForm] = Form.useForm<CreateQuizFormValues>();
+  const [videoForm] = Form.useForm<CreateVideoFormValues>();
+
+  // API
   const createLessonMutation = useCreateLesson();
-  const { data: lessonsRes, isLoading: isLoadingLessons } = useGetLessons({ page: 1, size: 3 });
-  const lessons = (lessonsRes?.items as any[]) || [];
-  const [exerciseForm] = Form.useForm();
+  const updateLessonMutation = useUpdateLesson();
 
-  // Mock data for courses and sessions
-  const courses = [
-    {
-      id: 1,
-      title: 'Pickleball Cơ Bản - Khóa 1',
-      description: 'Khóa học dành cho người mới bắt đầu',
-      totalSessions: 8,
-      enrolledStudents: 25,
-    },
-    {
-      id: 2,
-      title: 'Kỹ Thuật Nâng Cao - Khóa 2',
-      description: 'Khóa học cho người đã có kinh nghiệm',
-      totalSessions: 10,
-      enrolledStudents: 18,
-    },
-    {
-      id: 3,
-      title: 'Chiến Thuật Đôi - Khóa 3',
-      description: 'Khóa học chuyên về thi đấu đôi',
-      totalSessions: 6,
-      enrolledStudents: 12,
-    },
-  ];
+  // Fetch subjects for dropdown
+  const { data: subjectsRes } = useGetSubjects({ page: 1, size: 100 });
+  const subjects = useMemo(() => (subjectsRes?.items as any[]) || [], [subjectsRes?.items]);
+  const subjectsOptions = useMemo(
+    () => subjects.map((s) => ({ value: s.id, label: s.name })),
+    [subjects],
+  );
 
-  const sessions = [
-    {
-      id: 1,
-      courseId: 1,
-      title: 'Session 1: Giới thiệu Pickleball',
-      date: '2025-01-15',
-      status: 'upcoming',
-    },
-    {
-      id: 2,
-      courseId: 1,
-      title: 'Session 2: Kỹ thuật cầm vợt',
-      date: '2025-01-22',
-      status: 'upcoming',
-    },
-    {
-      id: 3,
-      courseId: 1,
-      title: 'Session 3: Serve cơ bản',
-      date: '2025-01-29',
-      status: 'upcoming',
-    },
-    {
-      id: 4,
-      courseId: 2,
-      title: 'Session 1: Return nâng cao',
-      date: '2025-02-01',
-      status: 'upcoming',
-    },
-    {
-      id: 5,
-      courseId: 2,
-      title: 'Session 2: Footwork chuyên nghiệp',
-      date: '2025-02-08',
-      status: 'upcoming',
-    },
-  ];
+  // Fetch lessons by subject or all lessons
+  const { data: lessonsRes, isLoading: isLoadingLessons } =
+    useGetLessonsBySubject(selectedSubjectForLesson);
+  const rawLessons = useMemo(() => {
+    if (Array.isArray(lessonsRes)) {
+      return lessonsRes;
+    }
+    return (lessonsRes?.items as any[]) || [];
+  }, [lessonsRes]);
 
-  const quizzes = [
-    {
-      id: 1,
-      title: 'Quiz: Kỹ thuật serve cơ bản',
-      level: 'Beginner',
-      levelColor: 'bg-green-100 text-green-800',
-      questions: 10,
-      used: 3,
-      createdDate: '2025-01-01',
-      description: 'Quiz kiểm tra kiến thức về kỹ thuật serve cơ bản trong Pickleball',
-      timeLimit: 15, // minutes
-      questionsData: [
-        {
-          id: 1,
-          question: 'Tư thế chuẩn bị serve trong Pickleball là gì?',
-          options: [
-            'Đứng song song với baseline',
-            'Đứng chéo với baseline',
-            'Đứng bất kỳ vị trí nào',
-            'Đứng trong service box',
-          ],
-          correctAnswer: 0,
-          explanation:
-            'Tư thế chuẩn bị serve phải đứng song song với baseline để đảm bảo tính công bằng.',
-        },
-        {
-          id: 2,
-          question: 'Quả serve hợp lệ phải rơi vào vùng nào?',
-          options: [
-            'Service box đối diện',
-            'Service box cùng bên',
-            'Bất kỳ vùng nào trong court',
-            'Vùng no-volley zone',
-          ],
-          correctAnswer: 0,
-          explanation:
-            'Serve phải rơi vào service box đối diện và không được chạm vào no-volley zone.',
-        },
-      ],
-    },
-    {
-      id: 2,
-      title: 'Quiz: Return nâng cao',
-      level: 'Intermediate',
-      levelColor: 'bg-blue-100 text-blue-800',
-      questions: 8,
-      used: 1,
-      createdDate: '2025-01-05',
-      description: 'Quiz về kỹ thuật return nâng cao và chiến thuật',
-      timeLimit: 20,
-      questionsData: [
-        {
-          id: 1,
-          question: 'Khi return serve, điều quan trọng nhất là gì?',
-          options: [
-            'Sức mạnh của cú đánh',
-            'Độ chính xác và vị trí',
-            'Tốc độ di chuyển',
-            'Thời gian phản ứng',
-          ],
-          correctAnswer: 1,
-          explanation:
-            'Độ chính xác và vị trí return quan trọng hơn sức mạnh để kiểm soát trận đấu.',
-        },
-      ],
-    },
-    {
-      id: 3,
-      title: 'Quiz: Chiến thuật cơ bản',
-      level: 'Beginner',
-      levelColor: 'bg-green-100 text-green-800',
-      questions: 5,
-      used: 2,
-      createdDate: '2025-01-10',
-      description: 'Quiz về chiến thuật cơ bản trong thi đấu Pickleball',
-      timeLimit: 10,
-      questionsData: [
-        {
-          id: 1,
-          question: 'Chiến thuật nào hiệu quả nhất khi đối thủ ở vị trí yếu?',
-          options: [
-            'Đánh mạnh về phía đối thủ',
-            'Đánh nhẹ về phía đối thủ',
-            'Đánh về vị trí trống',
-            'Đánh về phía sau',
-          ],
-          correctAnswer: 2,
-          explanation: 'Đánh về vị trí trống sẽ tạo áp lực và buộc đối thủ di chuyển nhiều hơn.',
-        },
-      ],
-    },
-  ];
+  // Map lessons to include original data
+  const lessons = useMemo(() => {
+    return rawLessons.map((lesson: any) => ({
+      ...lesson,
+      _original: lesson, // Keep original data for detail modal
+    }));
+  }, [rawLessons]);
+  const createQuizForLessonMutation = useCreateQuizForLesson();
+  const { data: quizzesRes, isLoading: isLoadingQuizzes } = useGetQuizzesByLesson({
+    lessonId: selectedLessonForQuiz ?? 0,
+  });
 
-  const handleCreateLesson = async (_values: {
-    subjectId: string | number;
-    name: string;
-    description?: string;
-    duration?: number;
-  }) => {
+  // Handle response - can be array directly or object with items
+  const rawQuizzes = useMemo(() => {
+    if (Array.isArray(quizzesRes)) {
+      return quizzesRes;
+    }
+    return (quizzesRes?.items as any[]) || (quizzesRes?.data as any[]) || [];
+  }, [quizzesRes]);
+
+  // Create lesson map for quick lookup
+  const lessonMap = useMemo(() => {
+    const map = new Map<string | number, string>();
+    lessons.forEach((lesson: any) => {
+      map.set(lesson.id, lesson.name || `Bài học ${lesson.id}`);
+    });
+    return map;
+  }, [lessons]);
+
+  // Map quiz data to match ContentCard expected format
+  const quizzes = useMemo(() => {
+    return rawQuizzes.map((quiz: any) => ({
+      id: quiz.id,
+      title: quiz.title,
+      description: quiz.description,
+      questions: quiz.totalQuestions || quiz.questions?.length || 0, // Map totalQuestions to questions count
+      totalQuestions: quiz.totalQuestions,
+      status: quiz.deletedAt ? 'draft' : 'published', // Map deletedAt to status
+      createdAt: quiz.createdAt,
+      lessonName: selectedLessonForQuiz ? lessonMap.get(selectedLessonForQuiz) : undefined,
+      lessonId: selectedLessonForQuiz,
+      createdBy: quiz.createdBy,
+      // Include questions array for detail modal
+      questionsList: quiz.questions || [],
+      // Keep original data for reference
+      _original: quiz,
+    }));
+  }, [rawQuizzes, selectedLessonForQuiz, lessonMap]);
+
+  const lessonsOptions = useMemo(
+    () =>
+      lessons.map((lesson: any) => ({
+        value: lesson.id,
+        label: lesson.name || `Bài học ${lesson.id}`,
+      })),
+    [lessons],
+  );
+
+  // Helper function to format video duration
+  const formatVideoDuration = (seconds: number): string => {
+    if (!seconds || seconds < 0) return '0:00';
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+
+    if (hours > 0) {
+      return `${hours}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    }
+    return `${minutes}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Video API
+  const createVideoForLessonMutation = useCreateVideoForLesson();
+  const { data: videosRes, isLoading: isLoadingVideos } = useGetVideosByLesson({
+    lessonId: selectedLessonForVideo ?? 0,
+  });
+
+  // Handle video response
+  const rawVideos = useMemo(() => {
+    if (Array.isArray(videosRes)) {
+      return videosRes;
+    }
+    return (videosRes?.items as any[]) || (videosRes?.data as any[]) || [];
+  }, [videosRes]);
+
+  // Map video data
+  const videos = useMemo(() => {
+    return rawVideos.map((video: any) => {
+      const duration = video.duration || 0;
+
+      // Parse tags from JSON string
+      let tags: string[] = [];
+      if (video.tags) {
+        try {
+          if (typeof video.tags === 'string') {
+            const parsed = JSON.parse(video.tags);
+            tags = Array.isArray(parsed) ? parsed : [parsed].filter(Boolean);
+          } else if (Array.isArray(video.tags)) {
+            tags = video.tags;
+          }
+        } catch (e) {
+          console.warn('Failed to parse tags:', e);
+          tags = [];
+        }
+      }
+
+      // Map video status: READY -> published, others -> draft
+      // Video statuses: UPLOADING, READY, ERROR, ANALYZING
+      let status = 'draft';
+      if (video.status === 'READY') {
+        status = 'published';
+      } else if (video.status === 'UPLOADING' || video.status === 'ANALYZING') {
+        status = 'draft'; // Processing states
+      } else if (video.status === 'ERROR') {
+        status = 'draft'; // Error state, can be shown as draft
+      } else if (video.deletedAt) {
+        status = 'draft';
+      }
+
+      return {
+        id: video.id,
+        title: video.title,
+        description: video.description,
+        duration, // in seconds
+        durationFormatted: formatVideoDuration(duration),
+        status,
+        videoStatus: video.status, // Original video status (UPLOADING, READY, ERROR, ANALYZING)
+        createdAt: video.createdAt || video.updatedAt,
+        lessonName: selectedLessonForVideo ? lessonMap.get(selectedLessonForVideo) : undefined,
+        lessonId: selectedLessonForVideo,
+        tags,
+        drillName: video.drillName,
+        drillDescription: video.drillDescription,
+        drillPracticeSets: video.drillPracticeSets,
+        publicUrl: video.publicUrl,
+        thumbnailUrl: video.thumbnailUrl,
+        uploadedBy: video.uploadedBy,
+        createdBy: video.uploadedBy, // Map uploadedBy to createdBy for compatibility
+        _original: video,
+      };
+    });
+  }, [rawVideos, selectedLessonForVideo, lessonMap]);
+
+  // Handlers
+  const handleCreateLesson = async (values: any) => {
     setLessonLoading(true);
     try {
       await createLessonMutation.mutateAsync({
-        subjectId: _values.subjectId,
+        subjectId: values.subjectId,
         data: {
-          name: _values.name,
-          description: _values.description,
-          duration: _values.duration,
+          name: values.name,
+          description: values.description,
+          duration: values.duration,
         },
       });
       message.success('Tạo bài học thành công!');
@@ -236,777 +279,706 @@ const ContentLibrary = () => {
     }
   };
 
-  const videos = [
-    {
-      id: 1,
-      title: 'Video: Serve technique',
-      tag: 'Technique',
-      tagColor: 'bg-orange-100 text-orange-800',
-      duration: '5:30',
-      used: 4,
-      createdDate: '2025-01-02',
-      description: 'Video hướng dẫn kỹ thuật serve cơ bản trong Pickleball',
-      fileSize: '45MB',
-      resolution: '1080p',
-      videoUrl: 'serve-technique-demo.mp4',
-      thumbnail: 'serve-thumbnail.jpg',
-      tags: ['serve', 'technique', 'beginner'],
-    },
-    {
-      id: 2,
-      title: 'Video: Return practice',
-      tag: 'Practice',
-      tagColor: 'bg-orange-100 text-orange-800',
-      duration: '8:15',
-      used: 2,
-      createdDate: '2025-01-06',
-      description: 'Video thực hành kỹ thuật return và phản xạ',
-      fileSize: '62MB',
-      resolution: '1080p',
-      videoUrl: 'return-practice-demo.mp4',
-      thumbnail: 'return-thumbnail.jpg',
-      tags: ['return', 'practice', 'reflex'],
-    },
-  ];
+  const handleEditLesson = async (values: any) => {
+    if (!selectedLessonForEdit) return;
 
-  // Modal handlers
-  const handleCreateQuiz = () => {
-    quizForm
-      .validateFields()
-      .then((values) => {
-        console.log('Creating quiz:', values);
-        message.success('Tạo quiz thành công!');
-        setIsQuizModalVisible(false);
-        quizForm.resetFields();
-      })
-      .catch((errorInfo) => {
-        console.log('Validation failed:', errorInfo);
+    setLessonLoading(true);
+    try {
+      await updateLessonMutation.mutateAsync({
+        lessonId: selectedLessonForEdit.id,
+        data: {
+          name: values.name,
+          description: values.description,
+          duration: values.duration,
+        },
       });
-  };
-
-  const handleCreateExercise = () => {
-    exerciseForm
-      .validateFields()
-      .then((values) => {
-        console.log('Creating exercise:', values);
-        message.success('Tạo bài tập thành công!');
-        setIsExerciseModalVisible(false);
-        exerciseForm.resetFields();
-      })
-      .catch((errorInfo) => {
-        console.log('Validation failed:', errorInfo);
-      });
-  };
-
-  const handleUseContent = (content: any) => {
-    setSelectedContent(content);
-    setIsCourseModalVisible(true);
-  };
-
-  const handleSelectCourse = (course: any) => {
-    setSelectedCourse(course);
-    setIsCourseModalVisible(false);
-    setIsSessionModalVisible(true);
-  };
-
-  const handleAssignToSession = (session: any) => {
-    message.success(`Đã gán ${selectedContent?.title} vào ${session.title}`);
-    setIsSessionModalVisible(false);
-    setSelectedContent(null);
-    setSelectedCourse(null);
-  };
-
-  const handleViewContent = (content: any) => {
-    setViewingContent(content);
-    setIsViewModalVisible(true);
-  };
-
-  const handleEditContent = (content: any) => {
-    setEditingContent(content);
-    setIsEditModalVisible(true);
-
-    // Pre-fill form based on content type
-    if (content.type === 'quiz') {
-      quizForm.setFieldsValue({
-        title: content.title,
-        description: content.description,
-        level: content.level,
-        timeLimit: content.timeLimit,
-        questions: content.questionsData,
-      });
-    } else if (content.type === 'video') {
-      // Handle video edit form
-    } else if (content.type === 'exercise') {
-      exerciseForm.setFieldsValue({
-        title: content.title,
-        description: content.description,
-        type: content.type,
-        level: content.level,
-        duration: content.duration,
-        instructions: content.instructions,
-        equipment: content.equipment,
-        objectives: content.objectives,
-      });
+      message.success('Cập nhật bài học thành công!');
+      setIsLessonModalVisible(false);
+      setSelectedLessonForEdit(null);
+    } catch (e: any) {
+      message.error(e?.message || 'Cập nhật bài học thất bại');
+    } finally {
+      setLessonLoading(false);
     }
   };
 
-  const ContentCard = ({ item, type }: any) => (
-    <Card
-      hoverable
-      style={{ marginBottom: 16 }}
-      actions={[
-        <Button
-          key="view"
-          type="primary"
-          icon={<EyeOutlined />}
-          size="small"
-          onClick={() => handleViewContent({ ...item, type })}
-        >
-          Xem
-        </Button>,
-        <Button
-          key="edit"
-          icon={<EditOutlined />}
-          size="small"
-          onClick={() => handleEditContent({ ...item, type })}
-        >
-          Sửa
-        </Button>,
-        <Button
-          key="use"
-          icon={<PlayCircleOutlined />}
-          size="small"
-          onClick={() => handleUseContent({ ...item, type })}
-        >
-          Sử dụng
-        </Button>,
-      ]}
-    >
-      <div style={{ marginBottom: 16 }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'flex-start',
-            marginBottom: 8,
-          }}
-        >
-          <div style={{ flex: 1 }}>
-            <h3 style={{ fontSize: '18px', fontWeight: '600', marginBottom: 8 }}>{item.title}</h3>
-            {type === 'quiz' && (
-              <>
-                <div style={{ fontSize: '14px', color: '#666', marginBottom: 4 }}>
-                  {item.questions} câu hỏi
-                </div>
-                <div style={{ fontSize: '14px', color: '#666', marginBottom: 8 }}>
-                  Đã dùng: {item.used} lần
-                </div>
-              </>
-            )}
-            {type === 'video' && (
-              <>
-                <div style={{ fontSize: '14px', color: '#666', marginBottom: 4 }}>
-                  Thời lượng: {item.duration}
-                </div>
-                <div style={{ fontSize: '14px', color: '#666', marginBottom: 8 }}>
-                  Đã dùng: {item.used} lần
-                </div>
-              </>
-            )}
-            {type === 'exercise' && (
-              <>
-                <div style={{ fontSize: '14px', color: '#666', marginBottom: 4 }}>
-                  Loại: {item.typeText}
-                </div>
-                <div style={{ fontSize: '14px', color: '#666', marginBottom: 4 }}>
-                  Độ khó: {item.level}
-                </div>
-                <div style={{ fontSize: '14px', color: '#666', marginBottom: 8 }}>
-                  Đã dùng: {item.used} lần
-                </div>
-              </>
-            )}
-            <div style={{ fontSize: '12px', color: '#999' }}>Tạo: {item.createdDate}</div>
-          </div>
-          {type === 'quiz' && <Tag color="green">{item.level}</Tag>}
-          {type === 'video' && <Tag color="orange">{item.tag}</Tag>}
-          {type === 'exercise' && <Tag color="blue">{item.typeText}</Tag>}
-        </div>
-      </div>
-    </Card>
-  );
+  const isCreatingQuiz = createQuizForLessonMutation.isPending;
+
+  const handleCreateQuiz = async () => {
+    try {
+      const values = await quizForm.validateFields();
+      const { title, description, lessonId, questions } = values;
+
+      if (!lessonId) {
+        message.warning('Vui lòng chọn bài học');
+        return;
+      }
+
+      if (!questions || questions.length === 0) {
+        message.warning('Quiz cần ít nhất một câu hỏi');
+        return;
+      }
+
+      const sanitizedQuestions = questions.map((question: any, index: number) => {
+        const trimmedOptions = (question.options || []).map((option: string) => option.trim());
+
+        if (trimmedOptions.length < 2) {
+          throw new Error(`Câu hỏi ${index + 1} cần ít nhất 2 đáp án`);
+        }
+
+        const correctIndex = question.correctOptionIndex ?? 0;
+        if (correctIndex >= trimmedOptions.length) {
+          throw new Error(`Vui lòng chọn đáp án đúng cho câu ${index + 1}`);
+        }
+
+        return {
+          title: question.title.trim(),
+          explanation: question.explanation?.trim() || undefined,
+          options: trimmedOptions.map((optionContent: string, optionIndex: number) => ({
+            content: optionContent,
+            isCorrect: optionIndex === correctIndex,
+          })),
+        };
+      });
+
+      const quizPayload: CreateQuizDto = {
+        title: title.trim(),
+        description: description?.trim() || undefined,
+        questions: sanitizedQuestions,
+      };
+
+      await createQuizForLessonMutation.mutateAsync({
+        lessonId,
+        quiz: quizPayload,
+      });
+
+      // Set selected lesson and refetch quizzes for the lesson after successful creation
+      setSelectedLessonForQuiz(lessonId);
+      await queryClient.refetchQueries({
+        queryKey: ['quizzes', 'lesson', lessonId],
+      });
+
+      message.success('Tạo quiz thành công!');
+      quizForm.resetFields();
+      setIsQuizModalVisible(false);
+
+      // Switch to quiz tab to show the newly created quiz
+      setActiveTab('quiz');
+    } catch (error: any) {
+      if (error?.errorFields) {
+        // Validation errors handled by Form
+        return;
+      }
+      message.error(error?.message || 'Tạo quiz thất bại, vui lòng thử lại');
+    }
+  };
+
+  const isCreatingVideo = createVideoForLessonMutation.isPending;
+
+  const handleCreateVideo = async () => {
+    try {
+      const values = await videoForm.validateFields();
+      const {
+        title,
+        description,
+        lessonId,
+        duration,
+        tags,
+        drillName,
+        drillDescription,
+        drillPracticeSets,
+        videoFile,
+      } = values;
+
+      if (!lessonId) {
+        message.warning('Vui lòng chọn bài học');
+        return;
+      }
+
+      if (!videoFile) {
+        message.warning('Vui lòng chọn file video');
+        return;
+      }
+
+      if (!duration || duration < 1) {
+        message.warning('Vui lòng nhập thời lượng hợp lệ (ít nhất 1 giây)');
+        return;
+      }
+
+      const videoPayload: CreateVideoDto = {
+        title: title.trim(),
+        description: description?.trim() || undefined,
+        duration: Math.floor(duration), // Ensure integer
+        tags: tags && tags.length > 0 ? tags : undefined,
+        drillName: drillName?.trim() || undefined,
+        drillDescription: drillDescription?.trim() || undefined,
+        drillPracticeSets: drillPracticeSets?.trim() || undefined,
+      };
+
+      await createVideoForLessonMutation.mutateAsync({
+        lessonId,
+        video: videoFile,
+        data: videoPayload,
+      });
+
+      // Set selected lesson and refetch videos for the lesson after successful creation
+      setSelectedLessonForVideo(lessonId);
+      await queryClient.refetchQueries({
+        queryKey: ['videos', 'lesson', lessonId],
+      });
+
+      message.success('Upload video thành công!');
+      videoForm.resetFields();
+      setIsVideoModalVisible(false);
+
+      // Switch to video tab to show the newly uploaded video
+      setActiveTab('video');
+    } catch (error: any) {
+      if (error?.errorFields) {
+        // Validation errors handled by Form
+        return;
+      }
+      message.error(error?.message || 'Upload video thất bại, vui lòng thử lại');
+    }
+  };
+
+  const handleViewVideo = (video: any) => {
+    setSelectedVideo(video);
+    setIsVideoDetailModalVisible(true);
+  };
+
+  const handleViewLesson = (lesson: any) => {
+    // Merge mapped data with original data for full information
+    const fullLessonData = {
+      ...lesson,
+      ...(lesson._original || {}),
+    };
+    setSelectedLesson(fullLessonData);
+    setIsLessonDetailModalVisible(true);
+  };
+
+  const handleEditLessonClick = (lesson: any) => {
+    // Merge mapped data with original data for full information
+    const fullLessonData = {
+      ...lesson,
+      ...(lesson._original || {}),
+    };
+    setSelectedLessonForEdit(fullLessonData);
+    setIsLessonModalVisible(true);
+  };
+
+  const handleViewQuiz = (quiz: any) => {
+    // Merge mapped data with original data for full information
+    const fullQuizData = {
+      ...quiz,
+      ...(quiz._original || {}),
+      // Keep mapped fields like lessonName
+      lessonName: quiz.lessonName,
+      status: quiz.status,
+    };
+    setSelectedQuiz(fullQuizData);
+    setIsQuizDetailModalVisible(true);
+  };
+
   if (isChecking) {
-    return <div>Đang tải...</div>;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Skeleton active paragraph={{ rows: 8 }} />
+      </div>
+    );
   }
+
   if (!isAuthorized) {
     return <div>Bạn không có quyền truy cập trang này</div>;
   }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Content */}
-      <div className="px-12 py-6">
-        {/* Title and Buttons */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            marginBottom: 24,
-          }}
-        >
-          <h2 style={{ fontSize: '24px', fontWeight: 'bold' }}>Kho nội dung</h2>
+      <div className="px-6 py-6">
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6 gap-4 flex-wrap">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800 m-0">📚 Kho nội dung</h1>
+            <p className="text-gray-500 mt-1 mb-0">Quản lý và tái sử dụng nội dung giảng dạy</p>
+          </div>
+
           <Space>
-            <Button
-              type="primary"
-              icon={<FileTextOutlined />}
-              onClick={() => setIsQuizModalVisible(true)}
-              style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
-            >
-              Tạo Quiz
-            </Button>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => setIsExerciseModalVisible(true)}
-              style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
-            >
-              Tạo Bài tập
-            </Button>
-            <Button
-              type="primary"
-              icon={<PlusOutlined />}
-              onClick={() => setIsLessonModalVisible(true)}
-              style={{ backgroundColor: '#52c41a', borderColor: '#52c41a' }}
-            >
-              Tạo bài học
-            </Button>
+            {activeTab === 'quiz' && (
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => {
+                  quizForm.resetFields();
+                  setIsQuizModalVisible(true);
+                }}
+                className="bg-blue-500"
+              >
+                Tạo Quiz
+              </Button>
+            )}
+
+            {activeTab === 'lesson' && (
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => setIsLessonModalVisible(true)}
+                className="bg-green-500"
+              >
+                Tạo Bài học
+              </Button>
+            )}
+
+            {activeTab === 'video' && (
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                className="bg-orange-500"
+                onClick={() => {
+                  videoForm.resetFields();
+                  setIsVideoModalVisible(true);
+                }}
+              >
+                Upload Video
+              </Button>
+            )}
           </Space>
         </div>
 
-        {/* Quiz Section */}
-        <div style={{ marginBottom: 32 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-            <span style={{ fontSize: '24px' }}>📋</span>
-            <h3 style={{ fontSize: '20px', fontWeight: '600' }}>Quiz ({quizzes.length})</h3>
-          </div>
-          <Row gutter={16}>
-            {quizzes.map((quiz) => (
-              <Col span={8} key={quiz.id}>
-                <ContentCard item={quiz} type="quiz" />
-              </Col>
-            ))}
-          </Row>
-        </div>
+        {/* Search & Filters */}
+        <Card className="mb-4" styles={{ body: { padding: '16px' } }}>
+          <div className="flex gap-3 flex-wrap">
+            <Search
+              placeholder="Tìm kiếm nội dung..."
+              allowClear
+              size="large"
+              style={{ width: 300 }}
+              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+            />
 
-        {/* Video Section */}
-        <div style={{ marginBottom: 32 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-            <span style={{ fontSize: '24px' }}>🎥</span>
-            <h3 style={{ fontSize: '20px', fontWeight: '600' }}>Video ({videos.length})</h3>
-          </div>
-          <Row gutter={16}>
-            {videos.map((video) => (
-              <Col span={8} key={video.id}>
-                <ContentCard item={video} type="video" />
-              </Col>
-            ))}
-          </Row>
-        </div>
+            <Select
+              placeholder="Cấp độ"
+              size="large"
+              style={{ width: 150 }}
+              value={filterLevel}
+              onChange={setFilterLevel}
+              suffixIcon={<FilterOutlined />}
+            >
+              <Select.Option value="all">Tất cả</Select.Option>
+              <Select.Option value="Beginner">Beginner</Select.Option>
+              <Select.Option value="Intermediate">Intermediate</Select.Option>
+              <Select.Option value="Advanced">Advanced</Select.Option>
+            </Select>
 
-        {/* Lessons Section */}
-        <div style={{ marginBottom: 32 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-            <span style={{ fontSize: '24px' }}>📚</span>
-            <h3 style={{ fontSize: '20px', fontWeight: '600' }}>Bài học ({lessons.length})</h3>
+            <Select
+              placeholder="Trạng thái"
+              size="large"
+              style={{ width: 150 }}
+              value={filterStatus}
+              onChange={setFilterStatus}
+            >
+              <Select.Option value="all">Tất cả</Select.Option>
+              <Select.Option value="published">Đã xuất bản</Select.Option>
+              <Select.Option value="draft">Nháp</Select.Option>
+              <Select.Option value="archived">Lưu trữ</Select.Option>
+            </Select>
+
+            {(searchText || filterLevel !== 'all' || filterStatus !== 'all') && (
+              <Button
+                onClick={() => {
+                  setSearchText('');
+                  setFilterLevel('all');
+                  setFilterStatus('all');
+                }}
+              >
+                Xóa bộ lọc
+              </Button>
+            )}
           </div>
-          {isLoadingLessons ? (
-            <Skeleton active paragraph={{ rows: 4 }} />
-          ) : (
-            <Row gutter={16}>
-              {lessons.map((lesson) => (
-                <Col span={8} key={lesson.id}>
-                  <Card hoverable style={{ marginBottom: 16 }}>
-                    <div
-                      style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <div style={{ fontWeight: 600 }}>{lesson.name}</div>
-                      {lesson.duration ? <Tag color="blue">{lesson.duration} phút</Tag> : null}
-                    </div>
-                    <div style={{ color: '#666', marginTop: 8 }}>
-                      {lesson.description || 'Chưa có mô tả'}
+        </Card>
+
+        {/* Tabs Content */}
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          size="large"
+          items={[
+            {
+              key: 'lesson',
+              label: (
+                <span className="flex items-center gap-2">
+                  <FileTextOutlined />
+                  Bài học
+                  <Badge count={lessons.length} showZero style={{ backgroundColor: '#52c41a' }} />
+                </span>
+              ),
+              children: (
+                <div>
+                  {/* Subject Filter for Lesson Tab */}
+                  <Card className="mb-4" styles={{ body: { padding: '16px' } }}>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="text-sm font-medium text-gray-700">Lọc theo môn học:</span>
+                      <Select
+                        placeholder="Chọn môn học để xem bài học"
+                        size="large"
+                        style={{ width: 300 }}
+                        value={selectedSubjectForLesson}
+                        onChange={(value) => setSelectedSubjectForLesson(value)}
+                        allowClear
+                        onClear={() => setSelectedSubjectForLesson(undefined)}
+                        options={[
+                          { value: undefined, label: 'Tất cả môn học', disabled: true },
+                          ...subjectsOptions,
+                        ]}
+                        optionFilterProp="label"
+                      />
+                      {selectedSubjectForLesson && (
+                        <Button
+                          onClick={() => {
+                            setSelectedSubjectForLesson(undefined);
+                          }}
+                        >
+                          Xóa bộ lọc
+                        </Button>
+                      )}
                     </div>
                   </Card>
-                </Col>
-              ))}
-            </Row>
-          )}
-        </div>
+
+                  {!selectedSubjectForLesson ? (
+                    <Empty
+                      image={Empty.PRESENTED_IMAGE_SIMPLE}
+                      description="Vui lòng chọn môn học để xem bài học"
+                    >
+                      <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={() => setIsLessonModalVisible(true)}
+                      >
+                        Tạo bài học mới
+                      </Button>
+                    </Empty>
+                  ) : isLoadingLessons ? (
+                    <Row gutter={[16, 16]}>
+                      {[1, 2, 3].map((i) => (
+                        <Col xs={24} sm={12} lg={8} key={i}>
+                          <Card>
+                            <Skeleton active paragraph={{ rows: 3 }} />
+                          </Card>
+                        </Col>
+                      ))}
+                    </Row>
+                  ) : lessons.length === 0 ? (
+                    <Empty
+                      image={Empty.PRESENTED_IMAGE_SIMPLE}
+                      description={`Chưa có bài học nào cho môn học đã chọn`}
+                    >
+                      <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={() => setIsLessonModalVisible(true)}
+                      >
+                        Tạo bài học cho môn học này
+                      </Button>
+                    </Empty>
+                  ) : (
+                    <Row gutter={[16, 16]}>
+                      {lessons.map((lesson) => (
+                        <Col xs={24} sm={12} lg={8} key={lesson.id}>
+                          <ContentCard
+                            item={lesson}
+                            type="lesson"
+                            onView={handleViewLesson}
+                            onEdit={handleEditLessonClick}
+                          />
+                        </Col>
+                      ))}
+                    </Row>
+                  )}
+                </div>
+              ),
+            },
+            {
+              key: 'quiz',
+              label: (
+                <span className="flex items-center gap-2">
+                  <QuestionCircleOutlined />
+                  Quiz
+                  <Badge count={quizzes.length} showZero style={{ backgroundColor: '#1890ff' }} />
+                </span>
+              ),
+              children: (
+                <div>
+                  {/* Lesson Filter for Quiz Tab */}
+                  <Card className="mb-4" styles={{ body: { padding: '16px' } }}>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="text-sm font-medium text-gray-700">Lọc theo bài học:</span>
+                      <Select
+                        placeholder="Chọn bài học để xem quiz"
+                        size="large"
+                        style={{ width: 300 }}
+                        value={selectedLessonForQuiz}
+                        onChange={(value) => setSelectedLessonForQuiz(value)}
+                        allowClear
+                        onClear={() => setSelectedLessonForQuiz(undefined)}
+                        options={[
+                          { value: undefined, label: 'Tất cả bài học', disabled: true },
+                          ...lessonsOptions,
+                        ]}
+                        optionFilterProp="label"
+                      />
+                      {selectedLessonForQuiz && (
+                        <Button
+                          onClick={() => {
+                            setSelectedLessonForQuiz(undefined);
+                          }}
+                        >
+                          Xóa bộ lọc
+                        </Button>
+                      )}
+                    </div>
+                  </Card>
+
+                  {!selectedLessonForQuiz ? (
+                    <Empty
+                      image={Empty.PRESENTED_IMAGE_SIMPLE}
+                      description="Vui lòng chọn bài học để xem quiz"
+                    >
+                      <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={() => setIsQuizModalVisible(true)}
+                      >
+                        Tạo quiz mới
+                      </Button>
+                    </Empty>
+                  ) : isLoadingQuizzes ? (
+                    <Row gutter={[16, 16]}>
+                      {[1, 2, 3].map((i) => (
+                        <Col xs={24} sm={12} lg={8} key={i}>
+                          <Card>
+                            <Skeleton active paragraph={{ rows: 3 }} />
+                          </Card>
+                        </Col>
+                      ))}
+                    </Row>
+                  ) : quizzes.length === 0 ? (
+                    <Empty
+                      image={Empty.PRESENTED_IMAGE_SIMPLE}
+                      description={`Chưa có quiz nào cho bài học "${lessonMap.get(selectedLessonForQuiz)}"`}
+                    >
+                      <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={() => {
+                          quizForm.setFieldsValue({ lessonId: selectedLessonForQuiz });
+                          setIsQuizModalVisible(true);
+                        }}
+                      >
+                        Tạo quiz cho bài học này
+                      </Button>
+                    </Empty>
+                  ) : (
+                    <Row gutter={[16, 16]}>
+                      {quizzes.map((quiz) => (
+                        <Col xs={24} sm={12} lg={8} key={quiz.id}>
+                          <ContentCard item={quiz} type="quiz" onView={handleViewQuiz} />
+                        </Col>
+                      ))}
+                    </Row>
+                  )}
+                </div>
+              ),
+            },
+            {
+              key: 'video',
+              label: (
+                <span className="flex items-center gap-2">
+                  <VideoCameraOutlined />
+                  Video
+                  <Badge count={videos.length} showZero style={{ backgroundColor: '#fa8c16' }} />
+                </span>
+              ),
+              children: (
+                <div>
+                  {/* Lesson Filter for Video Tab */}
+                  <Card className="mb-4" styles={{ body: { padding: '16px' } }}>
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="text-sm font-medium text-gray-700">Lọc theo bài học:</span>
+                      <Select
+                        placeholder="Chọn bài học để xem video"
+                        size="large"
+                        style={{ width: 300 }}
+                        value={selectedLessonForVideo}
+                        onChange={(value) => setSelectedLessonForVideo(value)}
+                        allowClear
+                        onClear={() => setSelectedLessonForVideo(undefined)}
+                        options={[
+                          { value: undefined, label: 'Tất cả bài học', disabled: true },
+                          ...lessonsOptions,
+                        ]}
+                        optionFilterProp="label"
+                      />
+                      {selectedLessonForVideo && (
+                        <Button
+                          onClick={() => {
+                            setSelectedLessonForVideo(undefined);
+                          }}
+                        >
+                          Xóa bộ lọc
+                        </Button>
+                      )}
+                    </div>
+                  </Card>
+
+                  {!selectedLessonForVideo ? (
+                    <Empty
+                      image={Empty.PRESENTED_IMAGE_SIMPLE}
+                      description="Vui lòng chọn bài học để xem video"
+                    >
+                      <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={() => setIsVideoModalVisible(true)}
+                      >
+                        Upload video mới
+                      </Button>
+                    </Empty>
+                  ) : isLoadingVideos ? (
+                    <Row gutter={[16, 16]}>
+                      {[1, 2, 3].map((i) => (
+                        <Col xs={24} sm={12} lg={8} key={i}>
+                          <Card>
+                            <Skeleton active paragraph={{ rows: 3 }} />
+                          </Card>
+                        </Col>
+                      ))}
+                    </Row>
+                  ) : videos.length === 0 ? (
+                    <Empty
+                      image={Empty.PRESENTED_IMAGE_SIMPLE}
+                      description={`Chưa có video nào cho bài học "${lessonMap.get(selectedLessonForVideo)}"`}
+                    >
+                      <Button
+                        type="primary"
+                        icon={<PlusOutlined />}
+                        onClick={() => {
+                          videoForm.setFieldsValue({ lessonId: selectedLessonForVideo });
+                          setIsVideoModalVisible(true);
+                        }}
+                      >
+                        Upload video cho bài học này
+                      </Button>
+                    </Empty>
+                  ) : (
+                    <Row gutter={[16, 16]}>
+                      {videos.map((video) => (
+                        <Col xs={24} sm={12} lg={8} key={video.id}>
+                          <ContentCard item={video} type="video" onView={handleViewVideo} />
+                        </Col>
+                      ))}
+                    </Row>
+                  )}
+                </div>
+              ),
+            },
+          ]}
+        />
       </div>
 
-      {/* Create Quiz Modal */}
+      {/* Modals */}
       <CreateQuizModal
-        isQuizModalVisible={isQuizModalVisible}
-        setIsQuizModalVisible={setIsQuizModalVisible}
-        handleCreateQuiz={handleCreateQuiz}
-        quizForm={quizForm}
+        open={isQuizModalVisible}
+        onClose={() => setIsQuizModalVisible(false)}
+        onSubmit={handleCreateQuiz}
+        form={quizForm}
+        submitting={isCreatingQuiz}
+        lessonsOptions={lessonsOptions}
       />
-      {/* Create Lesson Modal */}
+
       <CreateLessonModal
         open={isLessonModalVisible}
-        onClose={() => setIsLessonModalVisible(false)}
-        onSubmit={handleCreateLesson}
+        onClose={() => {
+          setIsLessonModalVisible(false);
+          setSelectedLessonForEdit(null);
+        }}
+        onSubmit={selectedLessonForEdit ? handleEditLesson : handleCreateLesson}
+        initialValues={
+          selectedLessonForEdit
+            ? {
+                subjectId:
+                  selectedLessonForEdit.subjectId || selectedLessonForEdit.subject?.id || '',
+                name: selectedLessonForEdit.name || '',
+                description: selectedLessonForEdit.description || '',
+                duration: selectedLessonForEdit.duration || undefined,
+              }
+            : undefined
+        }
         loading={lessonLoading}
       />
-      {/* Create Exercise Modal */}
-      {/* <Modal
-        title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <PlusOutlined style={{ color: '#52c41a' }} />
-            <span>Tạo bài tập mới</span>
-          </div>
+
+      <CreateVideoModal
+        open={isVideoModalVisible}
+        onClose={() => setIsVideoModalVisible(false)}
+        onSubmit={handleCreateVideo}
+        form={videoForm}
+        submitting={isCreatingVideo}
+        lessonsOptions={lessonsOptions}
+      />
+
+      <VideoDetailModal
+        open={isVideoDetailModalVisible}
+        video={selectedVideo}
+        onClose={() => {
+          setIsVideoDetailModalVisible(false);
+          setSelectedVideo(null);
+        }}
+      />
+
+      <QuizDetailModal
+        open={isQuizDetailModalVisible}
+        quiz={selectedQuiz}
+        onClose={() => {
+          setIsQuizDetailModalVisible(false);
+          setSelectedQuiz(null);
+        }}
+      />
+
+      <LessonDetailModal
+        open={isLessonDetailModalVisible}
+        lesson={selectedLesson}
+        onClose={() => {
+          setIsLessonDetailModalVisible(false);
+          setSelectedLesson(null);
+        }}
+      />
+
+      <style jsx global>{`
+        .content-card {
+          transition: all 0.3s ease;
+          border-radius: 8px;
+          border: 1px solid #f0f0f0;
         }
-        open={isExerciseModalVisible}
-        onOk={handleCreateExercise}
-        onCancel={() => {
-          setIsExerciseModalVisible(false);
-          exerciseForm.resetFields();
-        }}
-        width={600}
-        okText="Tạo bài tập"
-        cancelText="Hủy"
-        okButtonProps={{
-          style: { backgroundColor: '#52c41a', borderColor: '#52c41a' },
-        }}
-      >
-        <Form
-          form={exerciseForm}
-          layout="vertical"
-          initialValues={{
-            type: 'practice',
-          }}
-        >
-          <Form.Item
-            label="Tiêu đề bài tập"
-            name="title"
-            rules={[{ required: true, message: 'Vui lòng nhập tiêu đề bài tập!' }]}
-          >
-            <Input placeholder="VD: Luyện serve 100 quả" size="large" />
-          </Form.Item>
 
-          <Form.Item label="Mô tả" name="description">
-            <Input.TextArea rows={4} placeholder="Mô tả chi tiết về yêu cầu bài tập..." />
-          </Form.Item>
-
-          <Form.Item
-            label="Loại bài tập"
-            name="type"
-            rules={[{ required: true, message: 'Vui lòng chọn loại bài tập!' }]}
-          >
-            <Select size="large">
-              <Select.Option value="video">Video</Select.Option>
-            </Select>
-          </Form.Item>
-
-          <Form.Item
-            noStyle
-            shouldUpdate={(prevValues, currentValues) => prevValues.type !== currentValues.type}
-          >
-            {({ getFieldValue }) => {
-              const exerciseType = getFieldValue('type');
-              return exerciseType === 'video' ? (
-                <Form.Item
-                  label="Tải lên video"
-                  name="videoFile"
-                  rules={[{ required: true, message: 'Vui lòng chọn file video!' }]}
-                >
-                  <Upload.Dragger
-                    name="videoFile"
-                    multiple={false}
-                    accept="video/*"
-                    beforeUpload={() => false}
-                    style={{ padding: '20px' }}
-                  >
-                    <p className="ant-upload-drag-icon">
-                      <VideoCameraOutlined style={{ fontSize: '48px', color: '#52c41a' }} />
-                    </p>
-                    <p className="ant-upload-text" style={{ fontSize: '16px', fontWeight: '500' }}>
-                      Kéo và thả video vào đây hoặc click để chọn
-                    </p>
-                    <p className="ant-upload-hint" style={{ color: '#999' }}>
-                      Hỗ trợ: MP4, AVI, MOV (Tối đa 100MB)
-                    </p>
-                  </Upload.Dragger>
-                </Form.Item>
-              ) : null;
-            }}
-          </Form.Item>
-
-          <Form.Item label="Hạn nộp" name="deadline">
-            <DatePicker style={{ width: '100%' }} size="large" placeholder="Chọn ngày hạn nộp" />
-          </Form.Item>
-        </Form>
-      </Modal> */}
-
-      {/* Course Selection Modal */}
-      <Modal
-        title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <PlayCircleOutlined style={{ color: '#1890ff' }} />
-            <span>Chọn khóa học</span>
-          </div>
+        .content-card:hover {
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+          transform: translateY(-2px);
         }
-        open={isCourseModalVisible}
-        onCancel={() => {
-          setIsCourseModalVisible(false);
-          setSelectedContent(null);
-        }}
-        width={800}
-        footer={null}
-      >
-        <div
-          style={{
-            marginBottom: '16px',
-            padding: '16px',
-            background: '#f0f9ff',
-            borderRadius: '8px',
-          }}
-        >
-          <h4 style={{ margin: 0, color: '#1890ff' }}>📝 {selectedContent?.title || 'Bài tập'}</h4>
-          <p style={{ margin: '8px 0 0 0', color: '#666' }}>Chọn khóa học để gán bài tập này vào</p>
-        </div>
 
-        <Row gutter={[16, 16]}>
-          {courses.map((course) => (
-            <Col span={24} key={course.id}>
-              <Card
-                hoverable
-                onClick={() => handleSelectCourse(course)}
-                style={{ cursor: 'pointer' }}
-              >
-                <div
-                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                >
-                  <div style={{ flex: 1 }}>
-                    <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
-                      {course.title}
-                    </h3>
-                    <p style={{ margin: '8px 0', color: '#666' }}>{course.description}</p>
-                    <div style={{ display: 'flex', gap: '16px', fontSize: '14px', color: '#999' }}>
-                      <span>📚 {course.totalSessions} buổi học</span>
-                      <span>👥 {course.enrolledStudents} học viên</span>
-                    </div>
-                  </div>
-                  <Button type="primary" icon={<PlayCircleOutlined />}>
-                    Chọn
-                  </Button>
-                </div>
-              </Card>
-            </Col>
-          ))}
-        </Row>
-      </Modal>
-
-      {/* Session Selection Modal */}
-      <Modal
-        title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <PlayCircleOutlined style={{ color: '#52c41a' }} />
-            <span>Chọn session</span>
-          </div>
+        .line-clamp-1 {
+          display: -webkit-box;
+          -webkit-line-clamp: 1;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
         }
-        open={isSessionModalVisible}
-        onCancel={() => {
-          setIsSessionModalVisible(false);
-          setSelectedCourse(null);
-        }}
-        width={800}
-        footer={null}
-      >
-        <div
-          style={{
-            marginBottom: '16px',
-            padding: '16px',
-            background: '#f6ffed',
-            borderRadius: '8px',
-          }}
-        >
-          <h4 style={{ margin: 0, color: '#52c41a' }}>📚 {selectedCourse?.title || 'Khóa học'}</h4>
-          <p style={{ margin: '8px 0 0 0', color: '#666' }}>Chọn session để gán bài tập vào</p>
-        </div>
 
-        <Row gutter={[16, 16]}>
-          {sessions
-            .filter((session) => session.courseId === selectedCourse?.id)
-            .map((session) => (
-              <Col span={24} key={session.id}>
-                <Card
-                  hoverable
-                  onClick={() => handleAssignToSession(session)}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                    }}
-                  >
-                    <div style={{ flex: 1 }}>
-                      <h3 style={{ margin: 0, fontSize: '18px', fontWeight: '600' }}>
-                        {session.title}
-                      </h3>
-                      <p style={{ margin: '8px 0', color: '#666' }}>📅 {session.date}</p>
-                      <Tag color={session.status === 'upcoming' ? 'blue' : 'green'}>
-                        {session.status === 'upcoming' ? 'Sắp diễn ra' : 'Đã hoàn thành'}
-                      </Tag>
-                    </div>
-                    <Button type="primary" icon={<PlayCircleOutlined />}>
-                      Gán bài tập
-                    </Button>
-                  </div>
-                </Card>
-              </Col>
-            ))}
-        </Row>
-      </Modal>
-
-      {/* View Content Modal */}
-      <Modal
-        title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <EyeOutlined style={{ color: '#1890ff' }} />
-            <span>Xem chi tiết</span>
-          </div>
+        .line-clamp-2 {
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
         }
-        open={isViewModalVisible}
-        onCancel={() => {
-          setIsViewModalVisible(false);
-          setViewingContent(null);
-        }}
-        width={800}
-        footer={null}
-      >
-        {viewingContent && (
-          <div>
-            <div style={{ marginBottom: '24px' }}>
-              <h2 style={{ margin: 0, fontSize: '24px', fontWeight: '600' }}>
-                {viewingContent.title}
-              </h2>
-              <p style={{ margin: '8px 0', color: '#666' }}>{viewingContent.description}</p>
-              <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
-                <Tag color="blue">{viewingContent.level || viewingContent.tag}</Tag>
-                <Tag color="green">Đã dùng: {viewingContent.used} lần</Tag>
-                <Tag color="orange">Tạo: {viewingContent.createdDate}</Tag>
-              </div>
-            </div>
-
-            {viewingContent.type === 'quiz' && (
-              <div>
-                <h3 style={{ marginBottom: '16px' }}>📋 Thông tin Quiz</h3>
-                <div style={{ marginBottom: '16px' }}>
-                  <strong>Thời gian:</strong> {viewingContent.timeLimit} phút
-                </div>
-                <div style={{ marginBottom: '16px' }}>
-                  <strong>Số câu hỏi:</strong> {viewingContent.questions}
-                </div>
-
-                <h4 style={{ marginBottom: '12px' }}>Danh sách câu hỏi:</h4>
-                {viewingContent.questionsData?.map((question: any, index: number) => (
-                  <Card key={question.id} style={{ marginBottom: '12px' }}>
-                    <div style={{ marginBottom: '8px' }}>
-                      <strong>Câu {index + 1}:</strong> {question.question}
-                    </div>
-                    <div style={{ marginBottom: '8px' }}>
-                      <strong>Các đáp án:</strong>
-                      <ul style={{ margin: '4px 0', paddingLeft: '20px' }}>
-                        {question.options.map((option: string, optIndex: number) => (
-                          <li
-                            key={optIndex}
-                            style={{
-                              color: optIndex === question.correctAnswer ? '#52c41a' : '#666',
-                              fontWeight: optIndex === question.correctAnswer ? '600' : 'normal',
-                            }}
-                          >
-                            {option} {optIndex === question.correctAnswer && '✓'}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div style={{ color: '#1890ff', fontSize: '14px' }}>
-                      <strong>Giải thích:</strong> {question.explanation}
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            )}
-
-            {viewingContent.type === 'video' && (
-              <div>
-                <h3 style={{ marginBottom: '16px' }}>🎥 Thông tin Video</h3>
-                <div style={{ marginBottom: '16px' }}>
-                  <strong>Thời lượng:</strong> {viewingContent.duration}
-                </div>
-                <div style={{ marginBottom: '16px' }}>
-                  <strong>Kích thước file:</strong> {viewingContent.fileSize}
-                </div>
-                <div style={{ marginBottom: '16px' }}>
-                  <strong>Độ phân giải:</strong> {viewingContent.resolution}
-                </div>
-                <div style={{ marginBottom: '16px' }}>
-                  <strong>Tags:</strong> {viewingContent.tags?.join(', ')}
-                </div>
-              </div>
-            )}
-
-            {viewingContent.type === 'exercise' && (
-              <div>
-                <h3 style={{ marginBottom: '16px' }}>📝 Thông tin Bài tập</h3>
-                <div style={{ marginBottom: '16px' }}>
-                  <strong>Loại:</strong> {viewingContent.typeText}
-                </div>
-                <div style={{ marginBottom: '16px' }}>
-                  <strong>Thời gian:</strong> {viewingContent.duration} phút
-                </div>
-                <div style={{ marginBottom: '16px' }}>
-                  <strong>Độ khó:</strong> {viewingContent.difficulty}
-                </div>
-
-                <h4 style={{ marginBottom: '12px' }}>Hướng dẫn thực hiện:</h4>
-                <ul style={{ marginBottom: '16px', paddingLeft: '20px' }}>
-                  {viewingContent.instructions?.map((instruction: string, index: number) => (
-                    <li key={index} style={{ marginBottom: '4px' }}>
-                      {instruction}
-                    </li>
-                  ))}
-                </ul>
-
-                <h4 style={{ marginBottom: '12px' }}>Thiết bị cần thiết:</h4>
-                <div style={{ marginBottom: '16px' }}>{viewingContent.equipment?.join(', ')}</div>
-
-                <h4 style={{ marginBottom: '12px' }}>Mục tiêu:</h4>
-                <ul style={{ paddingLeft: '20px' }}>
-                  {viewingContent.objectives?.map((objective: string, index: number) => (
-                    <li key={index} style={{ marginBottom: '4px' }}>
-                      {objective}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        )}
-      </Modal>
-
-      {/* Edit Content Modal */}
-      <Modal
-        title={
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <EditOutlined style={{ color: '#52c41a' }} />
-            <span>Chỉnh sửa</span>
-          </div>
-        }
-        open={isEditModalVisible}
-        onOk={() => {
-          if (editingContent?.type === 'quiz') {
-            handleCreateQuiz();
-          } else if (editingContent?.type === 'exercise') {
-            handleCreateExercise();
-          }
-          setIsEditModalVisible(false);
-          setEditingContent(null);
-        }}
-        onCancel={() => {
-          setIsEditModalVisible(false);
-          setEditingContent(null);
-        }}
-        width={800}
-        okText="Lưu thay đổi"
-        cancelText="Hủy"
-      >
-        {editingContent?.type === 'quiz' && (
-          <Form
-            form={quizForm}
-            layout="vertical"
-            initialValues={{
-              title: editingContent.title,
-              description: editingContent.description,
-              level: editingContent.level,
-              timeLimit: editingContent.timeLimit,
-            }}
-          >
-            <Form.Item
-              label="Tiêu đề quiz"
-              name="title"
-              rules={[{ required: true, message: 'Vui lòng nhập tiêu đề quiz!' }]}
-            >
-              <Input placeholder="VD: Quiz kỹ thuật serve" size="large" />
-            </Form.Item>
-
-            <Form.Item label="Mô tả" name="description">
-              <Input.TextArea rows={3} placeholder="Mô tả chi tiết về quiz..." />
-            </Form.Item>
-
-            <Form.Item
-              label="Cấp độ"
-              name="level"
-              rules={[{ required: true, message: 'Vui lòng chọn cấp độ!' }]}
-            >
-              <Select size="large">
-                <Select.Option value="Beginner">Beginner</Select.Option>
-                <Select.Option value="Intermediate">Intermediate</Select.Option>
-                <Select.Option value="Advanced">Advanced</Select.Option>
-              </Select>
-            </Form.Item>
-
-            <Form.Item
-              label="Thời gian làm bài (phút)"
-              name="timeLimit"
-              rules={[{ required: true, message: 'Vui lòng nhập thời gian!' }]}
-            >
-              <Input type="number" placeholder="15" size="large" />
-            </Form.Item>
-          </Form>
-        )}
-
-        {editingContent?.type === 'exercise' && (
-          <Form
-            form={exerciseForm}
-            layout="vertical"
-            initialValues={{
-              title: editingContent.title,
-              description: editingContent.description,
-              type: editingContent.type,
-              level: editingContent.level,
-            }}
-          >
-            <Form.Item
-              label="Tiêu đề bài tập"
-              name="title"
-              rules={[{ required: true, message: 'Vui lòng nhập tiêu đề bài tập!' }]}
-            >
-              <Input placeholder="VD: Luyện serve 100 quả" size="large" />
-            </Form.Item>
-
-            <Form.Item label="Mô tả" name="description">
-              <Input.TextArea rows={4} placeholder="Mô tả chi tiết về yêu cầu bài tập..." />
-            </Form.Item>
-
-            <Form.Item
-              label="Loại bài tập"
-              name="type"
-              rules={[{ required: true, message: 'Vui lòng chọn loại bài tập!' }]}
-            >
-              <Select size="large">
-                <Select.Option value="video">Video</Select.Option>
-              </Select>
-            </Form.Item>
-          </Form>
-        )}
-      </Modal>
+      `}</style>
     </div>
   );
 };

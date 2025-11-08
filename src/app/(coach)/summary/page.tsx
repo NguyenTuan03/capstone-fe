@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Card, Button, Avatar, Badge, Row, Col, Typography, Space } from 'antd';
+import { Card, Button, Avatar, Badge, Row, Col, Typography, Space, Spin } from 'antd';
 import {
   UserOutlined,
   BookOutlined,
@@ -88,10 +88,10 @@ const CoachOverview = () => {
   ];
 
   if (isChecking) {
-    return <div>Đang tải...</div>;
+    return <Spin size="large" className="flex justify-center items-center h-[60vh]" />;
   }
   if (!isAuthorized) {
-    return <div>Bạn không có quyền truy cập trang này</div>;
+    return null;
   }
   return (
     <div style={{ padding: 24, background: '#f5f5f5', minHeight: '100vh' }}>

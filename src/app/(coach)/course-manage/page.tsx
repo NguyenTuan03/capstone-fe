@@ -1,8 +1,13 @@
 'use client';
 import { extractFrames } from '@/@crema/utils/video';
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import CreateCourseModal from '@/components/coach/course/CreateModal';
 import * as geminiService from '@/@crema/services/apis/ai/geminiService';
 import useRoleGuard from '@/@crema/hooks/useRoleGuard';
+import { CourseCard } from '@/components/coach/course/CourseCard';
+import { useGetCourses } from '@/@crema/services/apis/courses';
+import { Pagination } from 'antd';
+import { mapCoursesWithPagination } from '@/@crema/utils/courseCard';
 
 const CourseManagement = () => {
   const { isAuthorized, isChecking } = useRoleGuard(['COACH'], {
@@ -12,13 +17,15 @@ const CourseManagement = () => {
   });
   const [activeTab, setActiveTab] = useState('all');
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [showPreview, setShowPreview] = useState(false);
+  // const [showPreview, setShowPreview] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isManageModalVisible, setIsManageModalVisible] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<any>(null);
   const [manageTab, setManageTab] = useState('overview');
   const [isDetailModalVisible, setIsDetailModalVisible] = useState<any>(false);
   const [expandedSessions, setExpandedSessions] = useState<any>({});
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   // Trạng thái so sánh video
   const [coachVideo, setCoachVideo] = useState<any>(null);
@@ -106,18 +113,6 @@ const CourseManagement = () => {
     ],
   };
 
-  const [courseForm, setCourseForm] = useState({
-    name: '',
-    level: 'intermediate',
-    type: 'group',
-    totalSessions: 8,
-    sessionsPerWeek: 2,
-    startDate: '2025-10-23',
-    description: '',
-    price: 0,
-    schedule: [],
-  });
-
   const stats = [
     { title: 'Tổng khóa học', value: '7', icon: '📚', color: 'bg-blue-50 text-blue-600' },
     { title: 'Đang diễn ra', value: '4', icon: '⏰', color: 'bg-green-50 text-green-600' },
@@ -126,192 +121,12 @@ const CourseManagement = () => {
     { title: 'Doanh thu', value: '57.800.000đ', icon: '📈', color: 'bg-orange-50 text-orange-600' },
   ];
 
-  const courses = [
-    {
-      id: 1,
-      name: 'Pickleball cơ bản - Khóa 1',
-      level: 'Beginner',
-      levelColor: 'bg-green-100 text-green-800',
-      status: 'ongoing',
-      statusText: 'Đang diễn ra',
-      statusBadge: 'Đã đủ',
-      description:
-        'Khóa học offline dành cho người mới bắt đầu, tập trung vào các kỹ thuật cơ bản và luật chơi',
-      sessions: 4,
-      schedule: 'Thứ 2, 4, 6 - 14:00-15:30',
-      location: 'Sân Pickleball Quận 7',
-      coach: 'Huấn luyện viên Nguyễn Văn A',
-      currentStudents: 4,
-      maxStudents: 4,
-      progress: 100,
-      sessionsCompleted: 8,
-      fee: '500.000đ/người',
-      feeDetail: '≈ 62.500đ/buổi',
-      discount: '65%',
-    },
-    {
-      id: 2,
-      name: 'Kỹ thuật nâng cao - Khóa 1',
-      level: 'Intermediate',
-      levelColor: 'bg-blue-100 text-blue-800',
-      status: 'ongoing',
-      statusText: 'Đang diễn ra',
-      statusBadge: 'Đã đủ',
-      description: 'Nâng cao kỹ năng serve và return, chiến thuật thi đấu chuyên nghiệp',
-      sessions: 5,
-      schedule: 'Thứ 3, 5, 7 - 16:00-17:30',
-      location: 'Sân Pickleball Bình Thạnh',
-      coach: 'Huấn luyện viên Trần Thị B',
-      currentStudents: 2,
-      maxStudents: 2,
-      progress: 40,
-      sessionsCompleted: 10,
-      fee: '800.000đ/người',
-      feeDetail: '≈ 80.000đ/buổi',
-      discount: '40%',
-    },
-    {
-      id: 3,
-      name: 'Pickleball thiếu nhi - Khóa 2',
-      level: 'Beginner',
-      levelColor: 'bg-green-100 text-green-800',
-      status: 'ongoing',
-      statusText: 'Đang diễn ra',
-      statusBadge: 'Còn chỗ',
-      description: 'Khóa học vui nhộn cho trẻ em 8-14 tuổi, phát triển thể chất và kỹ năng',
-      sessions: 6,
-      schedule: 'Thứ 7, CN - 09:00-10:30',
-      location: 'Sân Pickleball Quận 1',
-      coach: 'Huấn luyện viên Lê Văn C',
-      currentStudents: 6,
-      maxStudents: 8,
-      progress: 75,
-      sessionsCompleted: 12,
-      fee: '600.000đ/người',
-      feeDetail: '≈ 50.000đ/buổi',
-      discount: '25%',
-    },
-    {
-      id: 4,
-      name: 'Chiến thuật đôi - Khóa 3',
-      level: 'Advanced',
-      levelColor: 'bg-purple-100 text-purple-800',
-      status: 'ongoing',
-      statusText: 'Đang diễn ra',
-      statusBadge: 'Còn chỗ',
-      description: 'Tập trung vào chiến thuật thi đấu đôi và phối hợp nhóm',
-      sessions: 3,
-      schedule: 'Thứ 2, 4 - 18:00-19:30',
-      location: 'Sân Pickleball Quận 3',
-      coach: 'Huấn luyện viên Phạm Thị D',
-      currentStudents: 4,
-      maxStudents: 6,
-      progress: 67,
-      sessionsCompleted: 6,
-      fee: '900.000đ/người',
-      feeDetail: '≈ 150.000đ/buổi',
-      discount: '50%',
-    },
-    {
-      id: 5,
-      name: 'Pickleball cơ bản - Khóa 0',
-      level: 'Beginner',
-      levelColor: 'bg-green-100 text-green-800',
-      status: 'completed',
-      statusText: 'Đã hoàn thành',
-      statusBadge: '',
-      description: 'Khóa học đầu tiên cho người mới bắt đầu',
-      sessions: 8,
-      schedule: 'Thứ 2, 4, 6 - 14:00-15:30',
-      location: 'Sân Pickleball Quận 7',
-      coach: 'Huấn luyện viên Nguyễn Văn A',
-      currentStudents: 5,
-      maxStudents: 5,
-      progress: 100,
-      sessionsCompleted: 8,
-      fee: '450.000đ/người',
-      feeDetail: '≈ 56.250đ/buổi',
-      discount: '100%',
-    },
-    {
-      id: 6,
-      name: 'Kỹ thuật serve - Workshop',
-      level: 'Intermediate',
-      levelColor: 'bg-blue-100 text-blue-800',
-      status: 'completed',
-      statusText: 'Đã hoàn thành',
-      statusBadge: '',
-      description: 'Workshop chuyên sâu về kỹ thuật serve',
-      sessions: 4,
-      schedule: 'Thứ 7 - 15:00-17:00',
-      location: 'Sân Pickleball Quận 2',
-      coach: 'Huấn luyện viên Trần Thị B',
-      currentStudents: 8,
-      maxStudents: 8,
-      progress: 100,
-      sessionsCompleted: 4,
-      fee: '300.000đ/người',
-      feeDetail: '≈ 75.000đ/buổi',
-      discount: '100%',
-    },
-    {
-      id: 7,
-      name: 'Pickleball nâng cao - Khóa 0',
-      level: 'Advanced',
-      levelColor: 'bg-purple-100 text-purple-800',
-      status: 'completed',
-      statusText: 'Đã hoàn thành',
-      statusBadge: '',
-      description: 'Khóa học nâng cao cho học viên có kinh nghiệm',
-      sessions: 10,
-      schedule: 'Thứ 3, 5, 7 - 17:00-18:30',
-      location: 'Sân Pickleball Tân Bình',
-      coach: 'Huấn luyện viên Lại Đức Hùng',
-      currentStudents: 3,
-      maxStudents: 4,
-      progress: 100,
-      sessionsCompleted: 10,
-      fee: '1.000.000đ/người',
-      feeDetail: '≈ 100.000đ/buổi',
-      discount: '100%',
-    },
-  ];
-
-  const ongoingSchedules = [
-    { day: 'Thứ 2', time: '14:00 - 15:30' },
-    { day: 'Thứ 4', time: '14:00 - 15:30' },
-    { day: 'Thứ 6', time: '14:00 - 15:30' },
-    { day: 'Thứ 3', time: '16:00 - 17:30' },
-    { day: 'Thứ 5', time: '16:00 - 17:30' },
-    { day: 'Thứ 7', time: '16:00 - 17:30' },
-  ];
-
-  const priceOptions = [500000, 1000000, 1500000, 2000000, 2500000, 3000000, 5000000, 10000000];
-
-  const calculateEndDate = () => {
-    const start = new Date(courseForm.startDate);
-    const weeks = Math.ceil(courseForm.totalSessions / courseForm.sessionsPerWeek);
-    const end = new Date(start.getTime() + weeks * 7 * 24 * 60 * 60 * 1000);
-    return end.toLocaleDateString('vi-VN');
-  };
-
-  const calculateDuration = () => {
-    const weeks = Math.ceil(courseForm.totalSessions / courseForm.sessionsPerWeek);
-    return `${weeks} tuần`;
-  };
-
-  const handleFormChange = (field: any, value: any) => {
-    setCourseForm((prev) => ({ ...prev, [field]: value }));
-  };
-
   // Refs video để điều hướng timestamp
   const coachVideoRef = React.useRef<HTMLVideoElement>(null);
   const studentVideoRef = React.useRef<HTMLVideoElement>(null);
 
   // Hàm nhảy đến timestamp trong video với đồng bộ hóa
   const jumpToTimestamp = (studentTimestamp: number, coachTimestamp: number) => {
-    console.log('Đang nhảy đến timestamp:', { studentTimestamp, coachTimestamp });
-
     // Nhảy video học viên đến timestamp học viên
     if (studentVideoRef.current) {
       studentVideoRef.current.currentTime = studentTimestamp;
@@ -410,290 +225,34 @@ const CourseManagement = () => {
     }
   };
 
-  const filteredCourses = courses.filter((course) => {
-    const matchesTab =
-      activeTab === 'all' ||
-      (activeTab === 'ongoing' && course.status === 'ongoing') ||
-      (activeTab === 'completed' && course.status === 'completed');
-    const matchesSearch = course.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesTab && matchesSearch;
+  // API: Get courses with pagination
+  // Map tab to status for API filter
+  const getStatusFromTab = (tab: string): string | undefined => {
+    const statusMap: Record<string, string> = {
+      ongoing: 'APPROVED', // Courses that are approved and ongoing
+      completed: 'COMPLETED',
+    };
+    return tab === 'all' ? undefined : statusMap[tab] || undefined;
+  };
+
+  const { data: coursesRes, isLoading: isLoadingCourses } = useGetCourses({
+    page,
+    pageSize,
+    search: searchQuery || undefined,
+    status: getStatusFromTab(activeTab),
   });
 
-  const CourseCard = ({ course }: any) => (
-    <div
-      style={{
-        background: 'white',
-        borderRadius: '12px',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        padding: '24px',
-        marginBottom: '20px',
-        border: '1px solid #f0f0f0',
-        transition: 'all 0.3s ease',
-        cursor: 'pointer',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = '0 8px 25px rgba(0,0,0,0.15)';
-        e.currentTarget.style.transform = 'translateY(-2px)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-        e.currentTarget.style.transform = 'translateY(0)';
-      }}
-    >
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: '16px',
-        }}
-      >
-        <div style={{ flex: 1 }}>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              marginBottom: '12px',
-              flexWrap: 'wrap',
-            }}
-          >
-            <h3 style={{ fontSize: '20px', fontWeight: '600', margin: 0, color: '#1a1a1a' }}>
-              {course.name}
-            </h3>
-            <span
-              style={{
-                padding: '6px 12px',
-                borderRadius: '20px',
-                fontSize: '12px',
-                fontWeight: '500',
-                backgroundColor: course.status === 'ongoing' ? '#f6ffed' : '#f5f5f5',
-                color: course.status === 'ongoing' ? '#52c41a' : '#8c8c8c',
-                border: `1px solid ${course.status === 'ongoing' ? '#b7eb8f' : '#d9d9d9'}`,
-              }}
-            >
-              {course.statusText}
-            </span>
-            {course.statusBadge && (
-              <span
-                style={{
-                  padding: '6px 12px',
-                  borderRadius: '20px',
-                  fontSize: '12px',
-                  fontWeight: '500',
-                  backgroundColor: '#fff2f0',
-                  color: '#ff4d4f',
-                  border: '1px solid #ffccc7',
-                }}
-              >
-                {course.statusBadge}
-              </span>
-            )}
-          </div>
-          <span
-            style={{
-              display: 'inline-block',
-              padding: '6px 12px',
-              borderRadius: '20px',
-              fontSize: '12px',
-              fontWeight: '500',
-              backgroundColor: course.levelColor.includes('green')
-                ? '#f6ffed'
-                : course.levelColor.includes('blue')
-                  ? '#e6f7ff'
-                  : '#f9f0ff',
-              color: course.levelColor.includes('green')
-                ? '#52c41a'
-                : course.levelColor.includes('blue')
-                  ? '#1890ff'
-                  : '#722ed1',
-              border: `1px solid ${course.levelColor.includes('green') ? '#b7eb8f' : course.levelColor.includes('blue') ? '#91d5ff' : '#d3adf7'}`,
-            }}
-          >
-            {course.level}
-          </span>
-        </div>
-      </div>
+  // Map course data với helper function (bao gồm phân trang)
+  const { courses, total: totalCourses } = useMemo(() => {
+    return mapCoursesWithPagination(coursesRes);
+  }, [coursesRes]);
 
-      <p style={{ color: '#666', marginBottom: '20px', lineHeight: '1.6' }}>{course.description}</p>
+  const filteredCourses = courses; // API already filters by status, so use courses directly
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '12px',
-          marginBottom: '20px',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '16px' }}>📅</span>
-          <span style={{ fontSize: '14px', color: '#666' }}>{course.sessions} tuần</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '16px' }}>⏰</span>
-          <span style={{ fontSize: '14px', color: '#1890ff', fontWeight: '500' }}>
-            {course.schedule}
-          </span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '16px' }}>📍</span>
-          <span style={{ fontSize: '14px', color: '#666' }}>{course.location}</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '16px' }}>👤</span>
-          <span style={{ fontSize: '14px', color: '#666' }}>{course.coach}</span>
-        </div>
-      </div>
-
-      <div style={{ marginBottom: '20px' }}>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            marginBottom: '8px',
-            fontSize: '14px',
-          }}
-        >
-          <span style={{ color: '#666' }}>Sĩ số:</span>
-          <span style={{ fontWeight: '600', color: '#1a1a1a' }}>
-            {course.currentStudents}/{course.maxStudents} học viên
-          </span>
-        </div>
-        <div
-          style={{
-            width: '100%',
-            height: '8px',
-            backgroundColor: '#f0f0f0',
-            borderRadius: '4px',
-            overflow: 'hidden',
-            marginBottom: '8px',
-          }}
-        >
-          <div
-            style={{
-              height: '100%',
-              background: 'linear-gradient(90deg, #ff4d4f 0%, #ff7875 100%)',
-              borderRadius: '4px',
-              transition: 'width 0.3s ease',
-              width: `${(course.currentStudents / course.maxStudents) * 100}%`,
-            }}
-          />
-        </div>
-        <div style={{ textAlign: 'right', fontSize: '12px', color: '#999' }}>
-          {course.sessionsCompleted} buổi học
-        </div>
-      </div>
-
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          paddingTop: '20px',
-          borderTop: '1px solid #f0f0f0',
-        }}
-      >
-        <div>
-          <div style={{ fontSize: '12px', color: '#999', marginBottom: '4px' }}>Học phí:</div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-            <span style={{ fontSize: '20px', fontWeight: 'bold', color: '#52c41a' }}>
-              {course.fee}
-            </span>
-            <span
-              style={{
-                padding: '4px 8px',
-                backgroundColor: '#e6f7ff',
-                color: '#1890ff',
-                borderRadius: '12px',
-                fontSize: '11px',
-                fontWeight: '500',
-              }}
-            >
-              {course.discount}
-            </span>
-          </div>
-          <div style={{ fontSize: '12px', color: '#999' }}>{course.feeDetail}</div>
-        </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            onClick={() => {
-              // Đóng tất cả modal khác trước khi mở modal xem chi tiết
-              setIsModalVisible(false);
-              setIsManageModalVisible(false);
-              setIsExerciseModalVisible(false);
-              setIsAIFeedbackModalVisible(false);
-              setSelectedExercise(null);
-              setSelectedSubmission(null);
-              setSelectedCourse(course);
-              setIsDetailModalVisible(true);
-            }}
-            style={{
-              padding: '10px 16px',
-              background: 'linear-gradient(135deg, #1890ff 0%, #40a9ff 100%)',
-              color: 'white',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              boxShadow: '0 2px 4px rgba(24, 144, 255, 0.3)',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 4px 8px rgba(24, 144, 255, 0.4)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 2px 4px rgba(24, 144, 255, 0.3)';
-            }}
-          >
-            👁️ Xem chi tiết
-          </button>
-          <button
-            onClick={() => {
-              // Đóng tất cả modal khác trước khi mở modal quản lý
-              setIsModalVisible(false);
-              setIsDetailModalVisible(false);
-              setIsExerciseModalVisible(false);
-              setIsAIFeedbackModalVisible(false);
-              setSelectedExercise(null);
-              setSelectedSubmission(null);
-              setSelectedCourse(course);
-              setIsManageModalVisible(true);
-            }}
-            style={{
-              padding: '10px 16px',
-              background: 'white',
-              color: '#1890ff',
-              border: '2px solid #1890ff',
-              borderRadius: '8px',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'all 0.3s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#e6f7ff';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'white';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
-          >
-            ⚙️ Quản lý
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  // Reset page to 1 when search query or activeTab changes
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, activeTab]);
 
   if (isChecking) {
     return <div>Đang tải...</div>;
@@ -811,22 +370,22 @@ const CourseManagement = () => {
                     justifyContent: 'center',
                     margin: '0 auto 16px',
                     fontSize: '28px',
-                    backgroundColor: stat.color.includes('blue')
+                    backgroundColor: stat.color?.includes('blue')
                       ? '#e6f7ff'
-                      : stat.color.includes('green')
+                      : stat.color?.includes('green')
                         ? '#f6ffed'
-                        : stat.color.includes('purple')
+                        : stat.color?.includes('purple')
                           ? '#f9f0ff'
-                          : stat.color.includes('orange')
+                          : stat.color?.includes('orange')
                             ? '#fff7e6'
                             : '#f5f5f5',
-                    color: stat.color.includes('blue')
+                    color: stat.color?.includes('blue')
                       ? '#1890ff'
-                      : stat.color.includes('green')
+                      : stat.color?.includes('green')
                         ? '#52c41a'
-                        : stat.color.includes('purple')
+                        : stat.color?.includes('purple')
                           ? '#722ed1'
-                          : stat.color.includes('orange')
+                          : stat.color?.includes('orange')
                             ? '#fa8c16'
                             : '#666',
                     boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
@@ -1000,450 +559,54 @@ const CourseManagement = () => {
         </div>
 
         {/* Course List */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
-          {filteredCourses.map((course) => (
-            <CourseCard key={course.id} course={course} />
-          ))}
-        </div>
+        {isLoadingCourses ? (
+          <div style={{ textAlign: 'center', padding: '40px' }}>Đang tải...</div>
+        ) : filteredCourses.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px', color: '#999' }}>
+            Chưa có khóa học nào
+          </div>
+        ) : (
+          <>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '24px' }}>
+              {filteredCourses.map((course) => (
+                <CourseCard
+                  key={course.id}
+                  course={course}
+                  setIsModalVisible={setIsModalVisible}
+                  setIsManageModalVisible={setIsManageModalVisible}
+                  setIsExerciseModalVisible={setIsExerciseModalVisible}
+                  setIsAIFeedbackModalVisible={setIsAIFeedbackModalVisible}
+                  setSelectedExercise={setSelectedExercise}
+                  setSelectedSubmission={setSelectedSubmission}
+                  setSelectedCourse={setSelectedCourse}
+                  setIsDetailModalVisible={setIsDetailModalVisible}
+                />
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalCourses > pageSize && (
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '32px' }}>
+                <Pagination
+                  current={page}
+                  pageSize={pageSize}
+                  total={totalCourses}
+                  onChange={(newPage, newPageSize) => {
+                    setPage(newPage);
+                    if (newPageSize) setPageSize(newPageSize);
+                  }}
+                  showSizeChanger
+                  pageSizeOptions={['10', '20', '50', '100']}
+                  showTotal={(total, range) => `${range[0]}-${range[1]} của ${total} khóa học`}
+                />
+              </div>
+            )}
+          </>
+        )}
       </div>
 
       {/* Modal tạo khóa học */}
-      {isModalVisible && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1003,
-            padding: '16px',
-          }}
-        >
-          <div
-            style={{
-              backgroundColor: 'white',
-              borderRadius: '16px',
-              width: '100%',
-              maxWidth: '1200px',
-              maxHeight: '90vh',
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
-            }}
-          >
-            {/* Header Modal */}
-            <div className="flex justify-between items-center p-6 border-b">
-              <h2 className="text-2xl font-bold">Tạo Khóa Học Mới</h2>
-              <button
-                onClick={() => setIsModalVisible(false)}
-                className="text-gray-500 hover:text-gray-700 text-2xl"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Nội dung Modal */}
-            <div className="flex-1 overflow-y-auto p-6">
-              {/* Thông tin cơ bản */}
-              <div className="grid grid-cols-4 gap-4 mb-6">
-                <div className="col-span-3">
-                  <label className="block text-sm font-medium mb-2">
-                    Tên khóa học <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="VD: Pickleball cơ bản cho người mới bắt đầu"
-                    value={courseForm.name}
-                    onChange={(e) => handleFormChange('name', e.target.value)}
-                    className={`w-full px-4 py-3 border rounded-lg focus:outline-none focus:ring-2 ${
-                      !courseForm.name
-                        ? 'border-red-500 focus:ring-red-500'
-                        : 'border-gray-300 focus:ring-blue-500'
-                    }`}
-                  />
-                  {!courseForm.name && (
-                    <p className="text-red-500 text-xs mt-1">Tên khóa học là bắt buộc</p>
-                  )}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Trình độ</label>
-                  <select
-                    value={courseForm.level}
-                    onChange={(e) => handleFormChange('level', e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  >
-                    <option value="beginner">Cơ bản</option>
-                    <option value="intermediate">Trung bình</option>
-                    <option value="advanced">Nâng cao</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Course Type */}
-              <div className="bg-gray-50 p-5 rounded-lg mb-6">
-                <div className="font-medium mb-4">Loại hình khóa học</div>
-                <div className="grid grid-cols-2 gap-4">
-                  <button
-                    onClick={() => handleFormChange('type', 'individual')}
-                    className={`p-5 border-2 rounded-lg transition-all ${
-                      courseForm.type === 'individual'
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-300 bg-white hover:border-gray-400'
-                    }`}
-                  >
-                    <div className="font-bold text-lg mb-1">Cá nhân (1 người)</div>
-                    <div className="text-gray-600 text-sm">Huấn luyện 1-1, hiệu quả cao nhất</div>
-                  </button>
-                  <button
-                    onClick={() => handleFormChange('type', 'group')}
-                    className={`p-5 border-2 rounded-lg transition-all ${
-                      courseForm.type === 'group'
-                        ? 'border-blue-500 bg-blue-50'
-                        : 'border-gray-300 bg-white hover:border-gray-400'
-                    }`}
-                  >
-                    <div className="font-bold text-lg mb-1">Nhóm (2-6 người)</div>
-                    <div className="text-gray-600 text-sm">Học theo nhóm, chi phí tiết kiệm</div>
-                  </button>
-                </div>
-              </div>
-
-              {/* Schedule and Duration */}
-              <div className="bg-green-50 p-5 rounded-lg mb-6">
-                <div className="font-medium mb-4 flex items-center gap-2">
-                  <span>📅</span>
-                  Lịch học và thời lượng
-                </div>
-                <div className="grid grid-cols-3 gap-4 mb-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Tổng số buổi học <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      value={courseForm.totalSessions}
-                      onChange={(e) =>
-                        handleFormChange('totalSessions', parseInt(e.target.value) || 0)
-                      }
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Số buổi mỗi tuần <span className="text-red-500">*</span>
-                    </label>
-                    <select
-                      value={courseForm.sessionsPerWeek}
-                      onChange={(e) =>
-                        handleFormChange('sessionsPerWeek', parseInt(e.target.value))
-                      }
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value="1">1 buổi/tuần</option>
-                      <option value="2">2 buổi/tuần</option>
-                      <option value="3">3 buổi/tuần</option>
-                      <option value="4">4 buổi/tuần</option>
-                      <option value="5">5 buổi/tuần</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-2">
-                      Ngày bắt đầu <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="date"
-                      value={courseForm.startDate}
-                      onChange={(e) => handleFormChange('startDate', e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-                <div className="bg-white p-4 rounded-lg border border-green-200">
-                  <div className="flex justify-between mb-2">
-                    <span>Ngày kết thúc dự kiến:</span>
-                    <span className="font-bold text-green-600">{calculateEndDate()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Tổng thời gian học:</span>
-                    <span className="font-bold text-green-600">{calculateDuration()}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Add Schedule */}
-              <div className="mb-6">
-                <div className="font-medium mb-4">Thêm lịch học</div>
-                <div className="grid grid-cols-12 gap-4 mb-4">
-                  <div className="col-span-4">
-                    <label className="block text-sm mb-2">Thứ</label>
-                    <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option>Chọn thứ</option>
-                      <option value="2">Thứ 2</option>
-                      <option value="3">Thứ 3</option>
-                      <option value="4">Thứ 4</option>
-                      <option value="5">Thứ 5</option>
-                      <option value="6">Thứ 6</option>
-                      <option value="7">Thứ 7</option>
-                      <option value="cn">Chủ nhật</option>
-                    </select>
-                  </div>
-                  <div className="col-span-3">
-                    <label className="block text-sm mb-2">Bắt đầu</label>
-                    <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option>Chọn giờ</option>
-                      {Array.from({ length: 24 }, (_, i) => (
-                        <option key={i} value={`${i}:00`}>{`${i}:00`}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="col-span-3">
-                    <label className="block text-sm mb-2">Kết thúc</label>
-                    <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                      <option>Chọn giờ</option>
-                      {Array.from({ length: 24 }, (_, i) => (
-                        <option key={i} value={`${i}:00`}>{`${i}:00`}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-sm mb-2">&nbsp;</label>
-                    <button className="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                      ➕ Thêm
-                    </button>
-                  </div>
-                </div>
-
-                {/* Ongoing Schedules Alert */}
-                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <div className="flex items-center gap-2 font-medium mb-3">
-                    <span>⚠️</span>
-                    <span>Lịch các khóa học đang diễn ra</span>
-                  </div>
-                  <div className="space-y-2">
-                    {ongoingSchedules.map((schedule, index) => (
-                      <div
-                        key={index}
-                        className="bg-yellow-100 border border-yellow-300 rounded p-3 flex items-center gap-3"
-                      >
-                        <span>📅</span>
-                        <span className="font-semibold">{schedule.day}</span>
-                        <span>{schedule.time}</span>
-                      </div>
-                    ))}
-                    <p className="text-xs text-orange-600 mt-2">
-                      * Vui lòng tránh chọn thời gian trùng với lịch đã có
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Description */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium mb-2">Mô tả khóa học</label>
-                <textarea
-                  rows={4}
-                  placeholder="Mô tả chi tiết về nội dung và mục tiêu của khóa học này..."
-                  value={courseForm.description}
-                  onChange={(e) => handleFormChange('description', e.target.value)}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              {/* Pricing */}
-              <div className="bg-blue-50 p-5 rounded-lg mb-6">
-                <div className="font-medium mb-4 flex items-center gap-2">
-                  <span>💰</span>
-                  Giá khóa học
-                </div>
-                <div className="mb-2">
-                  <label className="block text-sm font-medium mb-2">
-                    Giá khóa học <span className="text-red-500">*</span> (Nhóm{' '}
-                    {courseForm.type === 'group' ? '4' : '1'} người)
-                  </label>
-                </div>
-                <div className="grid grid-cols-4 gap-3 mb-4">
-                  {priceOptions.map((price) => (
-                    <button
-                      key={price}
-                      onClick={() => handleFormChange('price', price)}
-                      className={`px-4 py-3 border-2 rounded-lg transition-all ${
-                        courseForm.price === price
-                          ? 'border-blue-500 bg-blue-100 text-blue-700'
-                          : 'border-gray-300 bg-white hover:border-gray-400'
-                      }`}
-                    >
-                      {price >= 1000000 ? `${price / 1000000} triệu` : `${price / 1000}k`}
-                    </button>
-                  ))}
-                </div>
-                <input
-                  type="number"
-                  placeholder="0"
-                  min="0"
-                  value={courseForm.price}
-                  onChange={(e) => handleFormChange('price', parseInt(e.target.value) || 0)}
-                  className={`w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:ring-2 ${
-                    !courseForm.price
-                      ? 'border-red-500 focus:ring-red-500'
-                      : 'border-gray-300 focus:ring-blue-500'
-                  }`}
-                />
-                {!courseForm.price && (
-                  <p className="text-red-500 text-xs mt-1">Giá khóa học là bắt buộc</p>
-                )}
-                <p className="text-xs text-gray-600 mt-2">
-                  💡 Bước giá: 100,000đ. Bạn có thể chọn nhanh các mức giá phổ biến hoặc nhập giá
-                  tùy chỉnh.
-                </p>
-
-                {/* Price Preview */}
-                {courseForm.price > 0 && (
-                  <div className="mt-4 p-4 bg-white border-2 border-green-500 rounded-lg">
-                    <div className="text-center">
-                      <div className="text-green-700 font-medium mb-2">
-                        Khóa học nhóm ({courseForm.type === 'group' ? '4' : '1'} người)
-                      </div>
-                      <div className="text-4xl font-bold text-green-600 mb-1">
-                        {courseForm.price.toLocaleString()}đ
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        Tổng {courseForm.totalSessions} buổi
-                      </div>
-                      <div className="text-sm text-gray-600">
-                        {(courseForm.price / courseForm.totalSessions).toLocaleString()}đ/buổi
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Preview Button */}
-              <div className="mb-6">
-                <button
-                  onClick={() => setShowPreview(!showPreview)}
-                  className="w-full px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
-                >
-                  👁️ {showPreview ? 'Ẩn xem trước' : 'Xem trước khóa học'}
-                </button>
-              </div>
-
-              {/* Preview */}
-              {showPreview && (
-                <div className="border-2 border-blue-500 rounded-lg p-6 mb-6 bg-blue-50">
-                  <h3 className="text-xl font-bold mb-4">Xem trước khóa học</h3>
-                  <div className="bg-white rounded-lg p-5">
-                    <div className="flex items-center gap-3 mb-4">
-                      <h4 className="text-lg font-semibold">{courseForm.name || 'Khóa học mới'}</h4>
-                      <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
-                        {courseForm.level === 'beginner'
-                          ? 'Cơ bản'
-                          : courseForm.level === 'intermediate'
-                            ? 'Trung bình'
-                            : 'Nâng cao'}
-                      </span>
-                      <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
-                        {courseForm.type === 'group' ? 'Nhóm 4 người' : 'Cá nhân'}
-                      </span>
-                    </div>
-
-                    {courseForm.description && (
-                      <p className="text-gray-600 mb-4">{courseForm.description}</p>
-                    )}
-
-                    <div className="grid grid-cols-2 gap-3 mb-4">
-                      <div className="flex items-center gap-2 text-sm">
-                        <span>📅</span>
-                        <span>Lịch học:</span>
-                        <span className="text-blue-600">
-                          {courseForm.sessionsPerWeek} buổi/tuần
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <span>📚</span>
-                        <span>Tổng số buổi:</span>
-                        <span className="font-semibold">{courseForm.totalSessions} buổi</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <span>📅</span>
-                        <span>Bắt đầu:</span>
-                        <span className="font-semibold">
-                          {new Date(courseForm.startDate).toLocaleDateString('vi-VN')}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <span>🏁</span>
-                        <span>Động tác kết thúc:</span>
-                        <span className="font-semibold">{calculateEndDate()}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <span>⏱️</span>
-                        <span>Thời lượng:</span>
-                        <span className="font-semibold">{calculateDuration()}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <span>👥</span>
-                        <span>Số học viên tối đa:</span>
-                        <span className="font-semibold">
-                          {courseForm.type === 'group' ? '4' : '1'} người
-                        </span>
-                      </div>
-                    </div>
-
-                    {courseForm.price > 0 && (
-                      <div className="pt-4 border-t">
-                        <div className="flex justify-between items-center">
-                          <div>
-                            <div className="text-xs text-gray-500 mb-1">Học phí:</div>
-                            <div className="text-2xl font-bold text-green-600">
-                              {courseForm.price.toLocaleString()}đ/người
-                            </div>
-                            <div className="text-xs text-gray-500">
-                              ≈ {(courseForm.price / courseForm.totalSessions).toLocaleString()}
-                              đ/buổi
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Footer Modal */}
-            <div className="border-t p-6 flex justify-end gap-3 bg-gray-50">
-              <button
-                onClick={() => setIsModalVisible(false)}
-                className="px-6 py-3 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
-              >
-                Hủy
-              </button>
-              <button
-                onClick={() => {
-                  // Xử lý tạo khóa học
-                  console.log('Đang tạo khóa học:', courseForm);
-                  setIsModalVisible(false);
-                }}
-                disabled={!courseForm.name || !courseForm.price}
-                className={`px-6 py-3 rounded-lg transition-colors ${
-                  !courseForm.name || !courseForm.price
-                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    : 'bg-blue-600 text-white hover:bg-blue-700'
-                }`}
-              >
-                Tạo khóa học
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <CreateCourseModal open={isModalVisible} onClose={() => setIsModalVisible(false)} />
 
       {/* Modal chi tiết khóa học */}
       {isDetailModalVisible && selectedCourse && (
@@ -1540,7 +703,11 @@ const CourseManagement = () => {
                     <div className="flex justify-between">
                       <span className="text-gray-600">Giá cơ bản:</span>
                       <span className="font-medium text-green-600">
-                        {selectedCourse.fee.split('/')[0]}
+                        {selectedCourse.fee
+                          ? selectedCourse.fee.split('/')[0]
+                          : selectedCourse.pricePerParticipant
+                            ? `${Number(selectedCourse.pricePerParticipant).toLocaleString('vi-VN')}đ`
+                            : 'N/A'}
                       </span>
                     </div>
                     <div className="flex justify-between items-center">

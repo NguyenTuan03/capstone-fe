@@ -39,7 +39,7 @@ export default function LessonModal({
       onCancel={onClose}
       footer={null}
       width={700}
-      destroyOnClose
+      destroyOnHidden
     >
       <div className="mt-6">
         <LessonForm

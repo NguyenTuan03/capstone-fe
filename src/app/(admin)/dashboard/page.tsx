@@ -1,12 +1,12 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Card, Typography, Space, Button, message, Spin, Timeline } from 'antd';
+import { Row, Col, Card, Typography, Space, Button, Spin, Timeline } from 'antd';
 
 import { TeamOutlined, ClockCircleOutlined } from '@ant-design/icons';
 
-import DashboardApiService from '@/services/dashboardApi';
-import { DashboardStats, DashboardFilters } from '@/types/dashboard';
+// import DashboardApiService from '@/services/dashboardApi';
+// import { DashboardStats, DashboardFilters } from '@/types/dashboard';
 import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
 const { Text, Title } = Typography;
@@ -17,14 +17,18 @@ export default function DashboardPage() {
     COACH: '/summary',
     LEARNER: '/home',
   });
-  const [stats, setStats] = useState<DashboardStats | null>(null);
+  // const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
+  // const [filters] = useState<DashboardFilters>({
+  //   dateRange: ['2024-11-01', '2024-12-31'],
+  //   userType: 'all',
+  //   sessionType: 'all',
+  // });
 
-  const [filters] = useState<DashboardFilters>({
-    dateRange: ['2024-11-01', '2024-12-31'],
-    userType: 'all',
-    sessionType: 'all',
-  });
+  useEffect(() => {
+    // TODO: replace with real fetch that sets loading when data is ready
+    setLoading(false);
+  }, []);
   if (isChecking) {
     return <div>Loading...</div>;
   }
