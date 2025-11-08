@@ -224,7 +224,7 @@ export default function ConfigurationsPage() {
       title: 'Value',
       dataIndex: 'value',
       key: 'value',
-      width: 250,
+      width: 150,
       ellipsis: true,
       render: (value: string, record) => {
         const displayValue =
@@ -254,7 +254,7 @@ export default function ConfigurationsPage() {
       title: 'Description',
       dataIndex: 'description',
       key: 'description',
-      width: 250,
+      width: 200,
       ellipsis: true,
       render: (description?: string) => (
         <Tooltip title={description}>
@@ -357,7 +357,7 @@ export default function ConfigurationsPage() {
           dataSource={configurations}
           rowKey="id"
           loading={isLoading}
-          scroll={{ x: 1200 }}
+          scroll={{ x: 950 }}
           pagination={{
             current: currentPage,
             pageSize: pageSize,
