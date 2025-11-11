@@ -15,6 +15,7 @@ import {
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
+  ControlOutlined,
 } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
 import type { MenuProps } from 'antd';
@@ -56,6 +57,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       key: '/achievements',
       icon: <TrophyOutlined />,
       label: 'Thành tựu',
+    },
+    {
+      key: '/configurations',
+      icon: <ControlOutlined />,
+      label: 'Cấu hình',
     },
     {
       key: '/statistics',
@@ -107,6 +113,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (pathname.includes('/curriculum')) return '/curriculum';
     if (pathname.includes('/course-verification')) return '/course-verification';
     if (pathname.includes('/achievements')) return '/achievements';
+    if (pathname.includes('/configurations')) return '/configurations';
     if (pathname.includes('/statistics')) return '/statistics';
     return '/dashboard';
   };

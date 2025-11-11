@@ -9,68 +9,49 @@ import {
   Tag,
   Input,
   Select,
-  Avatar,
   Modal,
   Typography,
   Row,
   Col,
   message,
   Descriptions,
-  Dropdown,
-  Progress,
+  Form,
+  DatePicker,
 } from 'antd';
 import {
-  UserOutlined,
-  SearchOutlined,
   EyeOutlined,
-  FilterOutlined,
-  ExportOutlined,
-  MoreOutlined,
-  CheckCircleOutlined,
-  CloseCircleOutlined,
-  LockOutlined,
-  UnlockOutlined,
   DeleteOutlined,
-  TrophyOutlined,
+  UnlockOutlined,
+  PlusOutlined,
+  FilterOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import type { MenuProps } from 'antd';
 import useRoleGuard from '@/@crema/hooks/useRoleGuard';
+import { userService, CreateUserBody } from '@/@crema/services/apis/users';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 const { Search } = Input;
 const { Option } = Select;
-const { TextArea } = Input;
+const { RangePicker } = DatePicker;
 
-// Types
 interface User {
-  id: string;
+  id: number;
+  fullName: string;
   email: string;
-  name: string;
-  phone: string;
-  avatar: string;
-  role: string;
-  status: string;
-  skillLevel: string;
-  location: string;
-  joinDate: string;
-  lastLogin: string;
-  totalSessions: number;
-  totalSpent: number;
-  stats: {
-    completedLessons: number;
-    totalLessons: number;
-    currentLevel: string;
-    achievements: string[];
-  };
-  blockReason?: string;
+  phoneNumber?: string;
+  profilePicture: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  role: { id: number; name: string };
 }
 
-interface UserStats {
-  total: number;
-  active: number;
-  blocked: number;
-  inactive: number;
+// ✅ Interface cho filter form
+interface FilterValues {
+  search?: string;
+  status?: string;
+  role?: string;
+  dateRange?: [any, any];
 }
 
 export default function UsersPage() {
@@ -79,529 +60,500 @@ export default function UsersPage() {
     COACH: '/summary',
     LEARNER: '/home',
   });
+
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
-  const [isBlockModalVisible, setIsBlockModalVisible] = useState(false);
-  const [blockReason, setBlockReason] = useState('');
+  const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
+  const [isRestoreModalVisible, setIsRestoreModalVisible] = useState(false);
+  const [selectedUserForAction, setSelectedUserForAction] = useState<User | null>(null);
+  const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
 
-  // Filters and pagination
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [dateRange, setDateRange] = useState<[string, string] | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
-  const [stats, setStats] = useState<UserStats>({
-    total: 0,
-    active: 0,
-    blocked: 0,
-    inactive: 0,
-  });
 
-  // Load users data
+  const [filterForm] = Form.useForm();
+
+  // ✅ Build filter parameters cho API
+  const buildFilterParams = useCallback((): any => {
+    const params: any = {
+      page: currentPage,
+      size: pageSize,
+    };
+
+    // ✅ Tìm kiếm chung (search across multiple fields)
+    if (searchText) {
+      params.filter = `email_cont_${searchText},fullName_cont_${searchText}`;
+    }
+
+    // ✅ Filter theo status
+    if (statusFilter !== 'all') {
+      params.isActive = statusFilter === 'active';
+    }
+
+    // ✅ Filter theo role
+    if (roleFilter !== 'all') {
+      params.roleName = roleFilter;
+    }
+
+    // ✅ Filter theo date range
+    if (dateRange) {
+      const [startDate, endDate] = dateRange;
+      params.createdAtFrom = startDate;
+      params.createdAtTo = endDate;
+    }
+
+    return params;
+  }, [currentPage, pageSize, searchText, statusFilter, roleFilter, dateRange]);
+
+  // ✅ Load users data từ API với filter
   const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
-      // Import mock data
-      const { users: mockUsers } = await import('@/data_admin/users');
+      const params = buildFilterParams();
+      console.log('API Params:', params); // Debug params
 
-      // Convert mock users to UI format
-      let filteredUsers = mockUsers.map((user) => {
-        const isCoach = user.role.name === 'COACH';
-        const isLearner = user.role.name === 'LEARNER';
-
-        // Generate skill level based on role
-        let skillLevel = 'beginner';
-        if (isCoach) {
-          skillLevel = 'advanced'; // Coaches are advanced
-        } else if (isLearner) {
-          // Random skill level for learners
-          const levels = ['beginner', 'intermediate', 'advanced'];
-          skillLevel = levels[user.id % 3];
-        }
-
-        return {
-          id: user.id.toString(),
-          email: user.email,
-          name: user.fullName,
-          phone: user.phoneNumber || 'Chưa cập nhật',
-          avatar: user.profilePicture || '',
-          role: user.role.name.toLowerCase(),
-          status: user.isActive ? 'active' : 'inactive',
-          skillLevel: skillLevel,
-          location: 'TP. HCM',
-          joinDate: user.createdAt.toISOString(),
-          lastLogin: user.updatedAt.toISOString(),
-          totalSessions: Math.floor(Math.random() * 50),
-          totalSpent: Math.floor(Math.random() * 10000000),
-          stats: {
-            completedLessons: Math.floor(Math.random() * 20),
-            totalLessons: 30,
-            currentLevel: skillLevel.toUpperCase(),
-            achievements: ['Người mới', 'Tiến bộ nhanh'],
-          },
-        };
-      });
-
-      // Apply filters
-      if (searchText) {
-        const search = searchText.toLowerCase();
-        filteredUsers = filteredUsers.filter(
-          (u) => u.name.toLowerCase().includes(search) || u.email.toLowerCase().includes(search),
-        );
-      }
-
-      if (statusFilter !== 'all') {
-        filteredUsers = filteredUsers.filter((u) => u.status === statusFilter);
-      }
-
-      if (roleFilter !== 'all') {
-        filteredUsers = filteredUsers.filter((u) => u.role === roleFilter);
-      }
-
-      // Pagination
-      const start = (currentPage - 1) * pageSize;
-      const end = start + pageSize;
-      const paginatedUsers = filteredUsers.slice(start, end);
-
-      // Calculate stats
-      const totalUsers = mockUsers.length;
-      const activeUsers = mockUsers.filter((u) => u.isActive).length;
-      const inactiveUsers = mockUsers.filter((u) => !u.isActive).length;
-
-      setUsers(paginatedUsers);
-      setTotal(filteredUsers.length);
-      setStats({
-        total: totalUsers,
-        active: activeUsers,
-        blocked: 0, // No blocked users, only inactive
-        inactive: inactiveUsers,
-      });
+      const res = await userService.getAll(params);
+      setUsers(res.items);
+      setTotal(res.total);
     } catch (error) {
       console.error('Error loading users:', error);
       message.error('Không thể tải danh sách người dùng');
     } finally {
       setLoading(false);
     }
-  }, [currentPage, pageSize, searchText, statusFilter, roleFilter]);
+  }, [buildFilterParams]);
 
   useEffect(() => {
     loadUsers();
   }, [loadUsers]);
 
-  // Reset page to 1 when filters change
-  useEffect(() => {
+  // ✅ Apply advanced filters
+  const handleApplyAdvancedFilter = (values: FilterValues) => {
+    setSearchText(values.search || '');
+    setStatusFilter(values.status || 'all');
+    setRoleFilter(values.role || 'all');
+
+    if (values.dateRange) {
+      const [start, end] = values.dateRange;
+      setDateRange([start.format('YYYY-MM-DD'), end.format('YYYY-MM-DD')]);
+    } else {
+      setDateRange(null);
+    }
+
     setCurrentPage(1);
-  }, [searchText, statusFilter, roleFilter]);
-
-  // Helper functions
-  const getStatusColor = (status: string) => {
-    const colors: { [key: string]: string } = {
-      active: 'green',
-      inactive: 'orange',
-      blocked: 'red',
-    };
-    return colors[status] || 'default';
+    setShowAdvancedFilter(false);
   };
 
-  const getStatusText = (status: string) => {
-    const texts: { [key: string]: string } = {
-      active: 'Đang hoạt động',
-      inactive: 'Không hoạt động',
-      blocked: 'Đã khóa',
-    };
-    return texts[status] || status;
+  // ✅ Xóa mềm user
+  const handleDeleteUser = async () => {
+    if (!selectedUserForAction) return;
+
+    try {
+      const msg = await userService.softDelete(selectedUserForAction.id);
+      message.success(msg);
+      setIsDeleteModalVisible(false);
+      setSelectedUserForAction(null);
+      loadUsers();
+    } catch (err: any) {
+      console.error('Delete error:', err);
+      message.error(err.response?.data?.message || 'Không thể xóa người dùng');
+    }
   };
 
-  const getRoleText = (role: string) => {
-    const texts: { [key: string]: string } = {
-      learner: 'Học viên',
-      coach: 'Huấn luyện viên',
-      admin: 'Quản trị viên',
-    };
-    return texts[role] || role;
+  // ✅ Khôi phục user
+  const handleRestoreUser = async () => {
+    if (!selectedUserForAction) return;
+
+    try {
+      const msg = await userService.restore(selectedUserForAction.id);
+      message.success(msg);
+      setIsRestoreModalVisible(false);
+      setSelectedUserForAction(null);
+      loadUsers();
+    } catch (err: any) {
+      console.error('Restore error:', err);
+      message.error(err.response?.data?.message || 'Không thể khôi phục người dùng');
+    }
   };
 
-  const getSkillLevelText = (level: string) => {
-    const texts: { [key: string]: string } = {
-      beginner: 'Cơ bản',
-      intermediate: 'Trung cấp',
-      advanced: 'Nâng cao',
-    };
-    return texts[level] || level;
+  // ✅ Tạo user mới
+  const handleCreateUser = async (values: any) => {
+    setCreateLoading(true);
+    try {
+      const createData: CreateUserBody = {
+        email: values.email,
+        fullName: values.fullName,
+        password: values.password,
+        role: {
+          id: values.role,
+          name: values.role === 1 ? 'ADMIN' : values.role === 2 ? 'COACH' : 'LEARNER',
+        },
+      };
+
+      await userService.create(createData);
+      message.success('Tạo người dùng thành công');
+      setIsCreateModalVisible(false);
+      filterForm.resetFields();
+      loadUsers();
+    } catch (err: any) {
+      console.error(err);
+      message.error(err.response?.data?.message || 'Không thể tạo người dùng');
+    } finally {
+      setCreateLoading(false);
+    }
   };
 
-  // Actions
   const handleViewDetails = (user: User) => {
     setSelectedUser(user);
     setIsDetailModalVisible(true);
   };
 
-  const handleBlockUser = (user: User) => {
-    setSelectedUser(user);
-    setBlockReason('');
-    setIsBlockModalVisible(true);
+  const showDeleteConfirm = (user: User) => {
+    setSelectedUserForAction(user);
+    setIsDeleteModalVisible(true);
   };
 
-  const handleUnblockUser = async (user: User) => {
-    try {
-      message.success(`Đã mở khóa người dùng ${user.name}`);
-      loadUsers();
-    } catch (error) {
-      message.error('Không thể mở khóa người dùng');
-    }
+  const showRestoreConfirm = (user: User) => {
+    setSelectedUserForAction(user);
+    setIsRestoreModalVisible(true);
   };
-
-  const handleDeleteUser = (user: User) => {
-    Modal.confirm({
-      title: 'Xác nhận xóa người dùng',
-      content: `Bạn có chắc chắn muốn xóa người dùng "${user.name}"? Hành động này không thể hoàn tác.`,
-      okText: 'Xóa',
-      okType: 'danger',
-      cancelText: 'Hủy',
-      onOk: async () => {
-        try {
-          message.success(`Đã xóa người dùng ${user.name}`);
-          loadUsers();
-        } catch (error) {
-          message.error('Không thể xóa người dùng');
-        }
-      },
-    });
-  };
-
-  const confirmBlockUser = async () => {
-    if (!blockReason.trim()) {
-      message.error('Vui lòng nhập lý do khóa');
-      return;
-    }
-
-    try {
-      message.success(`Đã khóa người dùng ${selectedUser?.name}`);
-      setIsBlockModalVisible(false);
-      setBlockReason('');
-      loadUsers();
-    } catch (error) {
-      message.error('Không thể khóa người dùng');
-    }
-  };
-
-  const getActionMenu = (user: User): MenuProps => ({
-    items: [
-      {
-        key: 'view',
-        icon: <EyeOutlined />,
-        label: 'Xem chi tiết',
-        onClick: () => handleViewDetails(user),
-      },
-      {
-        key: 'divider-1',
-        type: 'divider',
-      },
-      user.status === 'blocked'
-        ? {
-            key: 'unblock',
-            icon: <UnlockOutlined />,
-            label: 'Mở khóa',
-            onClick: () => handleUnblockUser(user),
-          }
-        : {
-            key: 'block',
-            icon: <LockOutlined />,
-            label: 'Khóa tài khoản',
-            onClick: () => handleBlockUser(user),
-          },
-      {
-        key: 'divider-2',
-        type: 'divider',
-      },
-      {
-        key: 'delete',
-        icon: <DeleteOutlined />,
-        label: 'Xóa người dùng',
-        danger: true,
-        onClick: () => handleDeleteUser(user),
-      },
-    ],
-  });
 
   const columns: ColumnsType<User> = [
     {
-      title: 'Thông tin người dùng',
-      key: 'userInfo',
-      width: 280,
-      render: (_, record) => (
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <Avatar size={48} src={record.avatar} icon={<UserOutlined />} />
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 500, fontSize: '14px', marginBottom: '4px' }}>
-              {record.name}
-            </div>
-            <div
-              style={{
-                fontSize: '13px',
-                color: '#666',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              {record.email}
-            </div>
-          </div>
-        </div>
-      ),
+      title: 'Họ tên',
+      dataIndex: 'fullName',
+      key: 'fullName',
     },
     {
-      title: 'Vai trò',
-      dataIndex: 'role',
-      key: 'role',
-      width: 120,
-      render: (role: string) => <Tag color="blue">{getRoleText(role)}</Tag>,
+      title: 'Email',
+      dataIndex: 'email',
+      key: 'email',
     },
     {
       title: 'Trạng thái',
-      dataIndex: 'status',
-      key: 'status',
-      width: 140,
-      render: (status: string, record) => (
-        <div>
-          <Tag color={getStatusColor(status)}>{getStatusText(status)}</Tag>
-          {status === 'blocked' && record.blockReason && (
-            <div style={{ fontSize: '12px', color: '#999', marginTop: '4px' }}>
-              {record.blockReason}
-            </div>
-          )}
-        </div>
-      ),
+      dataIndex: 'isActive',
+      key: 'isActive',
+      render: (isActive: boolean) =>
+        isActive ? <Tag color="green">Hoạt động</Tag> : <Tag color="red">Đã xóa</Tag>,
     },
     {
-      title: 'Ngày tham gia',
-      dataIndex: 'joinDate',
-      key: 'joinDate',
-      width: 120,
+      title: 'Vai trò',
+      dataIndex: ['role', 'name'],
+      key: 'role',
+    },
+    {
+      title: 'Ngày tạo',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
       render: (date: string) => new Date(date).toLocaleDateString('vi-VN'),
-    },
-    {
-      title: 'Buổi học',
-      dataIndex: 'totalSessions',
-      key: 'totalSessions',
-      width: 80,
-      align: 'center',
-      render: (sessions: number) => <Text strong>{sessions}</Text>,
     },
     {
       title: 'Thao tác',
       key: 'actions',
-      width: 100,
-      fixed: 'right',
-      align: 'center',
       render: (_, record) => (
-        <Dropdown menu={getActionMenu(record)} trigger={['click']} placement="bottomRight">
-          <Button type="text" icon={<MoreOutlined />} />
-        </Dropdown>
+        <Space size="small">
+          <Button
+            type="text"
+            icon={<EyeOutlined />}
+            onClick={() => handleViewDetails(record)}
+            title="Xem chi tiết"
+          />
+          {record.isActive ? (
+            <Button
+              type="text"
+              icon={<DeleteOutlined />}
+              danger
+              onClick={() => showDeleteConfirm(record)}
+              title="Xóa người dùng"
+            />
+          ) : (
+            <Button
+              type="text"
+              icon={<UnlockOutlined />}
+              onClick={() => showRestoreConfirm(record)}
+              title="Khôi phục người dùng"
+            />
+          )}
+        </Space>
       ),
     },
   ];
 
-  if (isChecking) {
-    return <div>Đang tải...</div>;
-  }
-  if (!isAuthorized) {
-    return <div>Bạn không có quyền truy cập trang này</div>;
-  }
+  if (isChecking) return <div>Đang tải...</div>;
+  if (!isAuthorized) return <div>Bạn không có quyền truy cập trang này</div>;
+
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <Title level={2}>Quản lý người dùng</Title>
-        <Text className="text-gray-600">Quản lý tất cả người dùng trên nền tảng</Text>
-      </div>
-
-      {/* Main Table Card */}
-      <Card className="card-3d">
-        <div style={{ marginBottom: 16 }}>
-          <Row justify="space-between" align="middle">
-            <Col>
-              <Title level={4} style={{ margin: 0 }}>
-                Danh sách người dùng
-              </Title>
-            </Col>
-            <Col>
-              <Button icon={<ExportOutlined />}>Xuất dữ liệu</Button>
-            </Col>
-          </Row>
-        </div>
-
-        {/* Filters */}
+    <div>
+      <Title level={2}>Quản lý người dùng</Title>
+      <Card>
+        {/* ✅ Simple Search & Filter */}
         <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
           <Col xs={24} sm={12} md={8}>
             <Search
-              placeholder="Tìm kiếm theo tên, email..."
+              placeholder="Tìm theo tên hoặc email"
               allowClear
-              onSearch={setSearchText}
-              onChange={(e) => !e.target.value && setSearchText('')}
-              prefix={<SearchOutlined />}
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              onSearch={() => loadUsers()}
+              style={{ width: '100%' }}
             />
           </Col>
           <Col xs={12} sm={6} md={4}>
             <Select
-              style={{ width: '100%' }}
               value={statusFilter}
               onChange={setStatusFilter}
-              suffixIcon={<FilterOutlined />}
+              style={{ width: '100%' }}
+              placeholder="Trạng thái"
             >
               <Option value="all">Tất cả trạng thái</Option>
-              <Option value="active">Đang hoạt động</Option>
-              <Option value="inactive">Không hoạt động</Option>
+              <Option value="active">Hoạt động</Option>
+              <Option value="inactive">Đã xóa</Option>
             </Select>
           </Col>
           <Col xs={12} sm={6} md={4}>
             <Select
-              style={{ width: '100%' }}
               value={roleFilter}
               onChange={setRoleFilter}
-              suffixIcon={<FilterOutlined />}
+              style={{ width: '100%' }}
+              placeholder="Vai trò"
             >
               <Option value="all">Tất cả vai trò</Option>
-              <Option value="admin">Quản trị viên</Option>
-              <Option value="coach">Huấn luyện viên</Option>
-              <Option value="learner">Học viên</Option>
+              <Option value="ADMIN">ADMIN</Option>
+              <Option value="COACH">COACH</Option>
+              <Option value="LEARNER">LEARNER</Option>
             </Select>
+          </Col>
+          <Col xs={24} sm={24} md={8}>
+            <Space>
+              <Button
+                icon={<FilterOutlined />}
+                onClick={() => setShowAdvancedFilter(!showAdvancedFilter)}
+              >
+                Lọc nâng cao
+              </Button>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={() => setIsCreateModalVisible(true)}
+              >
+                Tạo tài khoản
+              </Button>
+            </Space>
           </Col>
         </Row>
 
-        {/* Table */}
+        {/* ✅ Advanced Filter Form */}
+        {showAdvancedFilter && (
+          <Card size="small" style={{ marginBottom: 16 }}>
+            <Form form={filterForm} layout="vertical" onFinish={handleApplyAdvancedFilter}>
+              <Row gutter={16}>
+                <Col xs={24} sm={12} md={6}>
+                  <Form.Item label="Tìm kiếm" name="search">
+                    <Input placeholder="Tên hoặc email" />
+                  </Form.Item>
+                </Col>
+                <Col xs={24} sm={12} md={6}>
+                  <Form.Item label="Trạng thái" name="status">
+                    <Select placeholder="Chọn trạng thái">
+                      <Option value="all">Tất cả</Option>
+                      <Option value="active">Hoạt động</Option>
+                      <Option value="inactive">Đã xóa</Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col xs={24} sm={12} md={6}>
+                  <Form.Item label="Vai trò" name="role">
+                    <Select placeholder="Chọn vai trò">
+                      <Option value="all">Tất cả</Option>
+                      <Option value="ADMIN">ADMIN</Option>
+                      <Option value="COACH">COACH</Option>
+                      <Option value="LEARNER">LEARNER</Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col xs={24} sm={12} md={6}>
+                  <Form.Item label="Ngày tạo" name="dateRange">
+                    <RangePicker style={{ width: '100%' }} format="DD/MM/YYYY" />
+                  </Form.Item>
+                </Col>
+              </Row>
+              <Row>
+                <Col>
+                  <Space>
+                    <Button type="primary" htmlType="submit">
+                      Áp dụng
+                    </Button>
+                    <Button onClick={() => setShowAdvancedFilter(false)}>Hủy</Button>
+                  </Space>
+                </Col>
+              </Row>
+            </Form>
+          </Card>
+        )}
+
         <Table
           columns={columns}
           dataSource={users}
           rowKey="id"
           loading={loading}
-          scroll={{ x: 900 }}
           pagination={{
             current: currentPage,
-            pageSize: pageSize,
-            total: total,
+            pageSize,
+            total,
             onChange: (page, size) => {
               setCurrentPage(page);
               setPageSize(size || 10);
             },
-            showSizeChanger: true,
-            showTotal: (total) => `Tổng ${total} người dùng`,
+            showTotal: (total, range) => `${range[0]}-${range[1]} của ${total} người dùng`,
           }}
         />
       </Card>
 
-      {/* Detail Modal */}
+      {/* Các modal khác giữ nguyên... */}
       <Modal
         title="Chi tiết người dùng"
         open={isDetailModalVisible}
         onCancel={() => setIsDetailModalVisible(false)}
-        footer={[
-          <Button key="close" onClick={() => setIsDetailModalVisible(false)}>
-            Đóng
-          </Button>,
-        ]}
-        width={700}
+        footer={<Button onClick={() => setIsDetailModalVisible(false)}>Đóng</Button>}
+        width={600}
       >
         {selectedUser && (
-          <div>
-            <div style={{ textAlign: 'center', marginBottom: 24 }}>
-              <Avatar size={80} src={selectedUser.avatar} icon={<UserOutlined />} />
-              <Title level={4} style={{ marginTop: 12, marginBottom: 4 }}>
-                {selectedUser.name}
-              </Title>
-              <Text type="secondary">{selectedUser.email}</Text>
-            </div>
-
-            <Descriptions bordered column={2}>
-              <Descriptions.Item label="Số điện thoại" span={2}>
-                {selectedUser.phone}
-              </Descriptions.Item>
-              <Descriptions.Item label="Vai trò">
-                <Tag color="blue">{getRoleText(selectedUser.role)}</Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Trạng thái">
-                <Tag color={getStatusColor(selectedUser.status)}>
-                  {getStatusText(selectedUser.status)}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Khu vực">{selectedUser.location}</Descriptions.Item>
-              <Descriptions.Item label="Trình độ">
-                {getSkillLevelText(selectedUser.skillLevel)}
-              </Descriptions.Item>
-              <Descriptions.Item label="Ngày tham gia">
-                {new Date(selectedUser.joinDate).toLocaleDateString('vi-VN')}
-              </Descriptions.Item>
-              <Descriptions.Item label="Đăng nhập gần nhất">
-                {new Date(selectedUser.lastLogin).toLocaleDateString('vi-VN')}
-              </Descriptions.Item>
-              <Descriptions.Item label="Tổng buổi học">
-                <Text strong>{selectedUser.totalSessions} buổi</Text>
-              </Descriptions.Item>
-              <Descriptions.Item label="Tổng chi tiêu">
-                <Text strong>{selectedUser.totalSpent.toLocaleString('vi-VN')} ₫</Text>
-              </Descriptions.Item>
-            </Descriptions>
-
-            <div style={{ marginTop: 24 }}>
-              <Title level={5}>Tiến độ học tập</Title>
-              <Progress
-                percent={Math.round(
-                  (selectedUser.stats.completedLessons / selectedUser.stats.totalLessons) * 100,
-                )}
-                format={(percent) =>
-                  `${selectedUser.stats.completedLessons}/${selectedUser.stats.totalLessons} bài`
-                }
-              />
-            </div>
-
-            <div style={{ marginTop: 16 }}>
-              <Title level={5}>
-                <TrophyOutlined /> Thành tựu
-              </Title>
-              <Space wrap>
-                {selectedUser.stats.achievements.map((achievement, index) => (
-                  <Tag key={index} color="gold">
-                    {achievement}
-                  </Tag>
-                ))}
-              </Space>
-            </div>
-          </div>
+          <Descriptions bordered column={1}>
+            <Descriptions.Item label="ID">{selectedUser.id}</Descriptions.Item>
+            <Descriptions.Item label="Họ tên">{selectedUser.fullName}</Descriptions.Item>
+            <Descriptions.Item label="Email">{selectedUser.email}</Descriptions.Item>
+            <Descriptions.Item label="Số điện thoại">
+              {selectedUser.phoneNumber || 'Chưa cập nhật'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Vai trò">{selectedUser.role.name}</Descriptions.Item>
+            <Descriptions.Item label="Trạng thái">
+              {selectedUser.isActive ? 'Hoạt động' : 'Đã xóa'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Ngày tạo">
+              {new Date(selectedUser.createdAt).toLocaleString('vi-VN')}
+            </Descriptions.Item>
+          </Descriptions>
         )}
       </Modal>
 
-      {/* Block Modal */}
       <Modal
-        title="Khóa tài khoản người dùng"
-        open={isBlockModalVisible}
-        onOk={confirmBlockUser}
+        title="Xác nhận xóa người dùng"
+        open={isDeleteModalVisible}
+        onOk={handleDeleteUser}
         onCancel={() => {
-          setIsBlockModalVisible(false);
-          setBlockReason('');
+          setIsDeleteModalVisible(false);
+          setSelectedUserForAction(null);
         }}
-        okText="Khóa"
+        okText="Xóa"
+        cancelText="Hủy"
         okType="danger"
+      >
+        {selectedUserForAction && (
+          <p>
+            Bạn có chắc chắn muốn xóa người dùng{' '}
+            <strong>&quot;{selectedUserForAction.fullName}&quot;</strong> không?
+          </p>
+        )}
+      </Modal>
+
+      <Modal
+        title="Khôi phục người dùng"
+        open={isRestoreModalVisible}
+        onOk={handleRestoreUser}
+        onCancel={() => {
+          setIsRestoreModalVisible(false);
+          setSelectedUserForAction(null);
+        }}
+        okText="Khôi phục"
         cancelText="Hủy"
       >
-        <div style={{ marginBottom: 16 }}>
-          <Text>
-            Bạn có chắc chắn muốn khóa tài khoản <strong>{selectedUser?.name}</strong>?
-          </Text>
-        </div>
-        <div>
-          <Text strong>Lý do khóa tài khoản:</Text>
-          <TextArea
-            rows={4}
-            value={blockReason}
-            onChange={(e) => setBlockReason(e.target.value)}
-            placeholder="Nhập lý do khóa tài khoản..."
-            style={{ marginTop: 8 }}
-          />
-        </div>
+        {selectedUserForAction && (
+          <p>
+            Bạn có chắc muốn khôi phục người dùng{' '}
+            <strong>&quot;{selectedUserForAction.fullName}&quot;</strong> không?
+          </p>
+        )}
+      </Modal>
+
+      {/* Modal tạo user mới - giữ nguyên */}
+      <Modal
+        title="Tạo tài khoản mới"
+        open={isCreateModalVisible}
+        onCancel={() => {
+          setIsCreateModalVisible(false);
+          filterForm.resetFields();
+        }}
+        footer={null}
+        width={500}
+      >
+        <Form form={filterForm} layout="vertical" onFinish={handleCreateUser}>
+          <Form.Item
+            label="Họ và tên"
+            name="fullName"
+            rules={[{ required: true, message: 'Vui lòng nhập họ và tên' }]}
+          >
+            <Input placeholder="Nhập họ và tên" />
+          </Form.Item>
+
+          <Form.Item
+            label="Email"
+            name="email"
+            rules={[
+              { required: true, message: 'Vui lòng nhập email' },
+              { type: 'email', message: 'Email không hợp lệ' },
+            ]}
+          >
+            <Input placeholder="Nhập email" />
+          </Form.Item>
+
+          <Form.Item
+            label="Mật khẩu"
+            name="password"
+            rules={[
+              { required: true, message: 'Vui lòng nhập mật khẩu' },
+              { min: 6, message: 'Mật khẩu phải có ít nhất 6 ký tự' },
+            ]}
+          >
+            <Input.Password placeholder="Nhập mật khẩu" />
+          </Form.Item>
+
+          <Form.Item
+            label="Vai trò"
+            name="role"
+            rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}
+          >
+            <Select placeholder="Chọn vai trò">
+              <Option value={1}>ADMIN</Option>
+              <Option value={2}>COACH</Option>
+              <Option value={3}>LEARNER</Option>
+            </Select>
+          </Form.Item>
+
+          <Form.Item style={{ marginBottom: 0, textAlign: 'right' }}>
+            <Space>
+              <Button
+                onClick={() => {
+                  setIsCreateModalVisible(false);
+                  filterForm.resetFields();
+                }}
+              >
+                Hủy
+              </Button>
+              <Button type="primary" htmlType="submit" loading={createLoading}>
+                Tạo tài khoản
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
       </Modal>
     </div>
   );

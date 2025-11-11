@@ -1,39 +1,88 @@
 import { buildUrl } from '@/@crema/helper/BuildUrl';
-import { useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import axios from 'axios';
+import { usePut } from '@/@crema/hooks/useApiQuery';
 
-export const useVerifyCoach = () => {
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const url = buildUrl(`coaches/${id}/verify`);
+// -------------------------
+// Get all coaches
+// -------------------------
+export const useGetAllCoaches = (params?: Record<string, any>) => {
+  return useQuery({
+    queryKey: ['coaches', params],
+    queryFn: async () => {
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
-      const response = await axios.put(
-        url,
-        {},
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
+      const url = buildUrl('coaches');
+      const response = await axios.get(url, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-      );
+        params,
+      });
       return response.data;
     },
   });
 };
 
-export const useRejectCoach = () => {
-  return useMutation({
-    mutationFn: async ({ id, reason }: { id: string; reason?: string }) => {
-      const url = buildUrl(`coaches/${id}/reject`);
+// -------------------------
+// Get a single coach by ID
+// -------------------------
+export const useGetCoachById = (id: string) => {
+  return useQuery({
+    queryKey: ['coach', id],
+    queryFn: async () => {
+      if (!id) return null;
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
-      const response = await axios.put(url, reason ? { reason } : {}, {
+      const url = buildUrl(`coaches/${id}`);
+      const response = await axios.get(url, {
         headers: {
-          'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
       return response.data;
+    },
+    enabled: !!id, // chỉ fetch khi có id
+  });
+};
+
+// -------------------------
+// Get overall rating of a coach
+// -------------------------
+export const useGetCoachRating = (id: string) => {
+  return useQuery({
+    queryKey: ['coachRating', id],
+    queryFn: async () => {
+      if (!id) return null;
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
+      const url = buildUrl(`coaches/${id}/rating/overall`);
+      const response = await axios.get(url, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      return response.data;
+    },
+    enabled: !!id,
+  });
+};
+
+// -------------------------
+// Verify coach
+// -------------------------
+export const useVerifyCoach = () => {
+  return usePut<any, { id: string }>('coaches/:id/verify', {
+    onSuccess: () => {
+      // Invalidate coaches list to refresh data
+    },
+  });
+};
+
+// -------------------------
+// Reject coach
+// -------------------------
+export const useRejectCoach = () => {
+  return usePut<any, { id: string; reason?: string }>('coaches/:id/reject', {
+    onSuccess: () => {
+      // Invalidate coaches list to refresh data
     },
   });
 };

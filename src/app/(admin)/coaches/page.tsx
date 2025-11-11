@@ -43,8 +43,13 @@ import {
   BookOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
-import { useGet } from '@/@crema/hooks/useApiQuery';
-import { useVerifyCoach, useRejectCoach } from '@/@crema/services/apis/coaches';
+import {
+  useGetAllCoaches,
+  useGetCoachById,
+  useGetCoachRating,
+  useVerifyCoach,
+  useRejectCoach,
+} from '@/@crema/services/apis/coaches';
 import { CoachVerificationStatus } from '@/types/enums';
 import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
@@ -71,6 +76,8 @@ interface CoachData {
   rejectionReason?: string;
   credentials: CredentialData[];
   bio?: string;
+  specialties?: string[];
+  teachingMethods?: string[];
 }
 
 interface CredentialData {
@@ -98,6 +105,24 @@ interface FeedbackItem {
  */
 const formatDate = (dateString?: string) =>
   dateString ? new Date(dateString).toLocaleDateString('vi-VN') : '-';
+
+const parseJsonArray = (value?: string | string[]) => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  try {
+    const normalized = value.trim().replace(/^{/, '[').replace(/}$/, ']');
+    const parsed = JSON.parse(normalized);
+    if (Array.isArray(parsed)) return parsed;
+  } catch {
+    /* noop */
+  }
+  // fallback: split by comma removing braces/quotes
+  return value
+    .replace(/[{}]/g, '')
+    .split(',')
+    .map((item) => item.trim().replace(/^"|"$/g, ''))
+    .filter(Boolean);
+};
 
 const statusColor: Record<
   CoachVerificationStatus | 'UNKNOWN',
@@ -134,15 +159,23 @@ export default function CoachesPage() {
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(10);
 
+  // Modal xem chi tiết từ API
+  const [viewDetailCoachId, setViewDetailCoachId] = useState<string | null>(null);
+  const [isViewDetailModalVisible, setIsViewDetailModalVisible] = useState(false);
+
   // API hooks
-  const {
-    data: coachesRes,
-    isLoading,
-    refetch,
-  } = useGet<any>('coaches', {
-    page,
-    size,
-  });
+  const { data: coachesRes, isLoading, refetch } = useGetAllCoaches({ page, size });
+
+  // Detail & rating (fetch only when modal is open and an ID exists)
+  const detailEnabledId = isDetailModalVisible && selectedCoach?.id ? selectedCoach.id : '';
+  const { data: coachDetail } = useGetCoachById(detailEnabledId as string);
+  const { data: coachRating } = useGetCoachRating(detailEnabledId as string);
+
+  // API cho modal xem chi tiết
+  const { data: viewDetailData, isLoading: isLoadingViewDetail } = useGetCoachById(
+    viewDetailCoachId || '',
+  );
+  const { data: viewDetailRating } = useGetCoachRating(viewDetailCoachId || '');
 
   const verifyCoachMutation = useVerifyCoach();
   const rejectCoachMutation = useRejectCoach();
@@ -154,25 +187,61 @@ export default function CoachesPage() {
   //   { enabled: isFeedbackModalVisible && !!selectedCoach?.id },
   // );
 
-  const totalFromApi: number | undefined = coachesRes?.meta?.total || coachesRes?.total;
+  const coachesListRaw: any[] = useMemo(() => {
+    if (!coachesRes) return [];
+
+    if (Array.isArray(coachesRes)) return coachesRes;
+
+    if (Array.isArray((coachesRes as any)?.items)) return (coachesRes as any).items;
+    if (Array.isArray((coachesRes as any)?.data?.items)) return (coachesRes as any).data.items;
+    if (Array.isArray((coachesRes as any)?.data)) return (coachesRes as any).data;
+    if (Array.isArray((coachesRes as any)?.result?.items)) return (coachesRes as any).result.items;
+    if (Array.isArray((coachesRes as any)?.result)) return (coachesRes as any).result;
+
+    return [];
+  }, [coachesRes]);
+
+  const totalFromApi: number | undefined = useMemo(() => {
+    if (!coachesRes) return undefined;
+
+    const candidateTotals = [
+      (coachesRes as any)?.meta?.total,
+      (coachesRes as any)?.meta?.pagination?.total,
+      (coachesRes as any)?.total,
+      (coachesRes as any)?.data?.meta?.total,
+      (coachesRes as any)?.data?.total,
+      Array.isArray(coachesListRaw) ? coachesListRaw.length : undefined,
+    ];
+
+    return candidateTotals.find((value) => typeof value === 'number') as number | undefined;
+  }, [coachesRes, coachesListRaw]);
 
   // Normalize response
   const mappedCoaches: CoachData[] = useMemo(
     () =>
-      (coachesRes?.items || []).map(
-        (item: any): CoachData => ({
-          id: String(item.id),
-          name: item.user?.fullName || item.user?.name || '-',
-          email: item.user?.email || '-',
-          phone: item.user?.phoneNumber || '-',
-          avatar: item.user?.profilePicture || '',
-          location: item.user?.location || '-',
-          yearsOfExperience: item.yearOfExperience ?? 0,
-          rating: item.rating ?? 0,
-          totalCourses: item.totalCourses ?? 0,
-          totalSessions: item.totalSessions ?? 0,
-          status: (item?.verificationStatus ?? null) as CoachVerificationStatus | null,
-          registrationDate: item.createdAt || new Date().toISOString(),
+      coachesListRaw.map((item: any): CoachData => {
+        const coachUser = item.user || item.coach?.user || item.profile;
+        const coachId = item.id ?? item.coachId ?? item.coach?.id;
+
+        return {
+          id: String(coachId),
+          name: coachUser?.fullName || coachUser?.name || item.name || '-',
+          email: coachUser?.email || item.email || '-',
+          phone: coachUser?.phoneNumber || item.phone || '-',
+          avatar: coachUser?.profilePicture || item.avatar || '',
+          location: coachUser?.location || item.location || '-',
+          yearsOfExperience:
+            item.yearOfExperience ?? item.yearsOfExperience ?? item.experience ?? 0,
+          rating:
+            typeof coachRating === 'number' && String(coachId) === selectedCoach?.id
+              ? coachRating
+              : (item.rating ?? item.averageRating ?? 0),
+          totalCourses: item.totalCourses ?? item.courseCount ?? 0,
+          totalSessions: item.totalSessions ?? item.sessionCount ?? 0,
+          status: (item?.verificationStatus ??
+            item?.status ??
+            null) as CoachVerificationStatus | null,
+          registrationDate: item.createdAt || item.registrationDate || new Date().toISOString(),
           credentials: Array.isArray(item.credentials)
             ? item.credentials.map((c: any) => ({
                 id: String(c.id),
@@ -185,10 +254,12 @@ export default function CoachesPage() {
               }))
             : [],
           bio: item.bio,
-          rejectionReason: item.verificationReason || undefined,
-        }),
-      ),
-    [coachesRes?.items],
+          rejectionReason: item.verificationReason || item.rejectionReason || undefined,
+          specialties: parseJsonArray(item.specialties),
+          teachingMethods: parseJsonArray(item.teachingMethods),
+        };
+      }),
+    [coachesListRaw, coachRating, selectedCoach?.id],
   );
 
   // Derived group & search (client-side search for now)
@@ -215,6 +286,12 @@ export default function CoachesPage() {
     setIsDetailModalVisible(true);
   };
 
+  // Mở modal xem chi tiết từ API
+  const openViewDetail = (coachId: string) => {
+    setViewDetailCoachId(coachId);
+    setIsViewDetailModalVisible(true);
+  };
+
   const openApprove = (coach: CoachData) => {
     setSelectedCoach(coach);
     setIsApproveModalVisible(true);
@@ -227,10 +304,13 @@ export default function CoachesPage() {
   };
 
   const confirmApprove = async () => {
-    if (!selectedCoach) return;
+    const displayCoach = coachDetail;
+    if (!displayCoach && !selectedCoach) return;
     try {
-      await verifyCoachMutation.mutateAsync(selectedCoach.id);
-      message.success(`Đã phê duyệt huấn luyện viên ${selectedCoach.name}`);
+      const id = (displayCoach?.id || selectedCoach?.id)!;
+      const name = displayCoach?.user?.fullName || displayCoach?.name || selectedCoach?.name || '';
+      await verifyCoachMutation.mutateAsync({ id });
+      message.success(`Đã phê duyệt huấn luyện viên ${name}`);
       setIsApproveModalVisible(false);
       setIsDetailModalVisible(false);
       await refetch();
@@ -240,14 +320,13 @@ export default function CoachesPage() {
   };
 
   const confirmReject = async () => {
-    if (!selectedCoach) return;
-    if (!rejectReason.trim()) {
-      message.error('Vui lòng nhập lý do từ chối');
-      return;
-    }
+    const displayCoach = coachDetail;
+    if (!displayCoach && !selectedCoach) return;
     try {
-      await rejectCoachMutation.mutateAsync({ id: selectedCoach.id, reason: rejectReason.trim() });
-      message.success(`Đã từ chối huấn luyện viên ${selectedCoach.name}`);
+      const id = (displayCoach?.id || selectedCoach?.id)!;
+      const name = displayCoach?.name || selectedCoach?.name || '';
+      await rejectCoachMutation.mutateAsync({ id, reason: rejectReason.trim() });
+      message.success(`Đã từ chối huấn luyện viên ${name}`);
       setIsRejectModalVisible(false);
       setIsDetailModalVisible(false);
       await refetch();
@@ -313,7 +392,7 @@ export default function CoachesPage() {
       render: (_, record) => (
         <Space size="small">
           <Tooltip title="Xem chi tiết">
-            <Button icon={<EyeOutlined />} onClick={() => openDetail(record)} />
+            <Button icon={<EyeOutlined />} onClick={() => openViewDetail(record.id)} />
           </Tooltip>
           <Tooltip title="Phê duyệt">
             <Button type="primary" icon={<CheckOutlined />} onClick={() => openApprove(record)} />
@@ -385,7 +464,7 @@ export default function CoachesPage() {
       width: 120,
       render: (_, record) => (
         <Tooltip title="Xem chi tiết">
-          <Button icon={<EyeOutlined />} onClick={() => openDetail(record)} />
+          <Button icon={<EyeOutlined />} onClick={() => openViewDetail(record.id)} />
         </Tooltip>
       ),
     },
@@ -509,19 +588,26 @@ export default function CoachesPage() {
         open={isDetailModalVisible}
         onCancel={() => setIsDetailModalVisible(false)}
         footer={
-          selectedCoach?.status === CoachVerificationStatus.UNVERIFIED
+          (coachDetail?.verificationStatus || selectedCoach?.status) ===
+          CoachVerificationStatus.UNVERIFIED
             ? [
                 <Button
                   key="reject"
                   danger
-                  onClick={() => selectedCoach && openReject(selectedCoach)}
+                  onClick={() =>
+                    (coachDetail || selectedCoach) &&
+                    openReject((coachDetail as any) || selectedCoach!)
+                  }
                 >
                   <CloseOutlined /> Từ chối
                 </Button>,
                 <Button
                   key="approve"
                   type="primary"
-                  onClick={() => selectedCoach && openApprove(selectedCoach)}
+                  onClick={() =>
+                    (coachDetail || selectedCoach) &&
+                    openApprove((coachDetail as any) || selectedCoach!)
+                  }
                 >
                   <CheckOutlined /> Phê duyệt
                 </Button>,
@@ -534,151 +620,424 @@ export default function CoachesPage() {
         }
         width={880}
       >
-        {selectedCoach && (
-          <div className="space-y-6">
-            {/* Profile */}
-            <div className="flex items-start gap-4">
-              <Avatar size={84} src={selectedCoach.avatar} icon={<UserOutlined />} />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-2">
-                  <Title level={4} className="mb-0 truncate">
-                    {selectedCoach.name}
-                  </Title>
-                  {selectedCoach.rating >= 4.5 && (
-                    <TrophyOutlined className="text-yellow-500 text-xl" />
-                  )}
-                </div>
-                <div className="mb-2 flex items-center gap-3">
-                  <Badge
-                    status={
-                      statusColor[(selectedCoach.status || 'UNKNOWN') as keyof typeof statusColor]
-                    }
-                    text={
-                      statusLabel[(selectedCoach.status || 'UNKNOWN') as keyof typeof statusLabel]
-                    }
-                  />
-                  {selectedCoach.status === CoachVerificationStatus.VERIFIED && (
-                    <div className="flex items-center gap-2">
-                      <Rate disabled value={selectedCoach.rating} allowHalf />
-                      <Text className="font-medium">
-                        {Number(selectedCoach.rating || 0).toFixed(1)}
-                      </Text>
-                    </div>
-                  )}
-                </div>
-                <div className="text-gray-500 text-sm truncate">{selectedCoach.email}</div>
-              </div>
-            </div>
+        {(coachDetail || selectedCoach) &&
+          (() => {
+            const dc: any = coachDetail || selectedCoach;
+            const ratingToShow =
+              typeof coachRating === 'number' ? coachRating : selectedCoach?.rating || 0;
+            const statusToShow =
+              (dc.verificationStatus as CoachVerificationStatus) ||
+              (selectedCoach?.status as CoachVerificationStatus) ||
+              null;
+            const credentialsToShow = dc.credentials || selectedCoach?.credentials || [];
+            const emailToShow = dc.user?.email || dc.email || selectedCoach?.email;
+            const phoneToShow = dc.user?.phoneNumber || dc.phone || selectedCoach?.phone;
+            const locationToShow = dc.user?.location || dc.location || selectedCoach?.location;
+            const nameToShow = dc.user?.fullName || dc.user?.name || dc.name || selectedCoach?.name;
+            const avatarToShow = dc.user?.profilePicture || dc.avatar || selectedCoach?.avatar;
+            const yearsToShow = dc.yearOfExperience ?? selectedCoach?.yearsOfExperience ?? 0;
+            const createdAtToShow = dc.createdAt || selectedCoach?.registrationDate;
+            const totalCoursesToShow = dc.totalCourses ?? selectedCoach?.totalCourses ?? 0;
+            const totalSessionsToShow = dc.totalSessions ?? selectedCoach?.totalSessions ?? 0;
+            const bioToShow = dc.bio || selectedCoach?.bio;
+            const specialtiesToShow = parseJsonArray(dc.specialties || selectedCoach?.specialties);
+            const teachingMethodsToShow = parseJsonArray(
+              dc.teachingMethods || selectedCoach?.teachingMethods,
+            );
 
-            {/* Basic Info */}
-            <Descriptions title="Thông tin cơ bản" column={2} bordered>
-              <Descriptions.Item
-                label={
-                  <>
-                    <MailOutlined /> Email
-                  </>
-                }
-                span={2}
-              >
-                {selectedCoach.email}
-              </Descriptions.Item>
-              <Descriptions.Item
-                label={
-                  <>
-                    <PhoneOutlined /> Số điện thoại
-                  </>
-                }
-              >
-                {' '}
-                {selectedCoach.phone}{' '}
-              </Descriptions.Item>
-              <Descriptions.Item
-                label={
-                  <>
-                    <EnvironmentOutlined /> Khu vực
-                  </>
-                }
-              >
-                {' '}
-                {selectedCoach.location}{' '}
-              </Descriptions.Item>
-              <Descriptions.Item label="Kinh nghiệm">
-                {' '}
-                {selectedCoach.yearsOfExperience} năm{' '}
-              </Descriptions.Item>
-              <Descriptions.Item label="Ngày đăng ký">
-                {' '}
-                {formatDate(selectedCoach.registrationDate)}{' '}
-              </Descriptions.Item>
-            </Descriptions>
-
-            {selectedCoach.bio && (
-              <div>
-                <Title level={5}>Giới thiệu</Title>
-                <Paragraph>{selectedCoach.bio}</Paragraph>
-              </div>
-            )}
-
-            {/* Credentials */}
-            <div>
-              <Title level={5}>
-                <SafetyCertificateOutlined /> Chứng chỉ ({selectedCoach.credentials.length})
-              </Title>
-              <Space direction="vertical" className="w-full" size="middle">
-                {selectedCoach.credentials.map((cred) => (
-                  <Card key={cred.id} size="small">
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1 min-w-0">
-                        <div className="font-medium mb-1 truncate">{cred.name}</div>
-                        <div className="text-sm text-gray-500 mb-2">
-                          <Tag color="blue">{cred.type}</Tag>
-                        </div>
-                        {cred.description && (
-                          <div className="text-sm text-gray-600 mb-2">{cred.description}</div>
-                        )}
-                        <Space size="middle" className="text-xs text-gray-500">
-                          {cred.issuedAt && (
-                            <span>
-                              <CalendarOutlined /> Cấp: {formatDate(cred.issuedAt)}
-                            </span>
-                          )}
-                          {cred.expiresAt && <span>Hết hạn: {formatDate(cred.expiresAt)}</span>}
-                        </Space>
+            <div className="space-y-6">
+              {/* Profile */}
+              <div className="flex items-start gap-4">
+                <Avatar size={84} src={avatarToShow} icon={<UserOutlined />} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Title level={4} className="mb-0 truncate">
+                      {nameToShow}
+                    </Title>
+                    {ratingToShow >= 4.5 && <TrophyOutlined className="text-yellow-500 text-xl" />}
+                  </div>
+                  <div className="mb-2 flex items-center gap-3">
+                    <Badge
+                      status={statusColor[(statusToShow || 'UNKNOWN') as keyof typeof statusColor]}
+                      text={statusLabel[(statusToShow || 'UNKNOWN') as keyof typeof statusLabel]}
+                    />
+                    {statusToShow === CoachVerificationStatus.VERIFIED && (
+                      <div className="flex items-center gap-2">
+                        <Rate disabled value={ratingToShow} allowHalf />
+                        <Text className="font-medium">{Number(ratingToShow || 0).toFixed(1)}</Text>
                       </div>
-                      {cred.publicUrl && (
-                        <Button
-                          type="link"
-                          icon={<LinkOutlined />}
-                          onClick={() => window.open(cred.publicUrl!, '_blank')}
-                        >
-                          Xem
-                        </Button>
-                      )}
-                    </div>
-                  </Card>
-                ))}
-              </Space>
-            </div>
+                    )}
+                  </div>
+                  <div className="text-gray-500 text-sm truncate">{emailToShow}</div>
+                </div>
+              </div>
 
-            {/* Stats for approved */}
-            {selectedCoach.status === CoachVerificationStatus.VERIFIED && (
-              <Descriptions title="Thống kê hoạt động" column={2} bordered>
-                <Descriptions.Item label="Tổng khóa học">
-                  {selectedCoach.totalCourses}
+              {/* Basic Info */}
+              <Descriptions title="Thông tin cơ bản" column={2} bordered>
+                <Descriptions.Item
+                  label={
+                    <>
+                      <MailOutlined /> Email
+                    </>
+                  }
+                  span={2}
+                >
+                  {emailToShow}
                 </Descriptions.Item>
-                <Descriptions.Item label="Tổng buổi học">
-                  {selectedCoach.totalSessions}
+                <Descriptions.Item
+                  label={
+                    <>
+                      <PhoneOutlined /> Số điện thoại
+                    </>
+                  }
+                >
+                  {' '}
+                  {phoneToShow}{' '}
+                </Descriptions.Item>
+                <Descriptions.Item
+                  label={
+                    <>
+                      <EnvironmentOutlined /> Khu vực
+                    </>
+                  }
+                >
+                  {' '}
+                  {locationToShow}{' '}
+                </Descriptions.Item>
+                <Descriptions.Item label="Kinh nghiệm"> {yearsToShow} năm </Descriptions.Item>
+                <Descriptions.Item label="Ngày đăng ký">
+                  {' '}
+                  {formatDate(createdAtToShow)}{' '}
                 </Descriptions.Item>
               </Descriptions>
-            )}
 
-            {/* Feedback quick open */}
-            <div className="flex justify-end">
-              <Button icon={<MessageOutlined />} onClick={() => setIsFeedbackModalVisible(true)}>
-                Xem feedback
-              </Button>
-            </div>
+              {bioToShow && (
+                <div>
+                  <Title level={5}>Giới thiệu</Title>
+                  <Paragraph>{bioToShow}</Paragraph>
+                </div>
+              )}
+
+              {specialtiesToShow.length > 0 && (
+                <div>
+                  <Title level={5}>
+                    <BookOutlined /> Chuyên môn
+                  </Title>
+                  <List
+                    size="small"
+                    bordered
+                    dataSource={specialtiesToShow}
+                    renderItem={(item) => <List.Item>{item}</List.Item>}
+                  />
+                </div>
+              )}
+
+              {teachingMethodsToShow.length > 0 && (
+                <div>
+                  <Title level={5}>
+                    <BookOutlined /> Phương pháp giảng dạy
+                  </Title>
+                  <List
+                    size="small"
+                    bordered
+                    dataSource={teachingMethodsToShow}
+                    renderItem={(item) => <List.Item>{item}</List.Item>}
+                  />
+                </div>
+              )}
+
+              {/* Credentials */}
+              <div>
+                <Title level={5}>
+                  <SafetyCertificateOutlined /> Chứng chỉ ({credentialsToShow.length})
+                </Title>
+                <Space direction="vertical" className="w-full" size="middle">
+                  {credentialsToShow.map((cred: any) => (
+                    <Card key={cred.id} size="small">
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium mb-1 truncate">{cred.name}</div>
+                          <div className="text-sm text-gray-500 mb-2">
+                            <Tag color="blue">{cred.type}</Tag>
+                          </div>
+                          {cred.description && (
+                            <div className="text-sm text-gray-600 mb-2">{cred.description}</div>
+                          )}
+                          <Space size="middle" className="text-xs text-gray-500">
+                            {cred.issuedAt && (
+                              <span>
+                                <CalendarOutlined /> Cấp: {formatDate(cred.issuedAt)}
+                              </span>
+                            )}
+                            {cred.expiresAt && <span>Hết hạn: {formatDate(cred.expiresAt)}</span>}
+                          </Space>
+                        </div>
+                        {cred.publicUrl && (
+                          <Button
+                            type="link"
+                            icon={<LinkOutlined />}
+                            onClick={() => window.open(cred.publicUrl!, '_blank')}
+                          >
+                            Xem
+                          </Button>
+                        )}
+                      </div>
+                    </Card>
+                  ))}
+                </Space>
+              </div>
+
+              {/* Stats for approved */}
+              {statusToShow === CoachVerificationStatus.VERIFIED && (
+                <Descriptions title="Thống kê hoạt động" column={2} bordered>
+                  <Descriptions.Item label="Tổng khóa học">{totalCoursesToShow}</Descriptions.Item>
+                  <Descriptions.Item label="Tổng buổi học">{totalSessionsToShow}</Descriptions.Item>
+                </Descriptions>
+              )}
+
+              {/* Feedback quick open */}
+              <div className="flex justify-end">
+                <Button icon={<MessageOutlined />} onClick={() => setIsFeedbackModalVisible(true)}>
+                  Xem feedback
+                </Button>
+              </div>
+            </div>;
+          })()}
+      </Modal>
+
+      {/* View Detail Modal - Xem chi tiết từ API */}
+      <Modal
+        title="Thông tin chi tiết Huấn luyện viên"
+        open={isViewDetailModalVisible}
+        onCancel={() => {
+          setIsViewDetailModalVisible(false);
+          setViewDetailCoachId(null);
+        }}
+        footer={[
+          <Button
+            key="close"
+            onClick={() => {
+              setIsViewDetailModalVisible(false);
+              setViewDetailCoachId(null);
+            }}
+          >
+            Đóng
+          </Button>,
+        ]}
+        width={900}
+      >
+        {isLoadingViewDetail ? (
+          <div className="py-8">
+            <Skeleton active paragraph={{ rows: 8 }} />
           </div>
+        ) : viewDetailData ? (
+          (() => {
+            const data: any = viewDetailData;
+            const user = data.user || {};
+            const ratingToShow =
+              typeof viewDetailRating === 'number' ? viewDetailRating : (data.rating ?? 0);
+            const statusToShow = (data.verificationStatus as CoachVerificationStatus) || null;
+            const credentialsToShow = Array.isArray(data.credentials) ? data.credentials : [];
+            const specialtiesToShow = parseJsonArray(data.specialties);
+            const teachingMethodsToShow = parseJsonArray(data.teachingMethods);
+
+            return (
+              <div className="space-y-6">
+                {/* Profile Header */}
+                <div className="flex items-start gap-4 pb-4 border-b">
+                  <Avatar
+                    size={96}
+                    src={user.profilePicture || undefined}
+                    icon={<UserOutlined />}
+                  />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Title level={3} className="mb-0 truncate">
+                        {user.fullName || user.name || '-'}
+                      </Title>
+                      {ratingToShow >= 4.5 && (
+                        <TrophyOutlined className="text-yellow-500 text-2xl" />
+                      )}
+                    </div>
+                    <div className="mb-2 flex items-center gap-3">
+                      <Badge
+                        status={
+                          statusColor[(statusToShow || 'UNKNOWN') as keyof typeof statusColor]
+                        }
+                        text={statusLabel[(statusToShow || 'UNKNOWN') as keyof typeof statusLabel]}
+                      />
+                      {statusToShow === CoachVerificationStatus.VERIFIED && (
+                        <div className="flex items-center gap-2">
+                          <Rate disabled value={ratingToShow} allowHalf />
+                          <Text className="font-medium text-lg">
+                            {Number(ratingToShow || 0).toFixed(1)}
+                          </Text>
+                        </div>
+                      )}
+                    </div>
+                    <div className="text-gray-500">{user.email || '-'}</div>
+                  </div>
+                </div>
+
+                {/* Basic Information */}
+                <Descriptions title="Thông tin cơ bản" column={2} bordered>
+                  <Descriptions.Item
+                    label={
+                      <>
+                        <MailOutlined /> Email
+                      </>
+                    }
+                    span={2}
+                  >
+                    {user.email || '-'}
+                  </Descriptions.Item>
+                  <Descriptions.Item
+                    label={
+                      <>
+                        <PhoneOutlined /> Số điện thoại
+                      </>
+                    }
+                  >
+                    {user.phoneNumber || '-'}
+                  </Descriptions.Item>
+                  <Descriptions.Item
+                    label={
+                      <>
+                        <EnvironmentOutlined /> Khu vực
+                      </>
+                    }
+                  >
+                    {user.location || '-'}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Kinh nghiệm">
+                    {data.yearOfExperience ?? 0} năm
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Ngày đăng ký">
+                    {formatDate(data.createdAt)}
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Trạng thái xác thực">
+                    <Badge
+                      status={statusColor[(statusToShow || 'UNKNOWN') as keyof typeof statusColor]}
+                      text={statusLabel[(statusToShow || 'UNKNOWN') as keyof typeof statusLabel]}
+                    />
+                  </Descriptions.Item>
+                </Descriptions>
+
+                {/* Bio */}
+                {data.bio && (
+                  <div>
+                    <Title level={5}>Giới thiệu</Title>
+                    <Paragraph className="text-gray-700">{data.bio}</Paragraph>
+                  </div>
+                )}
+
+                {/* Specialties */}
+                {specialtiesToShow.length > 0 && (
+                  <div>
+                    <Title level={5}>
+                      <BookOutlined /> Chuyên môn
+                    </Title>
+                    <div className="flex flex-wrap gap-2">
+                      {specialtiesToShow.map((spec: string, idx: number) => (
+                        <Tag key={idx} color="blue" className="text-sm py-1 px-3">
+                          {spec}
+                        </Tag>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Teaching Methods */}
+                {teachingMethodsToShow.length > 0 && (
+                  <div>
+                    <Title level={5}>
+                      <BookOutlined /> Phương pháp giảng dạy
+                    </Title>
+                    <List
+                      size="small"
+                      dataSource={teachingMethodsToShow}
+                      renderItem={(method: string) => (
+                        <List.Item>
+                          <Text>{method}</Text>
+                        </List.Item>
+                      )}
+                    />
+                  </div>
+                )}
+
+                {/* Credentials */}
+                <div>
+                  <Title level={5}>
+                    <SafetyCertificateOutlined /> Chứng chỉ ({credentialsToShow.length})
+                  </Title>
+                  {credentialsToShow.length > 0 ? (
+                    <Space direction="vertical" className="w-full" size="middle">
+                      {credentialsToShow.map((cred: any) => (
+                        <Card key={cred.id} size="small">
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium mb-1 truncate">{cred.name}</div>
+                              <div className="text-sm text-gray-500 mb-2">
+                                <Tag color="blue">{cred.type}</Tag>
+                              </div>
+                              {cred.description && (
+                                <div className="text-sm text-gray-600 mb-2">{cred.description}</div>
+                              )}
+                              <Space size="middle" className="text-xs text-gray-500">
+                                {cred.issuedAt && (
+                                  <span>
+                                    <CalendarOutlined /> Cấp: {formatDate(cred.issuedAt)}
+                                  </span>
+                                )}
+                                {cred.expiresAt && (
+                                  <span>Hết hạn: {formatDate(cred.expiresAt)}</span>
+                                )}
+                              </Space>
+                            </div>
+                            {cred.publicUrl && (
+                              <Button
+                                type="link"
+                                icon={<LinkOutlined />}
+                                onClick={() => window.open(cred.publicUrl!, '_blank')}
+                              >
+                                Xem
+                              </Button>
+                            )}
+                          </div>
+                        </Card>
+                      ))}
+                    </Space>
+                  ) : (
+                    <Empty description="Chưa có chứng chỉ" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+                  )}
+                </div>
+
+                {/* Stats for verified coaches */}
+                {statusToShow === CoachVerificationStatus.VERIFIED && (
+                  <Descriptions title="Thống kê hoạt động" column={2} bordered>
+                    <Descriptions.Item label="Tổng khóa học">
+                      {data.totalCourses ?? 0}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Tổng buổi học">
+                      {data.totalSessions ?? 0}
+                    </Descriptions.Item>
+                  </Descriptions>
+                )}
+
+                {/* Rejection Reason if rejected */}
+                {statusToShow === CoachVerificationStatus.REJECTED && data.verificationReason && (
+                  <div className="p-4 bg-red-50 border border-red-200 rounded">
+                    <Text strong className="text-red-600 block mb-2">
+                      Lý do từ chối:
+                    </Text>
+                    <Text className="text-red-700">{data.verificationReason}</Text>
+                  </div>
+                )}
+              </div>
+            );
+          })()
+        ) : (
+          <Empty description="Không tìm thấy thông tin" />
         )}
       </Modal>
 
@@ -695,7 +1054,10 @@ export default function CoachesPage() {
         <div>
           <Text>
             Bạn có chắc chắn muốn phê duyệt huấn luyện viên{' '}
-            <Text strong>{selectedCoach?.name}</Text>?
+            <Text strong>
+              {coachDetail?.user?.fullName || coachDetail?.name || selectedCoach?.name}
+            </Text>
+            ?
           </Text>
           <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded">
             <CheckCircleOutlined className="text-green-600 mr-2" />
@@ -720,108 +1082,16 @@ export default function CoachesPage() {
         <div>
           <Text>
             Bạn có chắc chắn muốn từ chối huấn luyện viên <Text strong>{selectedCoach?.name}</Text>?
+            {/* Optional: could also show coachDetail name */}
           </Text>
-          <div className="mt-4">
-            <Text strong className="block mb-2">
-              Lý do từ chối: <span className="text-red-500">*</span>
+          <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded">
+            <CheckCircleOutlined className="text-green-600 mr-2" />
+            <Text className="text-green-600">
+              Sau khi từ chối, huấn luyện viên không thể tạo khóa học và nhận học viên.
             </Text>
-            <TextArea
-              rows={4}
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="Nhập lý do từ chối phê duyệt..."
-            />
           </div>
         </div>
       </Modal>
-
-      {/* Feedback Modal */}
-      {/* <Modal
-        title={
-          <div className="flex items-center gap-2">
-            <MessageOutlined className="text-blue-500" />
-            <span>Feedback của {selectedCoach?.name}</span>
-          </div>
-        }
-        open={isFeedbackModalVisible}
-        onCancel={() => setIsFeedbackModalVisible(false)}
-        footer={null}
-        width={860}
-      >
-        {isLoadingFeedback ? (
-          <Skeleton active />
-        ) : !feedbackRes ||
-          (Array.isArray(feedbackRes?.items)
-            ? feedbackRes.items.length === 0
-            : (feedbackRes || []).length === 0) ? (
-          <Empty description="Chưa có feedback nào" />
-        ) : (
-          (() => {
-            const list: FeedbackItem[] = Array.isArray(feedbackRes?.items)
-              ? feedbackRes.items
-              : feedbackRes;
-            const avg = list.reduce((s, f) => s + (f.rating || 0), 0) / list.length;
-            return (
-              <>
-                <div className="mb-4 p-4 bg-blue-50 rounded">
-                  <Row gutter={16}>
-                    <Col span={8}>
-                      <div className="text-center">
-                        <div className="text-3xl font-bold text-blue-600">{list.length}</div>
-                        <div className="text-sm text-gray-600">Tổng feedback</div>
-                      </div>
-                    </Col>
-                    <Col span={8}>
-                      <div className="text-center">
-                        <div className="text-3xl font-bold text-yellow-500">{avg.toFixed(1)}</div>
-                        <div className="text-sm text-gray-600">Đánh giá TB</div>
-                      </div>
-                    </Col>
-                    <Col span={8}>
-                      <div className="text-center">
-                        <div className="text-3xl font-bold text-green-600">
-                          {new Set(list.map((f) => f.courseId)).size}
-                        </div>
-                        <div className="text-sm text-gray-600">Khóa học</div>
-                      </div>
-                    </Col>
-                  </Row>
-                </div>
-
-                <Divider>Danh sách feedback</Divider>
-
-                <List
-                  dataSource={list}
-                  renderItem={(fb) => (
-                    <List.Item key={String(fb.id)}>
-                      <Card className="w-full" size="small">
-                        <div className="flex justify-between items-start mb-2">
-                          <div className="flex items-center gap-2">
-                            <Avatar icon={<UserOutlined />} size="small" />
-                            <Text strong>{fb.learnerName}</Text>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Rate disabled value={fb.rating} className="text-sm" />
-                            <Text className="text-sm text-gray-500">
-                              {formatDate(fb.createdAt)}
-                            </Text>
-                          </div>
-                        </div>
-                        <div className="mb-2">
-                          <Tag icon={<BookOutlined />} color="blue">
-                            {fb.courseName}
-                          </Tag>
-                        </div>
-                        <Paragraph className="mb-0 text-gray-700">{fb.comment}</Paragraph>
-                      </Card>
-                    </List.Item>
-                  )}
-                />
-              </>
-            );
-          })()
-        )}
-      </Modal> */}
     </div>
   );
 }

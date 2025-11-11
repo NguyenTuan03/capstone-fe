@@ -8,6 +8,7 @@ import {
   UseMutationOptions,
 } from '@tanstack/react-query';
 import axios from '@/@crema/axios/ApiConfig';
+import { TOKEN_KEY } from '@/@crema/constants/AppConst';
 
 /* =========================
    URL builder (Cách 1)
@@ -59,7 +60,12 @@ const buildUrl = (endpoint: string, params?: Record<string, any>) => {
 
 const getAuthHeader = () => {
   if (typeof window === 'undefined') return {};
-  const token = localStorage.getItem('token');
+  // Try multiple token keys for compatibility
+  const token =
+    localStorage.getItem(TOKEN_KEY) ||
+    localStorage.getItem('token') ||
+    sessionStorage.getItem(TOKEN_KEY) ||
+    sessionStorage.getItem('token');
   return token ? { Authorization: `Bearer ${token}` } : {};
 };
 
@@ -76,12 +82,34 @@ const apiCall = async <TData = unknown>(
 ): Promise<TData> => {
   const { method = 'GET', data, params } = options;
   const url = buildUrl(endpoint, params);
+  const authHeaders = getAuthHeader();
+
+  // Debug: Log token status (remove in production)
+  if (typeof window !== 'undefined' && process.env.NODE_ENV === 'development') {
+    const token =
+      localStorage.getItem(TOKEN_KEY) ||
+      localStorage.getItem('token') ||
+      sessionStorage.getItem(TOKEN_KEY) ||
+      sessionStorage.getItem('token');
+    console.log('[apiCall]', method, url, {
+      hasToken: !!token,
+      tokenLength: token?.length || 0,
+      tokenPreview: token ? `${token.substring(0, 20)}...` : 'none',
+      authHeader: authHeaders,
+    });
+    if (!token) {
+      console.warn('[apiCall] No token found in storage for', method, url);
+    }
+  }
 
   try {
     const response = await axios.request<TData>({
       url,
       method,
-      headers: { ...getAuthHeader() },
+      headers: {
+        'Content-Type': 'application/json',
+        ...authHeaders,
+      },
       ...(data && { data }),
     });
     return response.data;
@@ -123,7 +151,21 @@ export const useApiMutation = <TData = unknown, TVariables = unknown, TError = E
 ) => {
   const { endpoint, method = 'POST', ...mutationOptions } = options;
   return useMutation({
-    mutationFn: (variables: TVariables) => apiCall<TData>(endpoint, { method, data: variables }),
+    mutationFn: (variables: TVariables) => {
+      // Support path params like ":id" from variables object
+      let finalEndpoint = endpoint;
+      try {
+        if (variables && typeof variables === 'object') {
+          finalEndpoint = endpoint.replace(/:([a-zA-Z_]\w*)/g, (_match, key) => {
+            const value = (variables as any)[key];
+            return value != null ? String(value) : _match;
+          });
+        }
+      } catch {
+        /* noop */
+      }
+      return apiCall<TData>(finalEndpoint, { method, data: variables });
+    },
     ...mutationOptions,
   });
 };
