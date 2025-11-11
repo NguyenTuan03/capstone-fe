@@ -1,9 +1,4 @@
-/**
- * Configuration API Service
- * Handles CRUD operations for system configurations
- */
-
-import { usePost, usePut, useDelete, useGet } from '@/@crema/hooks/useApiQuery';
+import { usePost, usePut, useGet } from '@/@crema/hooks/useApiQuery';
 import {
   Configuration,
   CreateConfigurationDto,
@@ -26,6 +21,16 @@ export const useGetConfigurations = (params?: Record<string, any>) => {
 export const useGetConfigurationById = (id: number | string, enabled = true) => {
   return useGet<ApiResponse<Configuration>>(id ? `configurations/${id}` : '', undefined, {
     enabled: enabled && !!id,
+  });
+};
+
+// ============================================
+// ✅ NEW - GET Configuration by Key
+// ============================================
+// GET /api/v1/configurations/{key}
+export const useGetConfigurationByKey = (key: string, enabled = true) => {
+  return useGet<ApiResponse<Configuration>>(key ? `configurations/${key}` : '', undefined, {
+    enabled: enabled && !!key,
   });
 };
 
@@ -67,25 +72,6 @@ export const useUpdateConfiguration = () => {
     },
   );
 };
-
-// ============================================
-// DELETE - Delete Configuration
-// ============================================
-export const useDeleteConfiguration = () => {
-  const { message } = App.useApp();
-
-  return useDelete<ApiResponse<void>, { id: number | string }>('configurations/:id', {
-    onSuccess: (data) => {
-      message.success(data?.message || 'Xóa cấu hình thành công!');
-    },
-    onError: (error: any) => {
-      const errorMessage =
-        error?.response?.data?.message || error?.message || 'Xóa cấu hình thất bại!';
-      message.error(errorMessage);
-    },
-  });
-};
-
 // ============================================
 // Helper function to parse value based on dataType
 // ============================================

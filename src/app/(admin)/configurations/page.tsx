@@ -15,11 +15,12 @@ import {
   Typography,
   Tooltip,
   App,
+  Descriptions,
+  Spin,
 } from 'antd';
 import {
   PlusOutlined,
   EditOutlined,
-  DeleteOutlined,
   EyeOutlined,
   SearchOutlined,
   SettingOutlined,
@@ -31,7 +32,7 @@ import {
   useGetConfigurations,
   useCreateConfiguration,
   useUpdateConfiguration,
-  useDeleteConfiguration,
+  useGetConfigurationByKey,
   parseConfigValue,
   stringifyConfigValue,
 } from '@/@crema/services/apis/configurations';
@@ -42,7 +43,8 @@ const { TextArea } = Input;
 
 export default function ConfigurationsPage() {
   const { modal } = App.useApp();
-  const [form] = Form.useForm();
+  const [createForm] = Form.useForm();
+  const [editForm] = Form.useForm();
 
   // Role guard
   const { isAuthorized, isChecking } = useRoleGuard(['ADMIN'], {
@@ -60,6 +62,7 @@ export default function ConfigurationsPage() {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
   const [selectedConfig, setSelectedConfig] = useState<Configuration | null>(null);
+  const [detailKey, setDetailKey] = useState<string | null>(null);
 
   // API params
   const apiParams = useMemo(() => {
@@ -83,7 +86,10 @@ export default function ConfigurationsPage() {
   const { data: configurationsRes, isLoading, refetch } = useGetConfigurations(apiParams);
   const createMutation = useCreateConfiguration();
   const updateMutation = useUpdateConfiguration();
-  const deleteMutation = useDeleteConfiguration();
+  const detailQuery = useGetConfigurationByKey(
+    detailKey || '',
+    !!detailKey && isDetailModalVisible,
+  );
 
   // Map data
   const configurations = useMemo(() => {
@@ -110,13 +116,13 @@ export default function ConfigurationsPage() {
 
   // Handlers
   const handleCreate = () => {
-    form.resetFields();
+    createForm.resetFields();
     setIsCreateModalVisible(true);
   };
 
   const handleEdit = (config: Configuration) => {
     setSelectedConfig(config);
-    form.setFieldsValue({
+    editForm.setFieldsValue({
       key: config.key,
       value: config.value,
       description: config.description,
@@ -127,26 +133,8 @@ export default function ConfigurationsPage() {
 
   const handleViewDetail = (config: Configuration) => {
     setSelectedConfig(config);
+    setDetailKey(config.key);
     setIsDetailModalVisible(true);
-  };
-
-  const handleDelete = (config: Configuration) => {
-    modal.confirm({
-      title: 'Xác nhận xóa',
-      content: `Bạn có chắc chắn muốn xóa cấu hình "${config.key}"? Hành động này không thể hoàn tác.`,
-      okText: 'Xóa',
-      okType: 'danger',
-      cancelText: 'Hủy',
-      centered: true,
-      onOk: async () => {
-        try {
-          await deleteMutation.mutateAsync({ id: config.id });
-          refetch();
-        } catch (error) {
-          console.error('Delete error:', error);
-        }
-      },
-    });
   };
 
   const handleCreateSubmit = async (values: any) => {
@@ -158,7 +146,7 @@ export default function ConfigurationsPage() {
         dataType: values.dataType,
       });
       setIsCreateModalVisible(false);
-      form.resetFields();
+      createForm.resetFields();
       refetch();
     } catch (error) {
       console.error('Create error:', error);
@@ -178,7 +166,7 @@ export default function ConfigurationsPage() {
       });
       setIsEditModalVisible(false);
       setSelectedConfig(null);
-      form.resetFields();
+      editForm.resetFields();
       refetch();
     } catch (error) {
       console.error('Update error:', error);
@@ -295,15 +283,6 @@ export default function ConfigurationsPage() {
               size="small"
             />
           </Tooltip>
-          <Tooltip title="Xóa">
-            <Button
-              type="text"
-              danger
-              icon={<DeleteOutlined />}
-              onClick={() => handleDelete(record)}
-              size="small"
-            />
-          </Tooltip>
         </Space>
       ),
     },
@@ -376,17 +355,19 @@ export default function ConfigurationsPage() {
       <Modal
         title="Tạo cấu hình mới"
         open={isCreateModalVisible}
+        destroyOnClose
+        getContainer={false}
         onCancel={() => {
           setIsCreateModalVisible(false);
-          form.resetFields();
+          createForm.resetFields();
         }}
-        onOk={() => form.submit()}
+        onOk={() => createForm.submit()}
         confirmLoading={createMutation.isPending}
         width={600}
         okText="Tạo"
         cancelText="Hủy"
       >
-        <Form form={form} layout="vertical" onFinish={handleCreateSubmit} className="mt-4">
+        <Form form={createForm} layout="vertical" onFinish={handleCreateSubmit} className="mt-4">
           <Form.Item
             name="key"
             label="Key"
@@ -437,18 +418,20 @@ export default function ConfigurationsPage() {
       <Modal
         title="Chỉnh sửa cấu hình"
         open={isEditModalVisible}
+        destroyOnClose
+        getContainer={false}
         onCancel={() => {
           setIsEditModalVisible(false);
           setSelectedConfig(null);
-          form.resetFields();
+          editForm.resetFields();
         }}
-        onOk={() => form.submit()}
+        onOk={() => editForm.submit()}
         confirmLoading={updateMutation.isPending}
         width={600}
         okText="Cập nhật"
         cancelText="Hủy"
       >
-        <Form form={form} layout="vertical" onFinish={handleEditSubmit} className="mt-4">
+        <Form form={editForm} layout="vertical" onFinish={handleEditSubmit} className="mt-4">
           <Form.Item
             name="key"
             label="Key"
@@ -498,93 +481,53 @@ export default function ConfigurationsPage() {
       <Modal
         title="Chi tiết cấu hình"
         open={isDetailModalVisible}
+        destroyOnClose
+        getContainer={false}
         onCancel={() => {
           setIsDetailModalVisible(false);
           setSelectedConfig(null);
+          setDetailKey(null);
         }}
-        footer={[
-          <Button key="close" onClick={() => setIsDetailModalVisible(false)}>
-            Đóng
-          </Button>,
-        ]}
-        width={700}
+        footer={null}
+        width={640}
       >
-        {selectedConfig && (
-          <div className="space-y-4 mt-4">
-            <div>
-              <Text type="secondary">Key:</Text>
-              <div className="mt-1">
-                <Text strong className="font-mono text-base">
-                  {selectedConfig.key}
-                </Text>
-              </div>
-            </div>
-
-            <div>
-              <Text type="secondary">Loại dữ liệu:</Text>
-              <div className="mt-1">
-                <Tag color={getDataTypeColor(selectedConfig.dataType)}>
-                  {getDataTypeLabel(selectedConfig.dataType)}
-                </Tag>
-              </div>
-            </div>
-
-            <div>
-              <Text type="secondary">Value:</Text>
-              <div className="mt-1 p-3 bg-gray-50 rounded font-mono text-sm">
-                {selectedConfig.dataType === 'json'
-                  ? JSON.stringify(
-                      parseConfigValue(selectedConfig.value, selectedConfig.dataType),
-                      null,
-                      2,
-                    )
-                  : selectedConfig.value}
-              </div>
-            </div>
-
-            {selectedConfig.description && (
-              <div>
-                <Text type="secondary">Mô tả:</Text>
-                <div className="mt-1">
-                  <Text>{selectedConfig.description}</Text>
-                </div>
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-              <div>
-                <Text type="secondary">Ngày tạo:</Text>
-                <div className="mt-1">
-                  <Text>{new Date(selectedConfig.createdAt).toLocaleString('vi-VN')}</Text>
-                </div>
-              </div>
-              <div>
-                <Text type="secondary">Ngày cập nhật:</Text>
-                <div className="mt-1">
-                  <Text>{new Date(selectedConfig.updatedAt).toLocaleString('vi-VN')}</Text>
-                </div>
-              </div>
-            </div>
-
-            {selectedConfig.createdBy && (
-              <div>
-                <Text type="secondary">Người tạo:</Text>
-                <div className="mt-1">
-                  <Text>{selectedConfig.createdBy.fullName}</Text>
-                </div>
-              </div>
-            )}
-
-            {selectedConfig.updatedBy && (
-              <div>
-                <Text type="secondary">Người cập nhật:</Text>
-                <div className="mt-1">
-                  <Text>{selectedConfig.updatedBy.fullName}</Text>
-                </div>
-              </div>
-            )}
+        {detailQuery.isFetching && (
+          <div className="flex justify-center items-center py-10">
+            <Spin />
           </div>
         )}
+        {!detailQuery.isFetching &&
+          (detailQuery.data?.data || selectedConfig) &&
+          (() => {
+            const cfg = (detailQuery.data?.data as Configuration) || selectedConfig!;
+            return (
+              <Descriptions bordered column={1} size="middle" className="mt-4">
+                <Descriptions.Item label="Key">
+                  <Text strong className="font-mono">
+                    {cfg.key}
+                  </Text>
+                </Descriptions.Item>
+                <Descriptions.Item label="Loại dữ liệu">
+                  <Tag color={getDataTypeColor(cfg.dataType)}>{getDataTypeLabel(cfg.dataType)}</Tag>
+                </Descriptions.Item>
+                <Descriptions.Item label="Value">
+                  {cfg.dataType === 'json' ? (
+                    <pre className="bg-gray-50 p-3 rounded-md overflow-auto max-h-60">
+                      {JSON.stringify(parseConfigValue(cfg.value, cfg.dataType), null, 2)}
+                    </pre>
+                  ) : (
+                    <Text className="font-mono">{cfg.value}</Text>
+                  )}
+                </Descriptions.Item>
+                <Descriptions.Item label="Mô tả">
+                  <Text type="secondary">{cfg.description || '-'}</Text>
+                </Descriptions.Item>
+                <Descriptions.Item label="Ngày tạo">
+                  {cfg.createdAt ? new Date(cfg.createdAt as any).toLocaleDateString('vi-VN') : '-'}
+                </Descriptions.Item>
+              </Descriptions>
+            );
+          })()}
       </Modal>
     </div>
   );
