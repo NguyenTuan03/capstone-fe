@@ -1,380 +1,466 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import { Card, Row, Col, Statistic, Typography, Select, DatePicker, Space } from 'antd';
 import {
-  Row,
-  Col,
-  Card,
-  Statistic,
-  Typography,
-  Space,
-  Button,
-  Select,
-  DatePicker,
-  message,
-  Spin,
-  Badge,
-  Switch,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
   Tooltip,
-} from 'antd';
+  Legend,
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  AreaChart,
+  Area,
+} from 'recharts';
+import { UserOutlined, DollarOutlined, WalletOutlined, RiseOutlined } from '@ant-design/icons';
 
-import {
-  UserOutlined,
-  VideoCameraOutlined,
-  DollarOutlined,
-  StarOutlined,
-  TrophyOutlined,
-  RiseOutlined,
-  ReloadOutlined,
-  SettingOutlined,
-  FullscreenOutlined,
-  ThunderboltOutlined,
-} from '@ant-design/icons';
-
-import StatisticsApiService from '@/services/statisticsApi';
-import { StatisticsData, GetStatisticsParams } from '@/types/statistics';
-
-// Import Chart Components
-import UserGrowthChart from '@/modules/dashboard/statistics/components/UserGrowthChart';
-import UserDistributionChart from '@/modules/dashboard/statistics/components/UserDistributionChart';
-import useRoleGuard from '@/@crema/hooks/useRoleGuard';
-
-const { Title, Text } = Typography;
-const { RangePicker } = DatePicker;
+const { Title } = Typography;
 const { Option } = Select;
+const { RangePicker } = DatePicker;
 
-const StatisticsPage: React.FC = () => {
-  const { isAuthorized, isChecking } = useRoleGuard(['ADMIN'], {
-    unauthenticated: '/signin',
-    COACH: '/summary',
-    LEARNER: '/home',
-  });
-  // States
-  const [statistics, setStatistics] = useState<StatisticsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [lastUpdated, setLastUpdated] = useState<string>('');
+// ✅ Mock data đơn giản theo API structure
+const mockUserStats = {
+  statusCode: 200,
+  message: 'Success',
+  metadata: {
+    data: [
+      { month: '1/2025', data: 0 },
+      { month: '2/2025', data: 0 },
+      { month: '3/2025', data: 0 },
+      { month: '4/2025', data: 0 },
+      { month: '5/2025', data: 0 },
+      { month: '6/2025', data: 0 },
+      { month: '7/2025', data: 0 },
+      { month: '8/2025', data: 0 },
+      { month: '9/2025', data: 0 },
+      { month: '10/2025', data: 5 },
+      { month: '11/2025', data: 6 },
+      { month: '12/2025', data: 0 },
+    ],
+  },
+};
 
-  // 3D Settings
-  // Chart display states (simplified from 3D version)
+const mockLearnerRevenue = {
+  statusCode: 200,
+  message: 'Success',
+  metadata: {
+    data: [
+      { month: '1/2025', data: 0 },
+      { month: '2/2025', data: 0 },
+      { month: '3/2025', data: 0 },
+      { month: '4/2025', data: 0 },
+      { month: '5/2025', data: 0 },
+      { month: '6/2025', data: 0 },
+      { month: '7/2025', data: 0 },
+      { month: '8/2025', data: 0 },
+      { month: '9/2025', data: 0 },
+      { month: '10/2025', data: 0 },
+      { month: '11/2025', data: 0 },
+      { month: '12/2025', data: 0 },
+    ],
+  },
+};
 
-  // Filters
-  const [filters, setFilters] = useState<GetStatisticsParams>({
-    dateRange: ['2024-01-01', '2024-12-31'],
-    metrics: ['users', 'sessions', 'revenue', 'engagement'],
-    granularity: 'month',
-    includeRealTime: true,
-    includePredictions: true,
-    includeGeographic: true,
-  });
+const mockCoachIncome = {
+  statusCode: 200,
+  message: 'Success',
+  metadata: {
+    data: [
+      { month: '1/2025', data: 0 },
+      { month: '2/2025', data: 0 },
+      { month: '3/2025', data: 0 },
+      { month: '4/2025', data: 0 },
+      { month: '5/2025', data: 0 },
+      { month: '6/2025', data: 0 },
+      { month: '7/2025', data: 0 },
+      { month: '8/2025', data: 0 },
+      { month: '9/2025', data: 0 },
+      { month: '10/2025', data: 0 },
+      { month: '11/2025', data: 0 },
+      { month: '12/2025', data: 0 },
+    ],
+  },
+};
 
-  // Load statistics data
-  const loadStatistics = async (showLoading = true) => {
-    if (showLoading) setLoading(true);
+const mockSystemRevenue = {
+  statusCode: 200,
+  message: 'Success',
+  metadata: {
+    data: [
+      { month: '1/2025', data: 0 },
+      { month: '2/2025', data: 0 },
+      { month: '3/2025', data: 0 },
+      { month: '4/2025', data: 0 },
+      { month: '5/2025', data: 0 },
+      { month: '6/2025', data: 0 },
+      { month: '7/2025', data: 0 },
+      { month: '8/2025', data: 0 },
+      { month: '9/2025', data: 0 },
+      { month: '10/2025', data: 0 },
+      { month: '11/2025', data: 0 },
+      { month: '12/2025', data: 0 },
+    ],
+  },
+};
 
-    try {
-      const response = await StatisticsApiService.getStatistics(filters);
+// ✅ Format tiền tệ
+const formatCurrency = (value: number) => {
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: 'VND',
+    minimumFractionDigits: 0,
+  }).format(value);
+};
 
-      if (response.success) {
-        setStatistics(response.data);
-        setLastUpdated(response.lastUpdated);
-      } else {
-        message.error('Không thể tải dữ liệu thống kê');
-      }
-    } catch (error) {
-      console.error('Error loading statistics:', error);
-      message.error('Có lỗi xảy ra khi tải dữ liệu');
-    } finally {
-      if (showLoading) setLoading(false);
-    }
-  };
+// ✅ Format số
+const formatNumber = (value: number) => {
+  return new Intl.NumberFormat('vi-VN').format(value);
+};
 
-  // Refresh data
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await loadStatistics(false);
-    setRefreshing(false);
-    message.success('Đã cập nhật dữ liệu');
-  };
+// ✅ Tính tổng và tăng trưởng từ data
+const calculateStats = (data: any[]) => {
+  const total = data.reduce((sum, item) => sum + item.data, 0);
+  const currentMonth = data[data.length - 1]?.data || 0;
+  const previousMonth = data[data.length - 2]?.data || 0;
+  const growth = previousMonth !== 0 ? ((currentMonth - previousMonth) / previousMonth) * 100 : 0;
 
-  // Handle filter changes
-  const handleFilterChange = (key: keyof GetStatisticsParams, value: any) => {
-    setFilters((prev) => ({
-      ...prev,
-      [key]: value,
-    }));
-  };
+  return { total, currentMonth, growth };
+};
 
-  // Apply filters
-  const applyFilters = () => {
-    loadStatistics();
-  };
-
-  // Load initial data
-  useEffect(() => {
-    loadStatistics();
-  }, []);
-
-  // Auto refresh every 5 minutes
-  useEffect(() => {
-    const interval = setInterval(
-      () => {
-        loadStatistics(false);
-      },
-      5 * 60 * 1000,
-    );
-
-    return () => clearInterval(interval);
-  }, [filters]);
-
-  if (loading) {
+// ✅ Custom tooltip
+const CustomTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
     return (
       <div
         style={{
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '60vh',
+          backgroundColor: 'white',
+          padding: '10px',
+          border: '1px solid #ccc',
+          borderRadius: '4px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
         }}
       >
-        <Spin size="large" tip="Đang tải 3D Statistics..." />
+        <p style={{ margin: 0, fontWeight: 'bold' }}>{`Tháng: ${label}`}</p>
+        <p style={{ margin: 0, color: payload[0].color }}>
+          {`Giá trị: ${formatNumber(payload[0].value)}`}
+        </p>
       </div>
     );
   }
-
-  if (!statistics) {
-    return (
-      <div style={{ textAlign: 'center', padding: '60px 0' }}>
-        <Title level={4}>Không có dữ liệu thống kê</Title>
-        <Button type="primary" onClick={() => loadStatistics()}>
-          Thử lại
-        </Button>
-      </div>
-    );
-  }
-  if (isChecking) {
-    return <div>Đang tải...</div>;
-  }
-  if (!isAuthorized) {
-    return <div>Bạn không có quyền truy cập trang này</div>;
-  }
-  return (
-    <div
-      style={{
-        width: '100%',
-        maxWidth: '100%',
-        overflowX: 'hidden',
-        boxSizing: 'border-box',
-      }}
-    >
-      {/* Header */}
-      <div style={{ marginBottom: 24 }}>
-        <Row justify="space-between" align="middle">
-          <Col>
-            <Title level={2} style={{ margin: 0 }}>
-              📊 Thống kê 3D Interactive
-            </Title>
-            <Text type="secondary">
-              Cập nhật lần cuối:{' '}
-              {lastUpdated ? StatisticsApiService.getTimeAgo(lastUpdated) : 'Đang tải...'}
-            </Text>
-          </Col>
-          <Col>
-            <Space>
-              <Button icon={<ReloadOutlined />} onClick={handleRefresh} loading={refreshing}>
-                Làm mới
-              </Button>
-              <Button icon={<SettingOutlined />}>Cài đặt</Button>
-            </Space>
-          </Col>
-        </Row>
-      </div>
-
-      {/* Filters */}
-      <Card style={{ marginBottom: 24 }} bodyStyle={{ padding: '16px' }}>
-        <Row gutter={[16, 16]} align="middle">
-          <Col xs={24} sm={12} md={6}>
-            <div>
-              <Text strong style={{ marginBottom: 4, display: 'block' }}>
-                📅 Khoảng thời gian
-              </Text>
-              <RangePicker
-                style={{ width: '100%' }}
-                onChange={(dates) => {
-                  if (dates && dates[0] && dates[1]) {
-                    handleFilterChange('dateRange', [
-                      dates[0].format('YYYY-MM-DD'),
-                      dates[1].format('YYYY-MM-DD'),
-                    ]);
-                  }
-                }}
-              />
-            </div>
-          </Col>
-          <Col xs={24} sm={12} md={4}>
-            <div>
-              <Text strong style={{ marginBottom: 4, display: 'block' }}>
-                📊 Độ chi tiết
-              </Text>
-              <Select
-                style={{ width: '100%' }}
-                value={filters.granularity}
-                onChange={(value) => handleFilterChange('granularity', value)}
-              >
-                <Option value="hour">Giờ</Option>
-                <Option value="day">Ngày</Option>
-                <Option value="week">Tuần</Option>
-                <Option value="month">Tháng</Option>
-                <Option value="year">Năm</Option>
-              </Select>
-            </div>
-          </Col>
-          <Col xs={24} sm={12} md={4}>
-            <div>
-              <Text strong style={{ marginBottom: 4, display: 'block' }}>
-                🎯 Metrics
-              </Text>
-              <Select
-                mode="multiple"
-                style={{ width: '100%' }}
-                value={filters.metrics}
-                onChange={(value) => handleFilterChange('metrics', value)}
-                placeholder="Chọn metrics"
-              >
-                <Option value="users">👥 Users</Option>
-                <Option value="sessions">🎥 Sessions</Option>
-                <Option value="revenue">💰 Revenue</Option>
-                <Option value="engagement">❤️ Engagement</Option>
-                <Option value="geographic">🌍 Geographic</Option>
-              </Select>
-            </div>
-          </Col>
-          <Col xs={24} sm={12} md={4}>
-            <Button
-              type="primary"
-              onClick={applyFilters}
-              style={{ marginTop: 24 }}
-              icon={<ThunderboltOutlined />}
-            >
-              Áp dụng
-            </Button>
-          </Col>
-          <Col xs={24} sm={12} md={6}>
-            <div style={{ marginTop: 24 }}>
-              <Space>
-                <Tooltip title="Real-time data">
-                  <Switch
-                    size="small"
-                    checked={filters.includeRealTime}
-                    onChange={(checked) => handleFilterChange('includeRealTime', checked)}
-                  />
-                </Tooltip>
-                <Text style={{ fontSize: '12px' }}>Real-time</Text>
-
-                <Tooltip title="Predictions">
-                  <Switch
-                    size="small"
-                    checked={filters.includePredictions}
-                    onChange={(checked) => handleFilterChange('includePredictions', checked)}
-                  />
-                </Tooltip>
-                <Text style={{ fontSize: '12px' }}>Dự đoán</Text>
-              </Space>
-            </div>
-          </Col>
-        </Row>
-      </Card>
-
-      {/* Charts Section */}
-      <Row gutter={[24, 24]} style={{ marginBottom: 24 }}>
-        {/* User Growth Chart */}
-        <Col xs={24} lg={14}>
-          <UserGrowthChart
-            data={statistics.userAnalytics.userGrowth.monthly}
-            title="📈 Tăng trưởng người dùng theo tháng"
-          />
-        </Col>
-
-        {/* User Distribution Chart */}
-        <Col xs={24} lg={10}>
-          <UserDistributionChart
-            data={statistics.userAnalytics.deviceUsage.devices}
-            title="🍩 Phân bố thiết bị người dùng"
-          />
-        </Col>
-      </Row>
-
-      {/* Additional Stats Row */}
-      <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="Tỷ lệ tăng trưởng"
-              value={statistics.overview.growthRate.current}
-              prefix={<RiseOutlined style={{ color: '#52c41a' }} />}
-              suffix="%"
-              precision={1}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="Sức khỏe hệ thống"
-              value={statistics.overview.systemHealth.current}
-              prefix={<TrophyOutlined style={{ color: '#13c2c2' }} />}
-              suffix="%"
-              precision={1}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card>
-            <Statistic
-              title="Users online"
-              value={statistics.timeSeriesData.realTime.activeUsers}
-              prefix={<UserOutlined style={{ color: '#722ed1' }} />}
-              suffix={<Badge status="processing" text="Live" />}
-            />
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Performance Info */}
-      <Card size="small" style={{ marginTop: 24 }}>
-        <Row justify="space-between" align="middle">
-          <Col>
-            <Space>
-              <Text type="secondary" style={{ fontSize: '12px' }}>
-                📊 Charts: Interactive 2D Visualization
-              </Text>
-              <Text type="secondary" style={{ fontSize: '12px' }}>
-                📈 Data Points: {statistics.userAnalytics.userGrowth.monthly.length} months
-              </Text>
-            </Space>
-          </Col>
-          <Col>
-            <Space>
-              <Button
-                size="small"
-                icon={<FullscreenOutlined />}
-                onClick={() => message.info('Fullscreen mode - Coming soon!')}
-              >
-                Toàn màn hình
-              </Button>
-              <Switch
-                size="small"
-                checked={true}
-                disabled={true}
-                checkedChildren="Interactive"
-                unCheckedChildren="Static"
-              />
-            </Space>
-          </Col>
-        </Row>
-      </Card>
-    </div>
-  );
+  return null;
 };
 
-export default StatisticsPage;
+// ✅ Custom tooltip cho tiền tệ
+const CurrencyTooltip = ({ active, payload, label }: any) => {
+  if (active && payload && payload.length) {
+    return (
+      <div
+        style={{
+          backgroundColor: 'white',
+          padding: '10px',
+          border: '1px solid #ccc',
+          borderRadius: '4px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+        }}
+      >
+        <p style={{ margin: 0, fontWeight: 'bold' }}>{`Tháng: ${label}`}</p>
+        <p style={{ margin: 0, color: payload[0].color }}>
+          {`Giá trị: ${formatCurrency(payload[0].value)}`}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
+export default function FinancialStatisticsPage() {
+  const [timeRange, setTimeRange] = useState('year');
+  const [customDateRange, setCustomDateRange] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  // ✅ Tính toán stats từ mock data
+  const userStats = calculateStats(mockUserStats.metadata.data);
+  const learnerStats = calculateStats(mockLearnerRevenue.metadata.data);
+  const coachStats = calculateStats(mockCoachIncome.metadata.data);
+  const systemStats = calculateStats(mockSystemRevenue.metadata.data);
+
+  // ✅ Mock API call
+  const fetchData = async () => {
+    setLoading(true);
+    // Simulate API call
+    setTimeout(() => {
+      setLoading(false);
+    }, 1000);
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, [timeRange, customDateRange]);
+
+  return (
+    <div style={{ padding: '24px' }}>
+      {/* Header */}
+      <div style={{ marginBottom: 24 }}>
+        <Title level={2}>📊 Thống Kê Tài Chính</Title>
+
+        {/* Filter Controls */}
+        <Card size="small" style={{ marginBottom: 16 }}>
+          <Space>
+            <span style={{ fontWeight: 500 }}>Thời gian:</span>
+            <Select
+              value={timeRange}
+              onChange={setTimeRange}
+              style={{ width: 120 }}
+              disabled={loading}
+            >
+              <Option value="week">Tuần</Option>
+              <Option value="month">Tháng</Option>
+              <Option value="quarter">Quý</Option>
+              <Option value="year">Năm</Option>
+              <Option value="custom">Tùy chọn</Option>
+            </Select>
+
+            {timeRange === 'custom' && (
+              <RangePicker onChange={setCustomDateRange} format="DD/MM/YYYY" disabled={loading} />
+            )}
+          </Space>
+        </Card>
+      </div>
+
+      {/* 4 Cards Statistics - 2 cards per row */}
+      <Row gutter={[16, 16]}>
+        {/* Card 1: Thống kê người dùng mới */}
+        <Col xs={24} lg={12}>
+          <Card
+            loading={loading}
+            style={{ height: '100%', borderRadius: '8px' }}
+            bodyStyle={{ padding: '16px' }}
+          >
+            <div style={{ marginBottom: 16 }}>
+              <Statistic
+                title="Người dùng mới"
+                value={userStats.currentMonth}
+                prefix={<UserOutlined />}
+                valueStyle={{ color: '#1890ff' }}
+                suffix={`/ ${formatNumber(userStats.total)} tổng`}
+              />
+              <div
+                style={{
+                  fontSize: '12px',
+                  color: userStats.growth >= 0 ? '#52c41a' : '#ff4d4f',
+                  marginTop: '4px',
+                }}
+              >
+                {userStats.growth >= 0 ? '📈' : '📉'} {Math.abs(userStats.growth).toFixed(1)}% so
+                với tháng trước
+              </div>
+            </div>
+
+            <div style={{ height: 300 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={mockUserStats.metadata.data}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="month" fontSize={12} angle={-45} textAnchor="end" height={50} />
+                  <YAxis fontSize={12} />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Line
+                    type="monotone"
+                    dataKey="data"
+                    stroke="#1890ff"
+                    strokeWidth={3}
+                    dot={{ fill: '#1890ff', strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </Col>
+
+        {/* Card 2: Tổng tiền thu được từ người học */}
+        <Col xs={24} lg={12}>
+          <Card
+            loading={loading}
+            style={{ height: '100%', borderRadius: '8px' }}
+            bodyStyle={{ padding: '16px' }}
+          >
+            <div style={{ marginBottom: 16 }}>
+              <Statistic
+                title="Doanh thu từ học viên"
+                value={learnerStats.currentMonth}
+                formatter={(value) => formatCurrency(Number(value))}
+                prefix={<DollarOutlined />}
+                valueStyle={{ color: '#52c41a' }}
+              />
+              <div
+                style={{
+                  fontSize: '12px',
+                  color: learnerStats.growth >= 0 ? '#52c41a' : '#ff4d4f',
+                  marginTop: '4px',
+                }}
+              >
+                {learnerStats.growth >= 0 ? '📈' : '📉'} {Math.abs(learnerStats.growth).toFixed(1)}%
+                so với tháng trước
+              </div>
+            </div>
+
+            <div style={{ height: 300 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={mockLearnerRevenue.metadata.data}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="month" fontSize={12} angle={-45} textAnchor="end" height={50} />
+                  <YAxis
+                    fontSize={12}
+                    tickFormatter={(value) => formatCurrency(value).replace('₫', '')}
+                  />
+                  <Tooltip content={<CurrencyTooltip />} />
+                  <Area
+                    type="monotone"
+                    dataKey="data"
+                    stroke="#52c41a"
+                    fill="#52c41a"
+                    fillOpacity={0.3}
+                    strokeWidth={2}
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </Col>
+
+        {/* Card 3: Tổng thu nhập của các coach */}
+        <Col xs={24} lg={12}>
+          <Card
+            loading={loading}
+            style={{ height: '100%', borderRadius: '8px' }}
+            bodyStyle={{ padding: '16px' }}
+          >
+            <div style={{ marginBottom: 16 }}>
+              <Statistic
+                title="Thu nhập của Coach"
+                value={coachStats.currentMonth}
+                formatter={(value) => formatCurrency(Number(value))}
+                prefix={<WalletOutlined />}
+                valueStyle={{ color: '#fa8c16' }}
+              />
+              <div
+                style={{
+                  fontSize: '12px',
+                  color: coachStats.growth >= 0 ? '#52c41a' : '#ff4d4f',
+                  marginTop: '4px',
+                }}
+              >
+                {coachStats.growth >= 0 ? '📈' : '📉'} {Math.abs(coachStats.growth).toFixed(1)}% so
+                với tháng trước
+              </div>
+            </div>
+
+            <div style={{ height: 300 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={mockCoachIncome.metadata.data}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="month" fontSize={12} angle={-45} textAnchor="end" height={50} />
+                  <YAxis
+                    fontSize={12}
+                    tickFormatter={(value) => formatCurrency(value).replace('₫', '')}
+                  />
+                  <Tooltip content={<CurrencyTooltip />} />
+                  <Bar dataKey="data" fill="#fa8c16" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </Col>
+
+        {/* Card 4: Doanh thu hệ thống */}
+        <Col xs={24} lg={12}>
+          <Card
+            loading={loading}
+            style={{ height: '100%', borderRadius: '8px' }}
+            bodyStyle={{ padding: '16px' }}
+          >
+            <div style={{ marginBottom: 16 }}>
+              <Statistic
+                title="Doanh thu hệ thống"
+                value={systemStats.currentMonth}
+                formatter={(value) => formatCurrency(Number(value))}
+                prefix={<RiseOutlined />}
+                valueStyle={{ color: '#eb2f96' }}
+              />
+              <div
+                style={{
+                  fontSize: '12px',
+                  color: systemStats.growth >= 0 ? '#52c41a' : '#ff4d4f',
+                  marginTop: '4px',
+                }}
+              >
+                {systemStats.growth >= 0 ? '📈' : '📉'} {Math.abs(systemStats.growth).toFixed(1)}%
+                so với tháng trước
+              </div>
+            </div>
+
+            <div style={{ height: 300 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={mockSystemRevenue.metadata.data}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <XAxis dataKey="month" fontSize={12} angle={-45} textAnchor="end" height={50} />
+                  <YAxis
+                    fontSize={12}
+                    tickFormatter={(value) => formatCurrency(value).replace('₫', '')}
+                  />
+                  <Tooltip content={<CurrencyTooltip />} />
+                  <Line
+                    type="monotone"
+                    dataKey="data"
+                    stroke="#eb2f96"
+                    strokeWidth={3}
+                    dot={{ fill: '#eb2f96', strokeWidth: 2, r: 4 }}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* Additional Summary Row */}
+      <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
+        <Col xs={24} md={8}>
+          <Card size="small" style={{ borderRadius: '8px' }}>
+            <Statistic
+              title="Tổng doanh thu năm"
+              value={systemStats.total + learnerStats.total}
+              formatter={(value) => formatCurrency(Number(value))}
+              valueStyle={{ color: '#1890ff' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} md={8}>
+          <Card size="small" style={{ borderRadius: '8px' }}>
+            <Statistic
+              title="Tổng chi phí Coach"
+              value={coachStats.total}
+              formatter={(value) => formatCurrency(Number(value))}
+              valueStyle={{ color: '#fa8c16' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} md={8}>
+          <Card size="small" style={{ borderRadius: '8px' }}>
+            <Statistic
+              title="Lợi nhuận ròng"
+              value={systemStats.total}
+              formatter={(value) => formatCurrency(Number(value))}
+              valueStyle={{ color: '#52c41a' }}
+            />
+          </Card>
+        </Col>
+      </Row>
+    </div>
+  );
+}
