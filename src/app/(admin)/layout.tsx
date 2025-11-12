@@ -49,11 +49,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       label: 'Khóa học',
     },
     {
-      key: '/course-verification',
-      icon: <FileTextOutlined />,
-      label: 'Nội dung',
-    },
-    {
       key: '/achievements',
       icon: <TrophyOutlined />,
       label: 'Thành tựu',
@@ -111,7 +106,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (pathname.includes('/users')) return '/users';
     if (pathname.includes('/coaches')) return '/coaches';
     if (pathname.includes('/curriculum')) return '/curriculum';
-    if (pathname.includes('/course-verification')) return '/course-verification';
     if (pathname.includes('/achievements')) return '/achievements';
     if (pathname.includes('/configurations')) return '/configurations';
     if (pathname.includes('/statistics')) return '/statistics';

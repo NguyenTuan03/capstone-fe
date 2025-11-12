@@ -446,7 +446,7 @@ const AnalyticsPage = () => {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={(entry) => `${entry.name}: ${entry.percentage}%`}
+                    label={(entry) => `${entry.payload.name}: ${entry.payload.percentage}%`}
                     outerRadius={120}
                     fill="#8884d8"
                     dataKey="value"
