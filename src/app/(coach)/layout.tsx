@@ -67,7 +67,7 @@ const CoachLayout = ({ children }: { children: React.ReactNode }) => {
     {
       key: 'subject-manage',
       icon: <FileTextOutlined />,
-      label: 'Môn học',
+      label: 'Tài liệu khoá học',
     },
     {
       key: 'course-manage',

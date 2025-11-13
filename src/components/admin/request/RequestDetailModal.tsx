@@ -194,11 +194,19 @@ export function RequestDetailModal({
             <Descriptions.Item label="Giá / học viên">
               <Space size={6}>
                 <DollarOutlined />
-                {formatCurrency(details.pricePerParticipant)}
+                {formatCurrency(
+                  typeof details.pricePerParticipant === 'string'
+                    ? parseFloat(details.pricePerParticipant)
+                    : details.pricePerParticipant,
+                )}
               </Space>
             </Descriptions.Item>
             <Descriptions.Item label="Tổng doanh thu">
-              {formatCurrency(details.totalEarnings)}
+              {formatCurrency(
+                typeof details.totalEarnings === 'string'
+                  ? parseFloat(details.totalEarnings)
+                  : details.totalEarnings,
+              )}
             </Descriptions.Item>
             <Descriptions.Item label="Ngày bắt đầu">
               {formatDate(details.startDate)}
@@ -355,8 +363,11 @@ function getSubjectStatusText(s: string) {
 function formatDate(d?: string) {
   return d ? dayjs(d).format('DD/MM/YYYY HH:mm') : '—';
 }
-function formatCurrency(n?: number) {
-  return typeof n === 'number' ? n.toLocaleString('vi-VN') + ' ₫' : '—';
+function formatCurrency(n?: number | string) {
+  if (n === undefined || n === null) return '—';
+  const num = typeof n === 'string' ? parseFloat(n) : n;
+  if (isNaN(num)) return '—';
+  return num.toLocaleString('vi-VN') + ' ₫';
 }
 function formatLearningFormat(v: any) {
   return String(v ?? '—');

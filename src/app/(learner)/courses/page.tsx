@@ -1,18 +1,34 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Card, Row, Col, Button, Tag, Typography, Input, Select, Badge } from 'antd';
+import React, { useState, useMemo, useEffect } from 'react';
+import {
+  Card,
+  Row,
+  Col,
+  Button,
+  Tag,
+  Typography,
+  Input,
+  Select,
+  Pagination,
+  Skeleton,
+  Empty,
+} from 'antd';
 import {
   SearchOutlined,
-  StarOutlined,
   CalendarOutlined,
   ClockCircleOutlined,
   EnvironmentOutlined,
   UserOutlined,
   TeamOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import useRoleGuard from '@/@crema/hooks/useRoleGuard';
+import { useGetCourses } from '@/@crema/services/apis/courses';
+import { mapCoursesWithPagination } from '@/@crema/utils/courseCard';
+import { CourseLearningFormat } from '@/types/enums';
+import { useGetProvinces, useGetDistricts } from '@/@crema/services/apis/locations';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -25,124 +41,166 @@ const CoursesPage = () => {
     ADMIN: '/dashboard',
     COACH: '/summary',
   });
-  const [selectedStatusFilter, setSelectedStatusFilter] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [selectedTypeFilter, setSelectedTypeFilter] = useState('all');
   const [selectedLevelFilter, setSelectedLevelFilter] = useState('all');
+  const [selectedProvince, setSelectedProvince] = useState<number | undefined>(undefined);
+  const [selectedDistrict, setSelectedDistrict] = useState<number | undefined>(undefined);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(9);
 
-  const courses = [
-    {
-      id: 1,
-      title: 'Kỹ thuật cơ bản Pickleball',
-      coach: 'Coach Minh',
-      rating: 4.8,
-      reviews: 125,
-      duration: '8 tuần',
-      level: 'Cơ bản',
-      status: 'upcoming',
-      courseType: 'individual',
-      price: 'Miễn phí',
-      location: 'Sân Pickleball Quận 1',
-      startDate: '15/02/2024',
-      endDate: '15/04/2024',
-      totalSessions: 16,
-      image: '/assets/images/pickleball.jpg',
-      weeklySchedule: [
-        { day: 'Thứ 2', time: '18:00-19:30', sessions: 1 },
-        { day: 'Thứ 4', time: '18:00-19:30', sessions: 1 },
-        { day: 'Thứ 6', time: '18:00-19:30', sessions: 1 },
-      ],
-    },
-    {
-      id: 2,
-      title: 'Chiến thuật đôi nâng cao',
-      coach: 'Coach Lan',
-      rating: 4.9,
-      reviews: 89,
-      duration: '6 tuần',
-      level: 'Nâng cao',
-      status: 'ongoing',
-      courseType: 'group',
-      price: '299,000 VNĐ',
-      location: 'Sân Pickleball Quận 3',
-      startDate: '01/02/2024',
-      endDate: '15/03/2024',
-      totalSessions: 12,
-      currentEnrollment: 6,
-      maxGroupSize: 8,
-      availableSlots: 2,
-      image: '/assets/images/pickleball.jpg',
-      weeklySchedule: [
-        { day: 'Thứ 3', time: '19:00-20:30', sessions: 1 },
-        { day: 'Thứ 5', time: '19:00-20:30', sessions: 1 },
-        { day: 'Chủ nhật', time: '09:00-10:30', sessions: 1 },
-      ],
-    },
-    {
-      id: 3,
-      title: 'Luyện tập thể lực cho Pickleball',
-      coach: 'Coach Hùng',
-      rating: 4.7,
-      reviews: 65,
-      duration: '4 tuần',
-      level: 'Trung cấp',
-      status: 'upcoming',
-      courseType: 'group',
-      price: '199,000 VNĐ',
-      location: 'Sân Pickleball Quận 7',
-      startDate: '20/02/2024',
-      endDate: '20/03/2024',
-      totalSessions: 8,
-      currentEnrollment: 4,
-      maxGroupSize: 6,
-      availableSlots: 2,
-      image: '/assets/images/pickleball.jpg',
-      weeklySchedule: [
-        { day: 'Thứ 2', time: '17:00-18:30', sessions: 1 },
-        { day: 'Thứ 4', time: '17:00-18:30', sessions: 1 },
-      ],
-    },
-  ];
-
-  const filteredCourses = courses.filter((course) => {
-    const typeMatch = selectedTypeFilter === 'all' || course.courseType === selectedTypeFilter;
-    const levelMatch = selectedLevelFilter === 'all' || course.level === selectedLevelFilter;
-    const statusMatch = selectedStatusFilter === 'all' || course.status === selectedStatusFilter;
-    return typeMatch && levelMatch && statusMatch;
-  });
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'upcoming':
-        return 'blue';
-      case 'ongoing':
-        return 'orange';
-      default:
-        return 'default';
+  // Get user from localStorage
+  const user = useMemo(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const userStr = localStorage.getItem('user');
+      return userStr ? JSON.parse(userStr) : null;
+    } catch {
+      return null;
     }
+  }, []);
+
+  // Get learner's location from user data
+  const learnerLocation = useMemo(() => {
+    if (!user?.learner || !Array.isArray(user.learner) || user.learner.length === 0) {
+      return null;
+    }
+    const learner = user.learner[0];
+    if (learner?.province && learner?.district) {
+      return {
+        provinceId: learner.province.id,
+        districtId: learner.district.id,
+        provinceName: learner.province.name,
+        districtName: learner.district.name,
+      };
+    }
+    return null;
+  }, [user]);
+
+  // Fetch provinces and districts
+  const { data: provincesRes, isLoading: isLoadingProvinces } = useGetProvinces();
+  const { data: districtsRes, isLoading: isLoadingDistricts } = useGetDistricts(
+    selectedProvince || learnerLocation?.provinceId,
+  );
+
+  const provinces = useMemo(() => {
+    if (!provincesRes) return [];
+    return Array.isArray(provincesRes) ? provincesRes : provincesRes.items || [];
+  }, [provincesRes]);
+
+  const districts = useMemo(() => {
+    if (!districtsRes) return [];
+    return Array.isArray(districtsRes) ? districtsRes : districtsRes.items || [];
+  }, [districtsRes]);
+
+  // Auto-select province/district based on learner location if available
+  useEffect(() => {
+    if (learnerLocation && provinces.length > 0 && !selectedProvince) {
+      setSelectedProvince(learnerLocation.provinceId);
+    }
+  }, [learnerLocation, provinces, selectedProvince]);
+
+  // Auto-select district when province is set and districts are loaded
+  useEffect(() => {
+    if (
+      learnerLocation &&
+      selectedProvince === learnerLocation.provinceId &&
+      districts.length > 0
+    ) {
+      // Find district by ID to ensure it exists
+      const districtExists = districts.find((d: any) => d.id === learnerLocation.districtId);
+      if (districtExists && selectedDistrict !== learnerLocation.districtId) {
+        setSelectedDistrict(learnerLocation.districtId);
+      }
+    }
+  }, [learnerLocation, selectedProvince, districts, selectedDistrict]);
+
+  // Map filter values to API params
+  const getLearningFormatFromFilter = (filter: string): string | undefined => {
+    if (filter === 'all') return undefined;
+    if (filter === 'individual') return CourseLearningFormat.INDIVIDUAL;
+    if (filter === 'group') return CourseLearningFormat.GROUP;
+    return undefined;
   };
 
-  const getTypeColor = (type: string) => {
+  // Fetch courses from API
+  const { data: coursesRes, isLoading: isLoadingCourses } = useGetCourses({
+    page,
+    pageSize,
+    search: searchQuery || undefined,
+    learningFormat: getLearningFormatFromFilter(selectedTypeFilter),
+    level: selectedLevelFilter !== 'all' ? selectedLevelFilter : undefined,
+    // Note: API might need province/district params, adjust based on actual API
+  });
+
+  // Map courses using helper
+  const { courses, total: totalCourses } = useMemo(() => {
+    return mapCoursesWithPagination(coursesRes);
+  }, [coursesRes]);
+
+  // Filter courses by location on client side
+  const filteredCourses = useMemo(() => {
+    return courses.filter((course) => {
+      // Location filter - check province and district
+      if (selectedProvince) {
+        const courseProvinceId = course.raw?.province?.id;
+        if (courseProvinceId !== selectedProvince) return false;
+      }
+
+      if (selectedDistrict) {
+        const courseDistrictId = course.raw?.district?.id;
+        if (courseDistrictId !== selectedDistrict) return false;
+      }
+
+      return true;
+    });
+  }, [courses, selectedProvince, selectedDistrict]);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setPage(1);
+  }, [searchQuery, selectedTypeFilter, selectedLevelFilter, selectedProvince, selectedDistrict]);
+
+  // Reset district when province changes
+  useEffect(() => {
+    setSelectedDistrict(undefined);
+  }, [selectedProvince]);
+
+  // Reset all filters
+  const handleResetFilters = () => {
+    setSearchQuery('');
+    setSelectedTypeFilter('all');
+    setSelectedLevelFilter('all');
+    setSelectedProvince(undefined);
+    setSelectedDistrict(undefined);
+    setPage(1);
+  };
+
+  const getTypeColor = (type: string | null | undefined) => {
+    if (!type) return 'default';
     switch (type) {
-      case 'individual':
+      case CourseLearningFormat.INDIVIDUAL:
+      case 'INDIVIDUAL':
         return 'green';
-      case 'group':
+      case CourseLearningFormat.GROUP:
+      case 'GROUP':
         return 'purple';
       default:
         return 'default';
     }
   };
 
-  const getLevelColor = (level: string) => {
-    switch (level) {
-      case 'Cơ bản':
-        return 'green';
-      case 'Trung cấp':
-        return 'blue';
-      case 'Nâng cao':
-        return 'red';
-      default:
-        return 'default';
-    }
+  const getLearningFormatLabel = (format: string | null | undefined) => {
+    if (!format) return 'Nhóm';
+    if (format === CourseLearningFormat.INDIVIDUAL || format === 'INDIVIDUAL') return 'Cá nhân';
+    return 'Nhóm';
+  };
+
+  const isIndividual = (course: any) => {
+    return (
+      course.raw?.learningFormat === CourseLearningFormat.INDIVIDUAL ||
+      course.raw?.learningFormat === 'INDIVIDUAL'
+    );
   };
 
   if (isChecking) {
@@ -158,21 +216,16 @@ const CoursesPage = () => {
       {/* Search and Filter */}
       <Card style={{ marginBottom: 24 }}>
         <Row gutter={[16, 16]}>
-          <Col xs={24} sm={12} md={8}>
-            <Search placeholder="Tìm kiếm khóa học..." prefix={<SearchOutlined />} size="large" />
-          </Col>
-          <Col xs={24} sm={12} md={4}>
-            <Select
-              placeholder="Trạng thái"
-              style={{ width: '100%' }}
+          <Col xs={24} sm={12} md={6}>
+            <Search
+              placeholder="Tìm kiếm khóa học..."
+              prefix={<SearchOutlined />}
               size="large"
-              value={selectedStatusFilter}
-              onChange={setSelectedStatusFilter}
-            >
-              <Option value="all">Tất cả</Option>
-              <Option value="upcoming">Sắp diễn ra</Option>
-              <Option value="ongoing">Đang diễn ra</Option>
-            </Select>
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              onSearch={(value) => setSearchQuery(value)}
+              allowClear
+            />
           </Col>
           <Col xs={24} sm={12} md={4}>
             <Select
@@ -201,135 +254,238 @@ const CoursesPage = () => {
               <Option value="Nâng cao">Nâng cao</Option>
             </Select>
           </Col>
+          <Col xs={24} sm={12} md={4}>
+            <Select
+              placeholder="Tỉnh/Thành phố"
+              style={{ width: '100%' }}
+              size="large"
+              value={selectedProvince}
+              onChange={(value) => setSelectedProvince(value || undefined)}
+              loading={isLoadingProvinces}
+              allowClear
+              showSearch
+              optionFilterProp="label"
+            >
+              {provinces.map((province: any) => (
+                <Option key={province.id} value={province.id} label={province.name}>
+                  {province.name}
+                </Option>
+              ))}
+            </Select>
+          </Col>
+          <Col xs={24} sm={12} md={4}>
+            <Select
+              placeholder="Quận/Huyện"
+              style={{ width: '100%' }}
+              size="large"
+              value={selectedDistrict}
+              onChange={(value) => setSelectedDistrict(value || undefined)}
+              loading={isLoadingDistricts}
+              disabled={!selectedProvince}
+              allowClear
+              showSearch
+              optionFilterProp="label"
+            >
+              {districts.map((district: any) => (
+                <Option key={district.id} value={district.id} label={district.name}>
+                  {district.name}
+                </Option>
+              ))}
+            </Select>
+          </Col>
+          <Col xs={24} sm={12} md={2}>
+            <Button
+              icon={<ReloadOutlined />}
+              size="large"
+              onClick={handleResetFilters}
+              style={{ width: '100%', borderColor: '#ff4d4f', color: '#ff4d4f', padding: '0 16px' }}
+            >
+              Đặt lại
+            </Button>
+          </Col>
         </Row>
       </Card>
 
       {/* Courses List */}
-      <Row gutter={[24, 24]}>
-        {filteredCourses.map((course) => (
-          <Col xs={24} lg={12} xl={8} key={course.id}>
-            <Card
-              hoverable
-              cover={
-                <div
-                  style={{
-                    height: 200,
-                    background: '#f0f0f0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  <Text type="secondary">Hình ảnh khóa học</Text>
-                </div>
-              }
-              actions={[
-                <Button
-                  key={course.id}
-                  type="primary"
-                  icon={course.courseType === 'individual' ? <UserOutlined /> : <TeamOutlined />}
-                  style={{
-                    backgroundColor: course.courseType === 'individual' ? '#52c41a' : '#722ed1',
-                    borderColor: course.courseType === 'individual' ? '#52c41a' : '#722ed1',
-                  }}
-                  onClick={() => router.push('/payment')}
-                >
-                  {course.courseType === 'individual' ? 'Đăng ký cá nhân' : 'Đăng ký'}
-                </Button>,
-              ]}
-            >
-              <Card.Meta
-                title={course.title}
-                description={
-                  <div>
-                    <Text type="secondary">Giảng viên: {course.coach}</Text>
-                    <br />
+      {isLoadingCourses ? (
+        <Row gutter={[24, 24]}>
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Col xs={24} lg={12} xl={8} key={i}>
+              <Card>
+                <Skeleton active paragraph={{ rows: 4 }} />
+              </Card>
+            </Col>
+          ))}
+        </Row>
+      ) : filteredCourses.length === 0 ? (
+        <Empty description="Không tìm thấy khóa học nào" image={Empty.PRESENTED_IMAGE_SIMPLE} />
+      ) : (
+        <>
+          <Row gutter={[24, 24]}>
+            {filteredCourses.map((course) => {
+              const individual = isIndividual(course);
+              const scheduleParts = course.schedule ? course.schedule.split(' · ') : [];
+              const scheduleText = scheduleParts[0] || '';
+              const dateRange = scheduleParts[1] || '';
 
-                    {/* Rating and Duration */}
-                    <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 16 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <StarOutlined style={{ color: '#faad14' }} />
-                        <Text strong>{course.rating}</Text>
-                        <Text type="secondary">({course.reviews} đánh giá)</Text>
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                        <ClockCircleOutlined style={{ color: '#666' }} />
-                        <Text type="secondary">{course.duration}</Text>
-                      </div>
-                    </div>
-
-                    {/* Location */}
-                    <div style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 4 }}>
-                      <EnvironmentOutlined style={{ color: '#666' }} />
-                      <Text type="secondary">{course.location}</Text>
-                    </div>
-
-                    {/* Status and Type Badges */}
-                    <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                      <Badge
-                        color={getStatusColor(course.status)}
-                        text={course.status === 'upcoming' ? 'Sắp diễn ra' : 'Đang diễn ra'}
-                      />
-                      <Badge
-                        color={getTypeColor(course.courseType)}
-                        text={course.courseType === 'individual' ? 'Cá nhân' : 'Nhóm'}
-                      />
-                      <Tag color={getLevelColor(course.level)}>{course.level}</Tag>
-                    </div>
-
-                    {/* Date Range */}
-                    <div style={{ marginTop: 12 }}>
+              return (
+                <Col xs={24} lg={12} xl={8} key={course.id}>
+                  <Card
+                    hoverable
+                    style={{
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      maxHeight: 650,
+                    }}
+                    bodyStyle={{
+                      flex: 1,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      overflow: 'hidden',
+                    }}
+                    cover={
                       <div
-                        style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}
+                        style={{
+                          height: 200,
+                          background: '#f0f0f0',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                        }}
                       >
-                        <CalendarOutlined style={{ color: '#666' }} />
-                        <Text type="secondary">
-                          {course.startDate} - {course.endDate}
-                        </Text>
+                        <Text type="secondary">Hình ảnh khóa học</Text>
                       </div>
-                      <Text type="secondary">{course.totalSessions} buổi học</Text>
-                    </div>
-
-                    {/* Weekly Schedule */}
-                    <div style={{ marginTop: 12 }}>
-                      <Text strong style={{ fontSize: 12 }}>
-                        Lịch học:
-                      </Text>
-                      <div style={{ marginTop: 4 }}>
-                        {course.weeklySchedule.map((schedule, index) => (
-                          <div key={index} style={{ fontSize: 12, color: '#666' }}>
-                            {schedule.day}: {schedule.time}
-                            {course.courseType === 'group' && ` (${schedule.sessions} buổi)`}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Pricing */}
-                    <div style={{ marginTop: 12 }}>
-                      {course.courseType === 'individual' ? (
-                        <Text strong style={{ color: '#52c41a', fontSize: 16 }}>
-                          {course.price}
-                        </Text>
-                      ) : (
+                    }
+                    actions={[
+                      <Button
+                        key={course.id}
+                        type="primary"
+                        icon={individual ? <UserOutlined /> : <TeamOutlined />}
+                        style={{
+                          backgroundColor: individual ? '#52c41a' : '#722ed1',
+                          borderColor: individual ? '#52c41a' : '#722ed1',
+                        }}
+                        onClick={() => router.push(`/payment?courseId=${course.id}`)}
+                      >
+                        {individual ? 'Đăng ký cá nhân' : 'Đăng ký'}
+                      </Button>,
+                    ]}
+                  >
+                    <Card.Meta
+                      title={course.name}
+                      description={
                         <div>
-                          <Text strong style={{ color: '#722ed1', fontSize: 16 }}>
-                            {course.price}/người
-                          </Text>
-                          <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>
-                            {course.currentEnrollment}/{course.maxGroupSize} học viên • Còn{' '}
-                            {course.availableSlots} chỗ
+                          <Text type="secondary">Giảng viên: {course.coach}</Text>
+                          <br />
+
+                          {/* Sessions */}
+                          <div
+                            style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 4 }}
+                          >
+                            <ClockCircleOutlined style={{ color: '#666' }} />
+                            <Text type="secondary">{course.sessions} tuần</Text>
+                          </div>
+
+                          {/* Location */}
+                          <div
+                            style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 4 }}
+                          >
+                            <EnvironmentOutlined style={{ color: '#666' }} />
+                            <Text type="secondary">{course.location}</Text>
+                          </div>
+
+                          {/* Subject and Type Badges */}
+                          <div style={{ marginTop: 12, display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                            {course.raw?.subject && course.raw.subject.status === 'PUBLISHED' && (
+                              <Tag color="blue">{course.raw.subject.name}</Tag>
+                            )}
+                            <Tag color={getTypeColor(course.raw?.learningFormat)}>
+                              {getLearningFormatLabel(course.raw?.learningFormat)}
+                            </Tag>
+                          </div>
+
+                          {/* Schedule */}
+                          {scheduleText && (
+                            <div style={{ marginTop: 12 }}>
+                              <div
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 4,
+                                  marginBottom: 4,
+                                }}
+                              >
+                                <CalendarOutlined style={{ color: '#666' }} />
+                                <Text type="secondary" style={{ fontSize: 12 }}>
+                                  {scheduleText}
+                                </Text>
+                              </div>
+                              {dateRange && (
+                                <Text type="secondary" style={{ fontSize: 12 }}>
+                                  {dateRange}
+                                </Text>
+                              )}
+                            </div>
+                          )}
+
+                          {/* Students and Sessions - Only show for group courses */}
+                          {!individual && (
+                            <div style={{ marginTop: 12 }}>
+                              <Text type="secondary" style={{ fontSize: 12 }}>
+                                {course.currentStudents}/{course.maxStudents} học viên
+                                {course.sessionsCompleted > 0 &&
+                                  ` • ${course.sessionsCompleted} buổi học`}
+                              </Text>
+                            </div>
+                          )}
+
+                          {/* Pricing */}
+                          <div style={{ marginTop: 12 }}>
+                            {individual ? (
+                              <Text strong style={{ color: '#52c41a', fontSize: 16 }}>
+                                {course.fee}
+                              </Text>
+                            ) : (
+                              <div>
+                                <Text strong style={{ color: '#722ed1', fontSize: 16 }}>
+                                  {course.fee}/người
+                                </Text>
+                                <div style={{ fontSize: 12, color: '#666', marginTop: 2 }}>
+                                  {course.currentStudents}/{course.maxStudents} học viên • Còn{' '}
+                                  {course.maxStudents - course.currentStudents} chỗ
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                }
+                      }
+                    />
+                  </Card>
+                </Col>
+              );
+            })}
+          </Row>
+
+          {/* Pagination */}
+          {totalCourses > pageSize && (
+            <div style={{ display: 'flex', justifyContent: 'center', marginTop: '32px' }}>
+              <Pagination
+                current={page}
+                pageSize={pageSize}
+                total={totalCourses}
+                onChange={(newPage, newPageSize) => {
+                  setPage(newPage);
+                  if (newPageSize) setPageSize(newPageSize);
+                }}
+                showSizeChanger
+                pageSizeOptions={['9', '18', '27', '36']}
+                showTotal={(total, range) => `${range[0]}-${range[1]} của ${total} khóa học`}
               />
-            </Card>
-          </Col>
-        ))}
-      </Row>
+            </div>
+          )}
+        </>
+      )}
     </div>
   );
 };
