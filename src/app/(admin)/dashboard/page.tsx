@@ -486,7 +486,9 @@ export default function DashboardPage() {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ payload }) => `${payload.rating}⭐ (${payload.percentage}%)`}
+                    label={(entry: any) =>
+                      `${entry.payload.rating}⭐ (${entry.payload.percentage}%)`
+                    }
                     outerRadius={120}
                     fill="#8884d8"
                     dataKey="count"
