@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import axios from '@/@crema/axios/ApiConfig';
 import { buildUrl } from '@/@crema/helper/BuildUrl';
-import { Result, Spin, Typography, Button, Card, Space } from 'antd';
+import { Result, Spin, Typography, Card, Space } from 'antd';
 
 type RequestState = 'idle' | 'loading' | 'success' | 'error';
 
@@ -19,38 +19,37 @@ interface PaymentSuccessQueryParams {
 const { Text } = Typography;
 
 const PaymentCourseSuccessPage: React.FC = () => {
-  const router = useRouter();
   const searchParams = useSearchParams();
-  const [requestState, setRequestState] = useState<RequestState>('idle');
+  const [requestState, setRequestState] = useState<RequestState>('loading');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [queryParams, setQueryParams] = useState<PaymentSuccessQueryParams | null>(null);
 
-  const queryParams = useMemo<PaymentSuccessQueryParams | null>(() => {
+  useEffect(() => {
+    // Kiểm tra và parse query params ngay lập tức
     const id = searchParams.get('id');
     const code = searchParams.get('code');
     const orderCode = searchParams.get('orderCode');
     const status = searchParams.get('status');
     const cancel = searchParams.get('cancel');
 
+    // Kiểm tra tất cả params bắt buộc
     if (!id || !code || !orderCode || !status || cancel === null) {
-      return null;
+      setRequestState('error');
+      setErrorMessage('Thiếu thông tin thanh toán trong đường dẫn. Vui lòng kiểm tra lại.');
+      return;
     }
 
-    return {
+    const params: PaymentSuccessQueryParams = {
       id,
       code,
       orderCode,
       status,
       cancel,
     };
-  }, [searchParams]);
 
-  useEffect(() => {
-    if (!queryParams) {
-      setRequestState('error');
-      setErrorMessage('Thiếu thông tin thanh toán trong đường dẫn. Vui lòng kiểm tra lại.');
-      return;
-    }
+    setQueryParams(params);
 
+    // Gửi request ngay lập tức sau khi có params hợp lệ
     let isMounted = true;
 
     const confirmPayment = async () => {
@@ -59,7 +58,7 @@ const PaymentCourseSuccessPage: React.FC = () => {
 
       try {
         await axios.get(buildUrl('payments/course/success'), {
-          params: queryParams,
+          params,
         });
 
         if (isMounted) {
@@ -85,7 +84,7 @@ const PaymentCourseSuccessPage: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [queryParams]);
+  }, [searchParams]);
 
   const isCancelled = queryParams?.cancel === 'true';
   const isPaid = queryParams?.status?.toUpperCase() === 'PAID';
@@ -107,21 +106,7 @@ const PaymentCourseSuccessPage: React.FC = () => {
     }
 
     if (requestState === 'error') {
-      return (
-        <Result
-          status="error"
-          title="Xác nhận thanh toán thất bại"
-          subTitle={errorMessage}
-          extra={[
-            <Button key="retry" type="primary" onClick={() => router.refresh()}>
-              Thử lại
-            </Button>,
-            <Button key="home" onClick={() => router.push('/')}>
-              Về trang chủ
-            </Button>,
-          ]}
-        />
-      );
+      return <Result status="error" title="Xác nhận thanh toán thất bại" subTitle={errorMessage} />;
     }
 
     return (
@@ -140,14 +125,6 @@ const PaymentCourseSuccessPage: React.FC = () => {
               ? 'Bạn đã hủy giao dịch. Nếu đây là nhầm lẫn, vui lòng thử thanh toán lại.'
               : 'Cảm ơn bạn đã đăng ký khóa học. Chúng tôi sẽ sớm liên hệ để xác nhận thông tin.'
           }
-          extra={[
-            <Button key="courses" type="primary" onClick={() => router.push('/my-courses')}>
-              Xem khóa học của tôi
-            </Button>,
-            <Button key="home" onClick={() => router.push('/')}>
-              Quay lại trang chủ
-            </Button>,
-          ]}
         />
 
         {queryParams && (
@@ -163,10 +140,10 @@ const PaymentCourseSuccessPage: React.FC = () => {
                 <strong>ID thanh toán:</strong> {queryParams.id}
               </Text>
               <Text>
-                <strong>Trạng thái:</strong> {queryParams.status}
-              </Text>
-              <Text>
-                <strong>Đã hủy:</strong> {queryParams.cancel}
+                <strong>Trạng thái:</strong>{' '}
+                {queryParams.status === 'PAID'
+                  ? 'Thanh toán thành công'
+                  : 'Thanh toán đã được xử lý'}
               </Text>
             </Space>
           </Card>

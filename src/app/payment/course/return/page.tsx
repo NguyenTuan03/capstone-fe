@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import axios from '@/@crema/axios/ApiConfig';
 import { buildUrl } from '@/@crema/helper/BuildUrl';
@@ -21,36 +21,36 @@ const { Text } = Typography;
 const PaymentCourseReturnPage: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [requestState, setRequestState] = useState<RequestState>('idle');
+  const [requestState, setRequestState] = useState<RequestState>('loading');
   const [errorMessage, setErrorMessage] = useState<string>('');
+  const [queryParams, setQueryParams] = useState<PaymentReturnQueryParams | null>(null);
 
-  const queryParams = useMemo<PaymentReturnQueryParams | null>(() => {
+  useEffect(() => {
+    // Kiểm tra và parse query params ngay lập tức
     const id = searchParams.get('id');
     const code = searchParams.get('code');
     const orderCode = searchParams.get('orderCode');
     const status = searchParams.get('status');
     const cancel = searchParams.get('cancel');
 
+    // Kiểm tra tất cả params bắt buộc
     if (!id || !code || !orderCode || !status || cancel === null) {
-      return null;
+      setRequestState('error');
+      setErrorMessage('Thiếu thông tin thanh toán trong đường dẫn. Vui lòng kiểm tra lại.');
+      return;
     }
 
-    return {
+    const params: PaymentReturnQueryParams = {
       id,
       code,
       orderCode,
       status,
       cancel,
     };
-  }, [searchParams]);
 
-  useEffect(() => {
-    if (!queryParams) {
-      setRequestState('error');
-      setErrorMessage('Thiếu thông tin thanh toán trong đường dẫn. Vui lòng kiểm tra lại.');
-      return;
-    }
+    setQueryParams(params);
 
+    // Gửi request ngay lập tức sau khi có params hợp lệ
     let isMounted = true;
 
     const notifyPaymentFailure = async () => {
@@ -59,7 +59,7 @@ const PaymentCourseReturnPage: React.FC = () => {
 
       try {
         await axios.get(buildUrl('payments/course/return'), {
-          params: queryParams,
+          params,
         });
 
         if (isMounted) {
@@ -85,7 +85,7 @@ const PaymentCourseReturnPage: React.FC = () => {
     return () => {
       isMounted = false;
     };
-  }, [queryParams]);
+  }, [searchParams]);
 
   const isCancelled = queryParams?.cancel === 'true';
   const isFailed = queryParams?.status?.toUpperCase() === 'FAILED';
@@ -108,19 +108,7 @@ const PaymentCourseReturnPage: React.FC = () => {
 
     if (requestState === 'error') {
       return (
-        <Result
-          status="error"
-          title="Không thể xử lý kết quả thanh toán"
-          subTitle={errorMessage}
-          extra={[
-            <Button key="retry" type="primary" onClick={() => router.refresh()}>
-              Thử lại
-            </Button>,
-            <Button key="home" onClick={() => router.push('/')}>
-              Về trang chủ
-            </Button>,
-          ]}
-        />
+        <Result status="error" title="Không thể xử lý kết quả thanh toán" subTitle={errorMessage} />
       );
     }
 
