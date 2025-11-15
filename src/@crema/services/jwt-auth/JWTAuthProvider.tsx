@@ -166,6 +166,8 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
         avatar: user.avatar,
         phone: user.phone,
         location: user.location,
+        learner: user.learner,
+        coach: user.coach,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };

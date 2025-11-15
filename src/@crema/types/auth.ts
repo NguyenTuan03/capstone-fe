@@ -9,6 +9,8 @@ export interface UserType {
   skillLevel?: 'beginner' | 'intermediate' | 'advanced';
   phone?: string;
   location?: string;
+  learner?: LearnerProfile;
+  coach?: CoachProfile;
   createdAt: string;
   updatedAt: string;
 }

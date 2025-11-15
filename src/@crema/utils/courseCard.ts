@@ -50,12 +50,14 @@ export type ApiItem = {
   totalSessions?: number | null;
   schedules?: Array<{ dayOfWeek: string; startTime: string; endTime: string }>;
   address?: string | null;
-  district?: { name?: string } | null;
-  province?: { name?: string } | null;
+  district?: { id?: number; name?: string } | null;
+  province?: { id?: number; name?: string } | null;
   createdBy?: { fullName?: string } | null;
   currentParticipants?: number | null;
   maxParticipants?: number | null;
   pricePerParticipant?: string | number | null;
+  learningFormat?: string | null;
+  subject?: { id: number; name: string; status?: string } | null;
 };
 
 export type MappedCourse = {

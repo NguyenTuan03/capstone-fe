@@ -240,6 +240,19 @@ export default function CurriculumPage() {
           if (request) {
             // Create a minimal RequestItem for the reject modal
             // We only need id and description for the reject flow
+            // Handle both formats: district/province can be number or object
+            const getDistrictId = (district: any): number => {
+              if (typeof district === 'number') return district;
+              if (district?.id) return district.id;
+              return 0;
+            };
+
+            const getProvinceId = (province: any): number => {
+              if (typeof province === 'number') return province;
+              if (province?.id) return province.id;
+              return 0;
+            };
+
             const requestItem: RequestItem = {
               id: request.id,
               description: request.description,
@@ -250,15 +263,17 @@ export default function CurriculumPage() {
                 type: request.metadata.type,
                 details: {
                   address: request.metadata.details.address || '',
-                  district: request.metadata.details.district?.id || 0,
-                  province: request.metadata.details.province?.id || 0,
+                  district: getDistrictId(request.metadata.details.district),
+                  province: getProvinceId(request.metadata.details.province),
                   schedules: request.metadata.details.schedules || [],
                   startDate: request.metadata.details.startDate,
                   learningFormat: request.metadata.details.learningFormat,
                   maxParticipants: request.metadata.details.maxParticipants,
                   minParticipants: request.metadata.details.minParticipants,
                   pricePerParticipant:
-                    parseFloat(request.metadata.details.pricePerParticipant) || 0,
+                    typeof request.metadata.details.pricePerParticipant === 'string'
+                      ? parseFloat(request.metadata.details.pricePerParticipant) || 0
+                      : request.metadata.details.pricePerParticipant || 0,
                 },
               },
               createdAt: request.createdAt,

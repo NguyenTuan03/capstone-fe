@@ -98,17 +98,6 @@ export default function RequestsTable({
       ),
     },
     {
-      title: 'Loại',
-      dataIndex: 'type',
-      key: 'type',
-      width: 200,
-      render: (type: string) => (
-        <Tag color={TYPE_COLOR[type] ?? 'default'} bordered={false}>
-          {getTypeText(type)}
-        </Tag>
-      ),
-    },
-    {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',

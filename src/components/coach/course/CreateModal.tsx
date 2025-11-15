@@ -201,7 +201,7 @@ export default function CreateCourseModal({
         {/* THÊM FIELD MÔN HỌC */}
         <Form.Item
           name="subjectId"
-          label="Môn học"
+          label="Tài liệu khoá học"
           rules={[{ required: true, message: 'Chọn môn học' }]}
         >
           <Select
