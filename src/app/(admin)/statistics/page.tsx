@@ -1,7 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card, Row, Col, Statistic, Typography, Select, DatePicker, Space } from 'antd';
+import { useState } from 'react';
+import {
+  Card,
+  Row,
+  Col,
+  Statistic,
+  Typography,
+  Select,
+  DatePicker,
+  Space,
+  Spin,
+  Alert,
+} from 'antd';
 import {
   LineChart,
   Line,
@@ -17,119 +28,21 @@ import {
   Area,
 } from 'recharts';
 import { UserOutlined, DollarOutlined, WalletOutlined, RiseOutlined } from '@ant-design/icons';
+import {
+  useGetMonthlyNewUsers,
+  useGetMonthlyLearnerPayments,
+  useGetMonthlyCoachEarnings,
+  useGetMonthlyPlatformRevenue,
+  formatCurrency,
+  formatNumber,
+  calculatePercentageChange,
+  getCurrentAndPreviousMonthData,
+  MonthlyDataItem,
+} from '@/@crema/services/apis/analysis';
 
 const { Title } = Typography;
 const { Option } = Select;
 const { RangePicker } = DatePicker;
-
-// ✅ Mock data đơn giản theo API structure
-const mockUserStats = {
-  statusCode: 200,
-  message: 'Success',
-  metadata: {
-    data: [
-      { month: '1/2025', data: 0 },
-      { month: '2/2025', data: 0 },
-      { month: '3/2025', data: 0 },
-      { month: '4/2025', data: 0 },
-      { month: '5/2025', data: 0 },
-      { month: '6/2025', data: 0 },
-      { month: '7/2025', data: 0 },
-      { month: '8/2025', data: 0 },
-      { month: '9/2025', data: 0 },
-      { month: '10/2025', data: 5 },
-      { month: '11/2025', data: 6 },
-      { month: '12/2025', data: 0 },
-    ],
-  },
-};
-
-const mockLearnerRevenue = {
-  statusCode: 200,
-  message: 'Success',
-  metadata: {
-    data: [
-      { month: '1/2025', data: 0 },
-      { month: '2/2025', data: 0 },
-      { month: '3/2025', data: 0 },
-      { month: '4/2025', data: 0 },
-      { month: '5/2025', data: 0 },
-      { month: '6/2025', data: 0 },
-      { month: '7/2025', data: 0 },
-      { month: '8/2025', data: 0 },
-      { month: '9/2025', data: 0 },
-      { month: '10/2025', data: 0 },
-      { month: '11/2025', data: 0 },
-      { month: '12/2025', data: 0 },
-    ],
-  },
-};
-
-const mockCoachIncome = {
-  statusCode: 200,
-  message: 'Success',
-  metadata: {
-    data: [
-      { month: '1/2025', data: 0 },
-      { month: '2/2025', data: 0 },
-      { month: '3/2025', data: 0 },
-      { month: '4/2025', data: 0 },
-      { month: '5/2025', data: 0 },
-      { month: '6/2025', data: 0 },
-      { month: '7/2025', data: 0 },
-      { month: '8/2025', data: 0 },
-      { month: '9/2025', data: 0 },
-      { month: '10/2025', data: 0 },
-      { month: '11/2025', data: 0 },
-      { month: '12/2025', data: 0 },
-    ],
-  },
-};
-
-const mockSystemRevenue = {
-  statusCode: 200,
-  message: 'Success',
-  metadata: {
-    data: [
-      { month: '1/2025', data: 0 },
-      { month: '2/2025', data: 0 },
-      { month: '3/2025', data: 0 },
-      { month: '4/2025', data: 0 },
-      { month: '5/2025', data: 0 },
-      { month: '6/2025', data: 0 },
-      { month: '7/2025', data: 0 },
-      { month: '8/2025', data: 0 },
-      { month: '9/2025', data: 0 },
-      { month: '10/2025', data: 0 },
-      { month: '11/2025', data: 0 },
-      { month: '12/2025', data: 0 },
-    ],
-  },
-};
-
-// ✅ Format tiền tệ
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('vi-VN', {
-    style: 'currency',
-    currency: 'VND',
-    minimumFractionDigits: 0,
-  }).format(value);
-};
-
-// ✅ Format số
-const formatNumber = (value: number) => {
-  return new Intl.NumberFormat('vi-VN').format(value);
-};
-
-// ✅ Tính tổng và tăng trưởng từ data
-const calculateStats = (data: any[]) => {
-  const total = data.reduce((sum, item) => sum + item.data, 0);
-  const currentMonth = data[data.length - 1]?.data || 0;
-  const previousMonth = data[data.length - 2]?.data || 0;
-  const growth = previousMonth !== 0 ? ((currentMonth - previousMonth) / previousMonth) * 100 : 0;
-
-  return { total, currentMonth, growth };
-};
 
 // ✅ Custom tooltip
 const CustomTooltip = ({ active, payload, label }: any) => {
@@ -180,26 +93,94 @@ const CurrencyTooltip = ({ active, payload, label }: any) => {
 export default function FinancialStatisticsPage() {
   const [timeRange, setTimeRange] = useState('year');
   const [customDateRange, setCustomDateRange] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
 
-  // ✅ Tính toán stats từ mock data
-  const userStats = calculateStats(mockUserStats.metadata.data);
-  const learnerStats = calculateStats(mockLearnerRevenue.metadata.data);
-  const coachStats = calculateStats(mockCoachIncome.metadata.data);
-  const systemStats = calculateStats(mockSystemRevenue.metadata.data);
+  // ✅ Call 4 API thực tế
+  const {
+    data: newUsersData,
+    isLoading: newUsersLoading,
+    error: newUsersError,
+  } = useGetMonthlyNewUsers();
 
-  // ✅ Mock API call
-  const fetchData = async () => {
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-  };
+  const {
+    data: learnerPaymentsData,
+    isLoading: learnerPaymentsLoading,
+    error: learnerPaymentsError,
+  } = useGetMonthlyLearnerPayments();
 
-  useEffect(() => {
-    fetchData();
-  }, [timeRange, customDateRange]);
+  const {
+    data: coachEarningsData,
+    isLoading: coachEarningsLoading,
+    error: coachEarningsError,
+  } = useGetMonthlyCoachEarnings();
+
+  const {
+    data: platformRevenueData,
+    isLoading: platformRevenueLoading,
+    error: platformRevenueError,
+  } = useGetMonthlyPlatformRevenue();
+
+  // ✅ Tính toán loading và error tổng hợp
+  const isLoading =
+    newUsersLoading || learnerPaymentsLoading || coachEarningsLoading || platformRevenueLoading;
+  const hasError =
+    newUsersError || learnerPaymentsError || coachEarningsError || platformRevenueError;
+
+  // ✅ Tính toán stats từ data thực tế
+  const userStats = newUsersData
+    ? getCurrentAndPreviousMonthData(newUsersData)
+    : { current: 0, previous: 0 };
+  const learnerStats = learnerPaymentsData
+    ? getCurrentAndPreviousMonthData(learnerPaymentsData)
+    : { current: 0, previous: 0 };
+  const coachStats = coachEarningsData
+    ? getCurrentAndPreviousMonthData(coachEarningsData)
+    : { current: 0, previous: 0 };
+  const systemStats = platformRevenueData
+    ? getCurrentAndPreviousMonthData(platformRevenueData)
+    : { current: 0, previous: 0 };
+
+  const userGrowth = calculatePercentageChange(userStats.current, userStats.previous);
+  const learnerGrowth = calculatePercentageChange(learnerStats.current, learnerStats.previous);
+  const coachGrowth = calculatePercentageChange(coachStats.current, coachStats.previous);
+  const systemGrowth = calculatePercentageChange(systemStats.current, systemStats.previous);
+
+  // ✅ Tính tổng
+  const userTotal = newUsersData
+    ? newUsersData.reduce((sum: number, item: MonthlyDataItem) => sum + item.data, 0)
+    : 0;
+  const learnerTotal = learnerPaymentsData
+    ? learnerPaymentsData.reduce((sum: number, item: MonthlyDataItem) => sum + item.data, 0)
+    : 0;
+  const coachTotal = coachEarningsData
+    ? coachEarningsData.reduce((sum: number, item: MonthlyDataItem) => sum + item.data, 0)
+    : 0;
+  const systemTotal = platformRevenueData
+    ? platformRevenueData.reduce((sum: number, item: MonthlyDataItem) => sum + item.data, 0)
+    : 0;
+
+  // ✅ Hiển thị loading
+  if (isLoading) {
+    return (
+      <div style={{ padding: '24px', textAlign: 'center' }}>
+        <Spin size="large" />
+        <div style={{ marginTop: 16 }}>Đang tải dữ liệu thống kê tài chính...</div>
+      </div>
+    );
+  }
+
+  // ✅ Hiển thị lỗi
+  if (hasError) {
+    return (
+      <div style={{ padding: '24px' }}>
+        <Alert
+          message="Lỗi tải dữ liệu"
+          description="Không thể tải dữ liệu thống kê tài chính. Vui lòng thử lại sau."
+          type="error"
+          showIcon
+        />
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: '24px' }}>
@@ -215,7 +196,7 @@ export default function FinancialStatisticsPage() {
               value={timeRange}
               onChange={setTimeRange}
               style={{ width: 120 }}
-              disabled={loading}
+              disabled={isLoading}
             >
               <Option value="week">Tuần</Option>
               <Option value="month">Tháng</Option>
@@ -225,7 +206,7 @@ export default function FinancialStatisticsPage() {
             </Select>
 
             {timeRange === 'custom' && (
-              <RangePicker onChange={setCustomDateRange} format="DD/MM/YYYY" disabled={loading} />
+              <RangePicker onChange={setCustomDateRange} format="DD/MM/YYYY" disabled={isLoading} />
             )}
           </Space>
         </Card>
@@ -235,34 +216,30 @@ export default function FinancialStatisticsPage() {
       <Row gutter={[16, 16]}>
         {/* Card 1: Thống kê người dùng mới */}
         <Col xs={24} lg={12}>
-          <Card
-            loading={loading}
-            style={{ height: '100%', borderRadius: '8px' }}
-            bodyStyle={{ padding: '16px' }}
-          >
+          <Card style={{ height: '100%', borderRadius: '8px' }} bodyStyle={{ padding: '16px' }}>
             <div style={{ marginBottom: 16 }}>
               <Statistic
                 title="Người dùng mới"
-                value={userStats.currentMonth}
+                value={userStats.current}
                 prefix={<UserOutlined />}
                 valueStyle={{ color: '#1890ff' }}
-                suffix={`/ ${formatNumber(userStats.total)} tổng`}
+                suffix={`/ ${formatNumber(userTotal)} tổng`}
               />
               <div
                 style={{
                   fontSize: '12px',
-                  color: userStats.growth >= 0 ? '#52c41a' : '#ff4d4f',
+                  color: userGrowth >= 0 ? '#52c41a' : '#ff4d4f',
                   marginTop: '4px',
                 }}
               >
-                {userStats.growth >= 0 ? '📈' : '📉'} {Math.abs(userStats.growth).toFixed(1)}% so
-                với tháng trước
+                {userGrowth >= 0 ? '📈' : '📉'} {Math.abs(userGrowth).toFixed(1)}% so với tháng
+                trước
               </div>
             </div>
 
             <div style={{ height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={mockUserStats.metadata.data}>
+                <LineChart data={newUsersData || []}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="month" fontSize={12} angle={-45} textAnchor="end" height={50} />
                   <YAxis fontSize={12} />
@@ -283,15 +260,11 @@ export default function FinancialStatisticsPage() {
 
         {/* Card 2: Tổng tiền thu được từ người học */}
         <Col xs={24} lg={12}>
-          <Card
-            loading={loading}
-            style={{ height: '100%', borderRadius: '8px' }}
-            bodyStyle={{ padding: '16px' }}
-          >
+          <Card style={{ height: '100%', borderRadius: '8px' }} bodyStyle={{ padding: '16px' }}>
             <div style={{ marginBottom: 16 }}>
               <Statistic
                 title="Doanh thu từ học viên"
-                value={learnerStats.currentMonth}
+                value={learnerStats.current}
                 formatter={(value) => formatCurrency(Number(value))}
                 prefix={<DollarOutlined />}
                 valueStyle={{ color: '#52c41a' }}
@@ -299,18 +272,18 @@ export default function FinancialStatisticsPage() {
               <div
                 style={{
                   fontSize: '12px',
-                  color: learnerStats.growth >= 0 ? '#52c41a' : '#ff4d4f',
+                  color: learnerGrowth >= 0 ? '#52c41a' : '#ff4d4f',
                   marginTop: '4px',
                 }}
               >
-                {learnerStats.growth >= 0 ? '📈' : '📉'} {Math.abs(learnerStats.growth).toFixed(1)}%
-                so với tháng trước
+                {learnerGrowth >= 0 ? '📈' : '📉'} {Math.abs(learnerGrowth).toFixed(1)}% so với
+                tháng trước
               </div>
             </div>
 
             <div style={{ height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={mockLearnerRevenue.metadata.data}>
+                <AreaChart data={learnerPaymentsData || []}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="month" fontSize={12} angle={-45} textAnchor="end" height={50} />
                   <YAxis
@@ -334,15 +307,11 @@ export default function FinancialStatisticsPage() {
 
         {/* Card 3: Tổng thu nhập của các coach */}
         <Col xs={24} lg={12}>
-          <Card
-            loading={loading}
-            style={{ height: '100%', borderRadius: '8px' }}
-            bodyStyle={{ padding: '16px' }}
-          >
+          <Card style={{ height: '100%', borderRadius: '8px' }} bodyStyle={{ padding: '16px' }}>
             <div style={{ marginBottom: 16 }}>
               <Statistic
                 title="Thu nhập của Coach"
-                value={coachStats.currentMonth}
+                value={coachStats.current}
                 formatter={(value) => formatCurrency(Number(value))}
                 prefix={<WalletOutlined />}
                 valueStyle={{ color: '#fa8c16' }}
@@ -350,18 +319,18 @@ export default function FinancialStatisticsPage() {
               <div
                 style={{
                   fontSize: '12px',
-                  color: coachStats.growth >= 0 ? '#52c41a' : '#ff4d4f',
+                  color: coachGrowth >= 0 ? '#52c41a' : '#ff4d4f',
                   marginTop: '4px',
                 }}
               >
-                {coachStats.growth >= 0 ? '📈' : '📉'} {Math.abs(coachStats.growth).toFixed(1)}% so
-                với tháng trước
+                {coachGrowth >= 0 ? '📈' : '📉'} {Math.abs(coachGrowth).toFixed(1)}% so với tháng
+                trước
               </div>
             </div>
 
             <div style={{ height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={mockCoachIncome.metadata.data}>
+                <BarChart data={coachEarningsData || []}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="month" fontSize={12} angle={-45} textAnchor="end" height={50} />
                   <YAxis
@@ -378,15 +347,11 @@ export default function FinancialStatisticsPage() {
 
         {/* Card 4: Doanh thu hệ thống */}
         <Col xs={24} lg={12}>
-          <Card
-            loading={loading}
-            style={{ height: '100%', borderRadius: '8px' }}
-            bodyStyle={{ padding: '16px' }}
-          >
+          <Card style={{ height: '100%', borderRadius: '8px' }} bodyStyle={{ padding: '16px' }}>
             <div style={{ marginBottom: 16 }}>
               <Statistic
                 title="Doanh thu hệ thống"
-                value={systemStats.currentMonth}
+                value={systemStats.current}
                 formatter={(value) => formatCurrency(Number(value))}
                 prefix={<RiseOutlined />}
                 valueStyle={{ color: '#eb2f96' }}
@@ -394,18 +359,18 @@ export default function FinancialStatisticsPage() {
               <div
                 style={{
                   fontSize: '12px',
-                  color: systemStats.growth >= 0 ? '#52c41a' : '#ff4d4f',
+                  color: systemGrowth >= 0 ? '#52c41a' : '#ff4d4f',
                   marginTop: '4px',
                 }}
               >
-                {systemStats.growth >= 0 ? '📈' : '📉'} {Math.abs(systemStats.growth).toFixed(1)}%
-                so với tháng trước
+                {systemGrowth >= 0 ? '📈' : '📉'} {Math.abs(systemGrowth).toFixed(1)}% so với tháng
+                trước
               </div>
             </div>
 
             <div style={{ height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={mockSystemRevenue.metadata.data}>
+                <LineChart data={platformRevenueData || []}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
                   <XAxis dataKey="month" fontSize={12} angle={-45} textAnchor="end" height={50} />
                   <YAxis
@@ -434,7 +399,7 @@ export default function FinancialStatisticsPage() {
           <Card size="small" style={{ borderRadius: '8px' }}>
             <Statistic
               title="Tổng doanh thu năm"
-              value={systemStats.total + learnerStats.total}
+              value={systemTotal + learnerTotal}
               formatter={(value) => formatCurrency(Number(value))}
               valueStyle={{ color: '#1890ff' }}
             />
@@ -444,7 +409,7 @@ export default function FinancialStatisticsPage() {
           <Card size="small" style={{ borderRadius: '8px' }}>
             <Statistic
               title="Tổng chi phí Coach"
-              value={coachStats.total}
+              value={coachTotal}
               formatter={(value) => formatCurrency(Number(value))}
               valueStyle={{ color: '#fa8c16' }}
             />
@@ -454,7 +419,7 @@ export default function FinancialStatisticsPage() {
           <Card size="small" style={{ borderRadius: '8px' }}>
             <Statistic
               title="Lợi nhuận ròng"
-              value={systemStats.total}
+              value={systemTotal}
               formatter={(value) => formatCurrency(Number(value))}
               valueStyle={{ color: '#52c41a' }}
             />
