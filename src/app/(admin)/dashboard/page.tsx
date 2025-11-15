@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card, Row, Col, Typography, Progress } from 'antd';
+import { Card, Row, Col, Typography, Progress, Spin, Alert } from 'antd';
 import {
   BarChart,
   Bar,
@@ -16,98 +15,13 @@ import {
   Cell,
 } from 'recharts';
 import { RiseOutlined, FallOutlined } from '@ant-design/icons';
+import {
+  useGetDashboardOverview,
+  CourseStatusChart,
+  FeedbackDistributionChart,
+} from '@/@crema/services/apis/analysis';
 
 const { Title } = Typography;
-
-// ✅ Mock data theo API structure
-const mockDashboardData = {
-  statusCode: 200,
-  message: 'Success',
-  metadata: {
-    totalUsers: {
-      total: 11,
-      percentageChange: 20,
-    },
-    coaches: {
-      total: 7,
-      percentageChange: 150,
-      verified: 5,
-      pending: 0,
-    },
-    learners: {
-      total: 2,
-      percentageChange: -50,
-    },
-    courses: {
-      total: 0,
-      completed: 0,
-      ongoing: 0,
-      cancelled: 0,
-    },
-    averageFeedback: {
-      total: 0,
-      percentageChange: 0,
-    },
-    systemReports: {
-      pending: 0,
-      approved: 0,
-      rejected: 0,
-    },
-    courseStatusChart: [
-      {
-        status: 'COMPLETED',
-        count: 0,
-      },
-      {
-        status: 'ON_GOING',
-        count: 0,
-      },
-      {
-        status: 'CANCELLED',
-        count: 0,
-      },
-      {
-        status: 'APPROVED',
-        count: 0,
-      },
-      {
-        status: 'READY_OPENED',
-        count: 0,
-      },
-      {
-        status: 'PENDING_APPROVAL',
-        count: 0,
-      },
-    ],
-    feedbackDistributionChart: [
-      {
-        rating: 1,
-        count: 0,
-        percentage: 0,
-      },
-      {
-        rating: 2,
-        count: 0,
-        percentage: 0,
-      },
-      {
-        rating: 3,
-        count: 0,
-        percentage: 0,
-      },
-      {
-        rating: 4,
-        count: 0,
-        percentage: 0,
-      },
-      {
-        rating: 5,
-        count: 0,
-        percentage: 0,
-      },
-    ],
-  },
-};
 
 // ✅ Format số
 const formatNumber = (value: number) => {
@@ -141,35 +55,52 @@ const getCourseStatusName = (status: string) => {
 };
 
 export default function DashboardPage() {
-  const [loading, setLoading] = useState(false);
-  const [data] = useState(mockDashboardData.metadata);
+  // ✅ Call API thực tế
+  const { data, isLoading, error } = useGetDashboardOverview();
 
-  // ✅ Mock API call
-  const fetchData = async () => {
-    setLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false);
-    }, 1000);
-  };
+  if (isLoading) {
+    return (
+      <div style={{ padding: '24px', textAlign: 'center' }}>
+        <Spin size="large" />
+        <div style={{ marginTop: 16 }}>Đang tải dữ liệu dashboard...</div>
+      </div>
+    );
+  }
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  if (error) {
+    return (
+      <div style={{ padding: '24px' }}>
+        <Alert
+          message="Lỗi tải dữ liệu"
+          description="Không thể tải dữ liệu dashboard. Vui lòng thử lại sau."
+          type="error"
+          showIcon
+        />
+      </div>
+    );
+  }
+
+  if (!data) {
+    return (
+      <div style={{ padding: '24px' }}>
+        <Alert
+          message="Không có dữ liệu"
+          description="Không tìm thấy dữ liệu dashboard."
+          type="warning"
+          showIcon
+        />
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: '24px' }}>
-      {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <Title level={2}>📊 Tổng Quan Hệ Thống</Title>
       </div>
-
-      {/* A. 6 Thẻ Thống Kê Nhanh - Cùng kích thước */}
       <Row gutter={[16, 16]} style={{ marginBottom: 24 }}>
-        {/* Thẻ 1: Tổng số người dùng */}
         <Col xs={24} sm={12} lg={8} xl={4}>
           <Card
-            loading={loading}
             style={{
               borderRadius: '8px',
               height: '200px',
@@ -211,7 +142,6 @@ export default function DashboardPage() {
         {/* Thẻ 2: Số huấn luyện viên */}
         <Col xs={24} sm={12} lg={8} xl={4}>
           <Card
-            loading={loading}
             style={{
               borderRadius: '8px',
               height: '200px',
@@ -257,7 +187,6 @@ export default function DashboardPage() {
         {/* Thẻ 3: Số học viên */}
         <Col xs={24} sm={12} lg={8} xl={4}>
           <Card
-            loading={loading}
             style={{
               borderRadius: '8px',
               height: '200px',
@@ -299,7 +228,6 @@ export default function DashboardPage() {
         {/* Thẻ 4: Tổng khóa học */}
         <Col xs={24} sm={12} lg={8} xl={4}>
           <Card
-            loading={loading}
             style={{
               borderRadius: '8px',
               height: '200px',
@@ -334,7 +262,6 @@ export default function DashboardPage() {
         {/* Thẻ 5: Feedback trung bình */}
         <Col xs={24} sm={12} lg={8} xl={4}>
           <Card
-            loading={loading}
             style={{
               borderRadius: '8px',
               height: '200px',
@@ -389,7 +316,6 @@ export default function DashboardPage() {
         {/* Thẻ 6: Báo cáo hệ thống */}
         <Col xs={24} sm={12} lg={8} xl={4}>
           <Card
-            loading={loading}
             style={{
               borderRadius: '8px',
               height: '200px',
@@ -434,7 +360,6 @@ export default function DashboardPage() {
         {/* Biểu đồ 1: Số buổi học theo trạng thái */}
         <Col xs={24} lg={12}>
           <Card
-            loading={loading}
             title="📊 Trạng thái khóa học"
             style={{ borderRadius: '8px', height: '400px' }}
             bodyStyle={{ padding: '16px', height: 'calc(100% - 57px)' }}
@@ -457,7 +382,7 @@ export default function DashboardPage() {
                     labelFormatter={(label) => getCourseStatusName(label)}
                   />
                   <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                    {data.courseStatusChart.map((entry, index) => (
+                    {data.courseStatusChart.map((entry: CourseStatusChart, index: number) => (
                       <Cell
                         key={`cell-${index}`}
                         fill={COURSE_STATUS_COLORS[entry.status] || '#8884d8'}
@@ -473,7 +398,6 @@ export default function DashboardPage() {
         {/* Biểu đồ 2: Phân bố đánh giá */}
         <Col xs={24} lg={12}>
           <Card
-            loading={loading}
             title="⭐ Phân bố đánh giá"
             style={{ borderRadius: '8px', height: '400px' }}
             bodyStyle={{ padding: '16px', height: 'calc(100% - 57px)' }}
@@ -486,6 +410,10 @@ export default function DashboardPage() {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
+                    label={(props: any) => {
+                      const entry = props.payload as FeedbackDistributionChart;
+                      return `${entry.rating}⭐ (${entry.percentage}%)`;
+                    }}
                     label={(entry: any) =>
                       `${entry.payload.rating}⭐ (${entry.payload.percentage}%)`
                     }
@@ -493,9 +421,11 @@ export default function DashboardPage() {
                     fill="#8884d8"
                     dataKey="count"
                   >
-                    {data.feedbackDistributionChart.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={RATING_COLORS[entry.rating - 1]} />
-                    ))}
+                    {data.feedbackDistributionChart.map(
+                      (entry: FeedbackDistributionChart, index: number) => (
+                        <Cell key={`cell-${index}`} fill={RATING_COLORS[entry.rating - 1]} />
+                      ),
+                    )}
                   </Pie>
                   <Tooltip
                     formatter={(value, name, props) => [
