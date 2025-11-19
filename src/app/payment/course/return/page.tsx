@@ -58,7 +58,7 @@ const PaymentCourseReturnPage: React.FC = () => {
       setErrorMessage('');
 
       try {
-        await axios.get(buildUrl('payments/course/return'), {
+        await axios.get(buildUrl('payment/course/return'), {
           params,
         });
 
