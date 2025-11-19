@@ -20,7 +20,9 @@ import {
   Badge,
   InputNumber,
   App,
+  Upload,
 } from 'antd';
+import type { UploadFile, UploadProps } from 'antd';
 import {
   TrophyOutlined,
   SearchOutlined,
@@ -32,6 +34,7 @@ import {
   ThunderboltOutlined,
   SafetyOutlined,
   FireOutlined,
+  UploadOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useGet } from '@/@crema/hooks/useApiQuery';
@@ -102,7 +105,6 @@ export default function AchievementsPage() {
     type: 'EVENT_COUNT',
     name: '',
     description: '',
-    iconUrl: '',
     isActive: true,
     // EVENT_COUNT
     eventName: '',
@@ -116,13 +118,13 @@ export default function AchievementsPage() {
     targetStreakLength: 1,
     streakUnit: 'days',
   });
+  const [createIconFile, setCreateIconFile] = useState<File | null>(null);
 
   // Edit form state
   const [editForm, setEditForm] = useState({
     type: 'EVENT_COUNT',
     name: '',
     description: '',
-    iconUrl: '',
     isActive: true,
     // EVENT_COUNT
     eventName: '',
@@ -136,6 +138,7 @@ export default function AchievementsPage() {
     targetStreakLength: 1,
     streakUnit: 'days',
   });
+  const [editIconFile, setEditIconFile] = useState<File | null>(null);
 
   // API mutations
   const createEventCountMutation = useCreateEventCountAchievement();
@@ -254,7 +257,6 @@ export default function AchievementsPage() {
       type: 'EVENT_COUNT',
       name: '',
       description: '',
-      iconUrl: '',
       isActive: true,
       eventName: '',
       targetCount: 1,
@@ -265,6 +267,7 @@ export default function AchievementsPage() {
       targetStreakLength: 1,
       streakUnit: 'days',
     });
+    setCreateIconFile(null);
   };
 
   const handleConfirmCreate = async () => {
@@ -277,10 +280,11 @@ export default function AchievementsPage() {
       message.error('Vui lòng nhập mô tả');
       return;
     }
-    if (!createForm.iconUrl.trim()) {
-      message.error('Vui lòng nhập Icon URL');
-      return;
-    }
+    // Icon file is optional - không bắt buộc
+    // if (!createIconFile) {
+    //   message.error('Vui lòng chọn file icon');
+    //   return;
+    // }
 
     // Set loading state
     setIsCreating(true);
@@ -304,7 +308,7 @@ export default function AchievementsPage() {
         await createEventCountMutation.mutateAsync({
           name: createForm.name,
           description: createForm.description,
-          iconUrl: createForm.iconUrl,
+          icon: createIconFile || undefined,
           isActive: createForm.isActive,
           eventName: createForm.eventName,
           targetCount: createForm.targetCount,
@@ -326,7 +330,7 @@ export default function AchievementsPage() {
         await createPropertyCheckMutation.mutateAsync({
           name: createForm.name,
           description: createForm.description,
-          iconUrl: createForm.iconUrl,
+          icon: createIconFile || undefined,
           isActive: createForm.isActive,
           eventName: createForm.eventName,
           entityName: createForm.entityName,
@@ -351,7 +355,7 @@ export default function AchievementsPage() {
         await createStreakMutation.mutateAsync({
           name: createForm.name,
           description: createForm.description,
-          iconUrl: createForm.iconUrl,
+          icon: createIconFile || undefined,
           isActive: createForm.isActive,
           eventName: createForm.eventName,
           targetStreakLength: createForm.targetStreakLength,
@@ -446,7 +450,6 @@ export default function AchievementsPage() {
       type: achievement.type,
       name: achievement.name,
       description: achievement.description,
-      iconUrl: achievement.iconUrl,
       isActive: achievement.isActive,
       // EVENT_COUNT
       eventName: achievement.eventName || '',
@@ -460,6 +463,7 @@ export default function AchievementsPage() {
       targetStreakLength: achievement.targetStreakLength || 1,
       streakUnit: achievement.streakUnit || 'days',
     });
+    setEditIconFile(null); // Reset file upload
 
     setIsEditModalVisible(true);
   }, []);
@@ -467,6 +471,7 @@ export default function AchievementsPage() {
   const handleCancelEdit = useCallback(() => {
     setIsEditModalVisible(false);
     setEditingAchievement(null);
+    setEditIconFile(null);
     setIsUpdating(false);
   }, []);
 
@@ -482,10 +487,7 @@ export default function AchievementsPage() {
       message.error('Vui lòng nhập mô tả');
       return;
     }
-    if (!editForm.iconUrl.trim()) {
-      message.error('Vui lòng nhập Icon URL');
-      return;
-    }
+    // Icon file is optional - không bắt buộc khi edit
 
     setIsUpdating(true);
 
@@ -511,7 +513,7 @@ export default function AchievementsPage() {
           data: {
             name: editForm.name,
             description: editForm.description,
-            iconUrl: editForm.iconUrl,
+            icon: editIconFile || undefined,
             isActive: editForm.isActive,
             eventName: editForm.eventName,
             targetCount: editForm.targetCount,
@@ -535,7 +537,7 @@ export default function AchievementsPage() {
           data: {
             name: editForm.name,
             description: editForm.description,
-            iconUrl: editForm.iconUrl,
+            icon: editIconFile || undefined,
             isActive: editForm.isActive,
             eventName: editForm.eventName,
             entityName: editForm.entityName,
@@ -562,7 +564,7 @@ export default function AchievementsPage() {
           data: {
             name: editForm.name,
             description: editForm.description,
-            iconUrl: editForm.iconUrl,
+            icon: editIconFile || undefined,
             isActive: editForm.isActive,
             eventName: editForm.eventName,
             targetStreakLength: editForm.targetStreakLength,
@@ -1062,28 +1064,51 @@ export default function AchievementsPage() {
             />
           </div>
 
-          {/* Icon URL */}
+          {/* Icon Upload */}
           <div>
             <Text strong>
-              Icon URL: <span className="text-red-500">*</span>
+              Icon (Tải ảnh lên): <span className="text-gray-400">(không bắt buộc)</span>
             </Text>
-            <Input
-              style={{ marginTop: 8 }}
-              placeholder="VD: https://api.dicebear.com/7.x/shapes/svg?seed=first-steps"
-              value={createForm.iconUrl}
-              onChange={(e) => setCreateForm({ ...createForm, iconUrl: e.target.value })}
-            />
+            <Upload
+              maxCount={1}
+              beforeUpload={(file) => {
+                // Kiểm tra loại file
+                const isImage = file.type.startsWith('image/');
+                if (!isImage) {
+                  message.error('Chỉ được upload file ảnh!');
+                  return Upload.LIST_IGNORE;
+                }
+                // Kiểm tra kích thước (max 5MB)
+                const isLt5M = file.size / 1024 / 1024 < 5;
+                if (!isLt5M) {
+                  message.error('Ảnh phải nhỏ hơn 5MB!');
+                  return Upload.LIST_IGNORE;
+                }
+                setCreateIconFile(file);
+                return false; // Prevent auto upload
+              }}
+              onRemove={() => {
+                setCreateIconFile(null);
+              }}
+              fileList={
+                createIconFile
+                  ? [
+                      {
+                        uid: '-1',
+                        name: createIconFile.name,
+                        status: 'done',
+                        url: URL.createObjectURL(createIconFile),
+                      },
+                    ]
+                  : []
+              }
+            >
+              <Button icon={<UploadOutlined />} style={{ marginTop: 8 }}>
+                Chọn file ảnh
+              </Button>
+            </Upload>
             <div className="mt-2 text-xs text-gray-500">
-              💡 Gợi ý: Sử dụng{' '}
-              <a
-                href="https://www.dicebear.com/playground"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-blue-500 hover:underline"
-              >
-                DiceBear Playground
-              </a>{' '}
-              để tạo icon
+              💡 Chấp nhận: JPG, PNG, GIF, SVG. Tối đa 5MB
             </div>
           </div>
 
@@ -1302,17 +1327,62 @@ export default function AchievementsPage() {
             />
           </div>
 
-          {/* Icon URL */}
+          {/* Icon Upload */}
           <div>
             <Text strong>
-              Icon URL: <span className="text-red-500">*</span>
+              Icon mới (Tải ảnh lên): <span className="text-gray-400">(không bắt buộc)</span>
             </Text>
-            <Input
-              style={{ marginTop: 8 }}
-              placeholder="VD: https://api.dicebear.com/7.x/shapes/svg?seed=first-steps"
-              value={editForm.iconUrl}
-              onChange={(e) => setEditForm({ ...editForm, iconUrl: e.target.value })}
-            />
+            <Upload
+              maxCount={1}
+              beforeUpload={(file) => {
+                // Kiểm tra loại file
+                const isImage = file.type.startsWith('image/');
+                if (!isImage) {
+                  message.error('Chỉ được upload file ảnh!');
+                  return Upload.LIST_IGNORE;
+                }
+                // Kiểm tra kích thước (max 5MB)
+                const isLt5M = file.size / 1024 / 1024 < 5;
+                if (!isLt5M) {
+                  message.error('Ảnh phải nhỏ hơn 5MB!');
+                  return Upload.LIST_IGNORE;
+                }
+                setEditIconFile(file);
+                return false; // Prevent auto upload
+              }}
+              onRemove={() => {
+                setEditIconFile(null);
+              }}
+              fileList={
+                editIconFile
+                  ? [
+                      {
+                        uid: '-1',
+                        name: editIconFile.name,
+                        status: 'done',
+                        url: URL.createObjectURL(editIconFile),
+                      },
+                    ]
+                  : []
+              }
+            >
+              <Button icon={<UploadOutlined />} style={{ marginTop: 8 }}>
+                Chọn file ảnh mới
+              </Button>
+            </Upload>
+            <div className="mt-2 text-xs text-gray-500">
+              💡 Chấp nhận: JPG, PNG, GIF, SVG. Tối đa 5MB. Để trống nếu không muốn thay đổi icon.
+            </div>
+            {editingAchievement?.iconUrl && (
+              <div className="mt-2 text-xs text-gray-500">
+                Icon hiện tại:{' '}
+                <img
+                  src={editingAchievement.iconUrl}
+                  alt="icon"
+                  className="inline-block w-8 h-8 ml-2"
+                />
+              </div>
+            )}
           </div>
 
           {/* Type-specific fields */}
