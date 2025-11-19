@@ -8,18 +8,18 @@ import { message } from 'antd';
 
 export interface CreateEventCountAchievementDto {
   name: string;
-  description: string;
-  iconUrl: string;
-  isActive: boolean;
+  description?: string;
+  icon?: File; // File upload
+  isActive?: boolean;
   eventName: string;
   targetCount: number;
 }
 
 export interface CreateStreakAchievementDto {
   name: string;
-  description: string;
-  iconUrl: string;
-  isActive: boolean;
+  description?: string;
+  icon?: File; // File upload
+  isActive?: boolean;
   eventName: string;
   targetStreakLength: number;
   streakUnit: string;
@@ -27,9 +27,9 @@ export interface CreateStreakAchievementDto {
 
 export interface CreatePropertyCheckAchievementDto {
   name: string;
-  description: string;
-  iconUrl: string;
-  isActive: boolean;
+  description?: string;
+  icon?: File; // File upload
+  isActive?: boolean;
   eventName: string;
   entityName: string;
   propertyName: string;
@@ -39,18 +39,18 @@ export interface CreatePropertyCheckAchievementDto {
 
 export interface UpdateEventCountAchievementDto {
   name: string;
-  description: string;
-  iconUrl: string;
-  isActive: boolean;
+  description?: string;
+  icon?: File; // File upload
+  isActive?: boolean;
   eventName: string;
   targetCount: number;
 }
 
 export interface UpdateStreakAchievementDto {
   name: string;
-  description: string;
-  iconUrl: string;
-  isActive: boolean;
+  description?: string;
+  icon?: File; // File upload
+  isActive?: boolean;
   eventName: string;
   targetStreakLength: number;
   streakUnit: string;
@@ -58,9 +58,9 @@ export interface UpdateStreakAchievementDto {
 
 export interface UpdatePropertyCheckAchievementDto {
   name: string;
-  description: string;
-  iconUrl: string;
-  isActive: boolean;
+  description?: string;
+  icon?: File; // File upload
+  isActive?: boolean;
   eventName: string;
   entityName: string;
   propertyName: string;
@@ -81,8 +81,21 @@ export const useCreateEventCountAchievement = () => {
 
   return useMutation({
     mutationFn: async (data: CreateEventCountAchievementDto) => {
+      // Tạo FormData để upload file
+      const formData = new FormData();
+      formData.append('name', data.name);
+      if (data.description) formData.append('description', data.description);
+      formData.append('eventName', data.eventName);
+      formData.append('targetCount', data.targetCount.toString());
+      formData.append('isActive', data.isActive !== undefined ? data.isActive.toString() : 'true');
+      if (data.icon) formData.append('icon', data.icon);
+
       // jwtAxios tự động thêm token vào header
-      const response = await jwtAxios.post('achievements/event-count', data);
+      const response = await jwtAxios.post('achievements/event-count', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return response.data;
     },
     onSuccess: () => {
@@ -105,8 +118,22 @@ export const useCreateStreakAchievement = () => {
 
   return useMutation({
     mutationFn: async (data: CreateStreakAchievementDto) => {
+      // Tạo FormData để upload file
+      const formData = new FormData();
+      formData.append('name', data.name);
+      if (data.description) formData.append('description', data.description);
+      formData.append('eventName', data.eventName);
+      formData.append('targetStreakLength', data.targetStreakLength.toString());
+      formData.append('streakUnit', data.streakUnit);
+      formData.append('isActive', data.isActive !== undefined ? data.isActive.toString() : 'true');
+      if (data.icon) formData.append('icon', data.icon);
+
       // jwtAxios tự động thêm token vào header
-      const response = await jwtAxios.post('achievements/streak', data);
+      const response = await jwtAxios.post('achievements/streak', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return response.data;
     },
     onSuccess: () => {
@@ -129,8 +156,24 @@ export const useCreatePropertyCheckAchievement = () => {
 
   return useMutation({
     mutationFn: async (data: CreatePropertyCheckAchievementDto) => {
+      // Tạo FormData để upload file
+      const formData = new FormData();
+      formData.append('name', data.name);
+      if (data.description) formData.append('description', data.description);
+      formData.append('eventName', data.eventName);
+      formData.append('entityName', data.entityName);
+      formData.append('propertyName', data.propertyName);
+      formData.append('comparisonOperator', data.comparisonOperator);
+      formData.append('targetValue', data.targetValue);
+      formData.append('isActive', data.isActive !== undefined ? data.isActive.toString() : 'true');
+      if (data.icon) formData.append('icon', data.icon);
+
       // jwtAxios tự động thêm token vào header
-      const response = await jwtAxios.post('achievements/property-check', data);
+      const response = await jwtAxios.post('achievements/property-check', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       return response.data;
     },
     onSuccess: () => {
@@ -265,7 +308,20 @@ export const useUpdateEventCountAchievement = () => {
       console.log('🌐 PUT API endpoint (UPDATE EVENT_COUNT):', endpoint);
       console.log('📝 Update data:', data);
 
-      const response = await jwtAxios.put(endpoint, data);
+      // Tạo FormData để upload file
+      const formData = new FormData();
+      formData.append('name', data.name);
+      if (data.description) formData.append('description', data.description);
+      formData.append('eventName', data.eventName);
+      formData.append('targetCount', data.targetCount.toString());
+      formData.append('isActive', data.isActive !== undefined ? data.isActive.toString() : 'true');
+      if (data.icon) formData.append('icon', data.icon);
+
+      const response = await jwtAxios.put(endpoint, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       console.log('📦 UPDATE Response:', response.data);
       return response.data;
     },
@@ -299,7 +355,21 @@ export const useUpdateStreakAchievement = () => {
       console.log('🌐 PUT API endpoint (UPDATE STREAK):', endpoint);
       console.log('📝 Update data:', data);
 
-      const response = await jwtAxios.put(endpoint, data);
+      // Tạo FormData để upload file
+      const formData = new FormData();
+      formData.append('name', data.name);
+      if (data.description) formData.append('description', data.description);
+      formData.append('eventName', data.eventName);
+      formData.append('targetStreakLength', data.targetStreakLength.toString());
+      formData.append('streakUnit', data.streakUnit);
+      formData.append('isActive', data.isActive !== undefined ? data.isActive.toString() : 'true');
+      if (data.icon) formData.append('icon', data.icon);
+
+      const response = await jwtAxios.put(endpoint, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       console.log('📦 UPDATE Response:', response.data);
       return response.data;
     },
@@ -339,7 +409,23 @@ export const useUpdatePropertyCheckAchievement = () => {
       console.log('🌐 PUT API endpoint (UPDATE PROPERTY_CHECK):', endpoint);
       console.log('📝 Update data:', data);
 
-      const response = await jwtAxios.put(endpoint, data);
+      // Tạo FormData để upload file
+      const formData = new FormData();
+      formData.append('name', data.name);
+      if (data.description) formData.append('description', data.description);
+      formData.append('eventName', data.eventName);
+      formData.append('entityName', data.entityName);
+      formData.append('propertyName', data.propertyName);
+      formData.append('comparisonOperator', data.comparisonOperator);
+      formData.append('targetValue', data.targetValue);
+      formData.append('isActive', data.isActive !== undefined ? data.isActive.toString() : 'true');
+      if (data.icon) formData.append('icon', data.icon);
+
+      const response = await jwtAxios.put(endpoint, formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       console.log('📦 UPDATE Response:', response.data);
       return response.data;
     },
