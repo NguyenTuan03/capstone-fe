@@ -414,9 +414,6 @@ export default function DashboardPage() {
                       const entry = props.payload as FeedbackDistributionChart;
                       return `${entry.rating}⭐ (${entry.percentage}%)`;
                     }}
-                    label={(entry: any) =>
-                      `${entry.payload.rating}⭐ (${entry.payload.percentage}%)`
-                    }
                     outerRadius={120}
                     fill="#8884d8"
                     dataKey="count"
