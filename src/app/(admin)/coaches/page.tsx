@@ -517,7 +517,7 @@ export default function CoachesPage() {
       {isLoading ? <Skeleton active paragraph={{ rows: 1 }} /> : summaryCards}
 
       {/* Tables */}
-      <Card className="rounded-2xl border-0 shadow-sm" bodyStyle={{ padding: 0 }}>
+      <Card className="rounded-2xl border-0 shadow-sm" styles={{ body: { padding: 0 } }}>
         <Tabs
           activeKey={activeTab}
           onChange={(k) => setActiveTab(k as 'pending' | 'approved')}
