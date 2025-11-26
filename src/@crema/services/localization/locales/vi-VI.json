@@ -78,7 +78,7 @@
   "settings.changePassword.mismatch": "Mật khẩu xác nhận không khớp",
   "settings.changePassword.success": "Đổi mật khẩu thành công (mock)",
   "menu.dashboard": "Tổng quan",
-  "menu.users": "Quản lý user",
+  "menu.users": "Người dùng",
   "menu.coaches": "Quản lý huấn luyện viên",
   "menu.curriculum": "Quản lý chương trình giảng dậy",
   "menu.achievements": "Quản lý thành tựu",

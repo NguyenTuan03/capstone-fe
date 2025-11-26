@@ -36,7 +36,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     {
       key: '/users',
       icon: <UserOutlined />,
-      label: 'Quản lý User',
+      label: 'Người dùng',
     },
     {
       key: '/coaches',

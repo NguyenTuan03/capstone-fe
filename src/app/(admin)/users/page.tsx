@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, ChangeEvent } from 'react';
 import {
   Card,
   Table,
@@ -61,7 +61,7 @@ export default function UsersPage() {
     LEARNER: '/home',
   });
 
-  const [users, setUsers] = useState<User[]>([]);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
@@ -72,73 +72,142 @@ export default function UsersPage() {
   const [selectedUserForAction, setSelectedUserForAction] = useState<User | null>(null);
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
 
+  const [searchInput, setSearchInput] = useState('');
   const [searchText, setSearchText] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [dateRange, setDateRange] = useState<[string, string] | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [total, setTotal] = useState(0);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   const [filterForm] = Form.useForm();
 
-  // ✅ Build filter parameters cho API
-  const buildFilterParams = useCallback((): any => {
-    const params: any = {
-      page: currentPage,
-      size: pageSize,
-    };
+  useEffect(() => {
+    try {
+      const storedUser = localStorage.getItem('user') || sessionStorage.getItem('user');
+      if (!storedUser) return;
+      const parsedUser = JSON.parse(storedUser);
+      if (parsedUser?.id) {
+        setCurrentUserId(Number(parsedUser.id));
+      }
+    } catch (error) {
+      console.error('Failed to parse current user from storage:', error);
+    }
+  }, []);
 
-    // ✅ Tìm kiếm chung (search across multiple fields)
-    if (searchText) {
-      params.filter = `email_cont_${searchText},fullName_cont_${searchText}`;
+  const frontendFilteredUsers = useMemo(() => {
+    let result = allUsers;
+
+    // 1. Loại ADMIN khác khỏi danh sách
+    result = result.filter((user) => {
+      if (user.role.name !== 'ADMIN') {
+        return true;
+      }
+      if (currentUserId === null) {
+        return false;
+      }
+      return user.id === currentUserId;
+    });
+
+    // 2. Tìm kiếm theo tên
+    if (searchText.trim()) {
+      const keyword = searchText.trim().toLowerCase();
+      result = result.filter((user) => user.fullName.toLowerCase().includes(keyword));
     }
 
-    // ✅ Filter theo status
+    // 3. Filter theo trạng thái
     if (statusFilter !== 'all') {
-      params.isActive = statusFilter === 'active';
+      const shouldActive = statusFilter === 'active';
+      result = result.filter((user) => user.isActive === shouldActive);
     }
 
-    // ✅ Filter theo role
+    // 4. Filter theo vai trò
     if (roleFilter !== 'all') {
-      params.roleName = roleFilter;
+      result = result.filter((user) => user.role.name === roleFilter);
     }
 
-    // ✅ Filter theo date range
+    // 5. Filter theo ngày tạo
     if (dateRange) {
-      const [startDate, endDate] = dateRange;
-      params.createdAtFrom = startDate;
-      params.createdAtTo = endDate;
+      const [from, to] = dateRange;
+      const fromTime = new Date(from).getTime();
+      const toTime = new Date(to).getTime();
+      result = result.filter((user) => {
+        const createdTime = new Date(user.createdAt).getTime();
+        if (Number.isNaN(createdTime)) return false;
+        return createdTime >= fromTime && createdTime <= toTime;
+      });
     }
 
-    return params;
-  }, [currentPage, pageSize, searchText, statusFilter, roleFilter, dateRange]);
+    return result;
+  }, [allUsers, currentUserId, searchText, statusFilter, roleFilter, dateRange]);
 
-  // ✅ Load users data từ API với filter
+  const paginatedUsers = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return frontendFilteredUsers.slice(startIndex, startIndex + pageSize);
+  }, [frontendFilteredUsers, currentPage, pageSize]);
+
+  const totalUsers = frontendFilteredUsers.length;
+
+  useEffect(() => {
+    if (!totalUsers) {
+      if (currentPage !== 1) {
+        setCurrentPage(1);
+      }
+      return;
+    }
+    const maxPage = Math.ceil(totalUsers / pageSize) || 1;
+    if (currentPage > maxPage) {
+      setCurrentPage(maxPage);
+    }
+  }, [totalUsers, pageSize, currentPage]);
+
+  // ✅ Load toàn bộ dữ liệu từ backend, không filter/pagination phía server
   const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const params = buildFilterParams();
-      console.log('API Params:', params); // Debug params
+      const pageSizeFetch = 100;
+      let page = 1;
+      let aggregated: User[] = [];
+      let total: number | null = null;
+      let hasMore = true;
 
-      const res = await userService.getAll(params);
-      setUsers(res.items);
-      setTotal(res.total);
+      while (hasMore) {
+        const res = await userService.getAll({ page, size: pageSizeFetch });
+        aggregated = [...aggregated, ...res.items];
+        total = typeof res.total === 'number' ? res.total : null;
+
+        if (total !== null) {
+          hasMore = aggregated.length < total;
+        } else {
+          hasMore = res.items.length === pageSizeFetch;
+        }
+
+        page += 1;
+      }
+
+      setAllUsers(aggregated);
     } catch (error) {
       console.error('Error loading users:', error);
       message.error('Không thể tải danh sách người dùng');
     } finally {
       setLoading(false);
     }
-  }, [buildFilterParams]);
+  }, []);
 
   useEffect(() => {
     loadUsers();
   }, [loadUsers]);
 
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchText, statusFilter, roleFilter, dateRange]);
+
   // ✅ Apply advanced filters
   const handleApplyAdvancedFilter = (values: FilterValues) => {
-    setSearchText(values.search || '');
+    const nextSearch = values.search || '';
+    setSearchInput(nextSearch);
+    setSearchText(nextSearch.trim());
     setStatusFilter(values.status || 'all');
     setRoleFilter(values.role || 'all');
 
@@ -151,6 +220,33 @@ export default function UsersPage() {
 
     setCurrentPage(1);
     setShowAdvancedFilter(false);
+  };
+
+  const handleSearchInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const nextValue = event.target.value;
+    setSearchInput(nextValue);
+    if (!nextValue.trim()) {
+      setSearchText('');
+    }
+  };
+
+  const handleSearch = (value?: string) => {
+    const keyword = typeof value === 'string' ? value : searchInput;
+    const normalizedKeyword = keyword.trim();
+
+    if (!normalizedKeyword) {
+      setSearchInput('');
+      setSearchText('');
+      return;
+    }
+
+    if (normalizedKeyword === searchText) {
+      loadUsers();
+      return;
+    }
+
+    setSearchInput(keyword);
+    setSearchText(normalizedKeyword);
   };
 
   // ✅ Xóa mềm user
@@ -229,19 +325,33 @@ export default function UsersPage() {
 
   const columns: ColumnsType<User> = [
     {
+      title: 'ID',
+      dataIndex: 'id',
+      key: 'id',
+      render: (id: number) => id.toString(),
+      sorter: (a, b) => a.id - b.id,
+      sortDirections: ['descend', 'ascend'],
+    },
+    {
       title: 'Họ tên',
       dataIndex: 'fullName',
       key: 'fullName',
+      sorter: (a, b) => a.fullName.localeCompare(b.fullName),
+      sortDirections: ['ascend', 'descend'],
     },
     {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
+      sorter: (a, b) => a.email.localeCompare(b.email),
+      sortDirections: ['ascend', 'descend'],
     },
     {
       title: 'Trạng thái',
       dataIndex: 'isActive',
       key: 'isActive',
+      sorter: (a, b) => Number(a.isActive) - Number(b.isActive),
+      sortDirections: ['descend', 'ascend'],
       render: (isActive: boolean) =>
         isActive ? <Tag color="green">Hoạt động</Tag> : <Tag color="red">Đã xóa</Tag>,
     },
@@ -249,11 +359,15 @@ export default function UsersPage() {
       title: 'Vai trò',
       dataIndex: ['role', 'name'],
       key: 'role',
+      sorter: (a, b) => a.role.name.localeCompare(b.role.name),
+      sortDirections: ['ascend', 'descend'],
     },
     {
       title: 'Ngày tạo',
       dataIndex: 'createdAt',
       key: 'createdAt',
+      sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      sortDirections: ['descend', 'ascend'],
       render: (date: string) => new Date(date).toLocaleDateString('vi-VN'),
     },
     {
@@ -295,15 +409,14 @@ export default function UsersPage() {
     <div>
       <Title level={2}>Quản lý người dùng</Title>
       <Card>
-        {/* ✅ Simple Search & Filter */}
         <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
           <Col xs={24} sm={12} md={8}>
             <Search
               placeholder="Tìm theo tên hoặc email"
               allowClear
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              onSearch={() => loadUsers()}
+              value={searchInput}
+              onChange={handleSearchInputChange}
+              onSearch={handleSearch}
               style={{ width: '100%' }}
             />
           </Col>
@@ -331,23 +444,6 @@ export default function UsersPage() {
               <Option value="COACH">COACH</Option>
               <Option value="LEARNER">LEARNER</Option>
             </Select>
-          </Col>
-          <Col xs={24} sm={24} md={8}>
-            <Space>
-              <Button
-                icon={<FilterOutlined />}
-                onClick={() => setShowAdvancedFilter(!showAdvancedFilter)}
-              >
-                Lọc nâng cao
-              </Button>
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={() => setIsCreateModalVisible(true)}
-              >
-                Tạo tài khoản
-              </Button>
-            </Space>
           </Col>
         </Row>
 
@@ -402,13 +498,13 @@ export default function UsersPage() {
 
         <Table
           columns={columns}
-          dataSource={users}
+          dataSource={paginatedUsers}
           rowKey="id"
           loading={loading}
           pagination={{
             current: currentPage,
             pageSize,
-            total,
+            total: totalUsers,
             onChange: (page, size) => {
               setCurrentPage(page);
               setPageSize(size || 10);
