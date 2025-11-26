@@ -22,7 +22,6 @@ import {
   App,
   Upload,
 } from 'antd';
-import type { UploadFile, UploadProps } from 'antd';
 import {
   TrophyOutlined,
   SearchOutlined,
@@ -140,6 +139,61 @@ export default function AchievementsPage() {
   });
   const [editIconFile, setEditIconFile] = useState<File | null>(null);
 
+  const ENTITY_OPTIONS = [
+    { label: 'Tiến trình người học', value: 'LearnerProgress' },
+    { label: 'Bài kiểm tra', value: 'Quiz' },
+    { label: 'Huấn luyện viên', value: 'Coach' },
+    { label: 'Ghi danh', value: 'Enrollment' },
+  ];
+
+  const PROPERTY_OPTIONS_BY_ENTITY: Record<string, { label: string; value: string }[]> = {
+    LearnerProgress: [
+      { value: 'avgQuizScore', label: 'Điểm quiz trung bình' },
+      {
+        value: 'avgAiAnalysisScore',
+        label: 'Điểm AI phân tích trung bình',
+      },
+      {
+        value: 'sessionsCompleted',
+        label: 'Số buổi học đã hoàn thành',
+      },
+      {
+        value: 'progress',
+        label: 'Tiến độ khóa học (%)',
+      },
+    ],
+    Coach: [
+      { value: 'averageRating', label: 'Điểm đánh giá trung bình' },
+      {
+        value: 'yearOfExperience',
+        label: 'Số năm kinh nghiệm',
+      },
+      {
+        value: 'verificationStatus',
+        label: 'Trạng thái duyệt',
+      },
+    ],
+    Enrollment: [
+      {
+        value: 'sessionCount',
+        label: 'Số buổi đã tham gia',
+      },
+    ],
+    Quiz: [{ value: 'score', label: 'Điểm quiz' }],
+  };
+
+  const getEntityLabel = (value?: string) => {
+    if (!value) return '';
+    return ENTITY_OPTIONS.find((opt) => opt.value === value)?.label || value;
+  };
+
+  const getPropertyLabel = (entity?: string, property?: string) => {
+    if (!entity || !property) return '';
+    const options = PROPERTY_OPTIONS_BY_ENTITY[entity];
+    if (!options) return property;
+    return options.find((opt) => opt.value === property)?.label || property;
+  };
+
   // API mutations
   const createEventCountMutation = useCreateEventCountAchievement();
   const createStreakMutation = useCreateStreakAchievement();
@@ -156,7 +210,7 @@ export default function AchievementsPage() {
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
+  const [pageSize, setPageSize] = useState(5);
 
   // API call - Get list
   const { data: achievementsRes, isLoading, refetch } = useGet<any>('achievements');
@@ -223,18 +277,19 @@ export default function AchievementsPage() {
       items = items.filter((a: AchievementData) => a.type === typeFilter);
     }
 
-    return items;
-  }, [achievementsRes?.items, searchText, typeFilter]);
-
-  // Total từ API nếu không có client-side filter, ngược lại dùng length của filtered items
-  const total = useMemo(() => {
-    // Nếu có search hoặc type filter → dùng client-side total
-    if (searchText || typeFilter !== 'all') {
-      return achievements.length;
+    // Client-side status filter
+    if (statusFilter !== 'all') {
+      const isActive = statusFilter === 'active';
+      items = items.filter((a: AchievementData) => a.isActive === isActive);
     }
-    // Không có filter → dùng total từ API
-    return achievementsRes?.total || 0;
-  }, [achievementsRes?.total, achievements.length, searchText, typeFilter]);
+
+    return items;
+  }, [achievementsRes?.items, searchText, typeFilter, statusFilter]);
+
+  const paginatedAchievements = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return achievements.slice(startIndex, startIndex + pageSize);
+  }, [achievements, currentPage, pageSize]);
 
   // Reset page when filters change
   useEffect(() => {
@@ -668,10 +723,11 @@ export default function AchievementsPage() {
           return (
             <div className="text-sm">
               <div>
-                <Text strong>Entity:</Text> {record.entityName}
+                <Text strong>Đối tượng:</Text> {getEntityLabel(record.entityName)}
               </div>
               <div>
-                <Text strong>Thuộc tính:</Text> {record.propertyName}
+                <Text strong>Thuộc tính:</Text>{' '}
+                {getPropertyLabel(record.entityName, record.propertyName)}
               </div>
               <div>
                 <Text strong>Điều kiện:</Text> {record.comparisonOperator} {record.targetValue}
@@ -779,9 +835,6 @@ export default function AchievementsPage() {
       <div className="flex justify-between items-start">
         <div>
           <Title level={2}>Quản lý Thành tựu</Title>
-          <Text className="text-gray-600">
-            Quản lý hệ thống thành tựu và theo dõi tiến độ của học viên
-          </Text>
         </div>
         <Button
           type="primary"
@@ -836,18 +889,18 @@ export default function AchievementsPage() {
         {/* Table */}
         <Table
           columns={columns}
-          dataSource={achievements}
+          dataSource={paginatedAchievements}
           loading={isLoading}
           rowKey="id"
           pagination={{
             current: currentPage,
-            pageSize: pageSize,
-            total: total,
+            pageSize,
+            total: achievements.length,
             onChange: (page, size) => {
               setCurrentPage(page);
-              setPageSize(size || 10);
+              setPageSize(size || 5);
             },
-            showSizeChanger: true,
+            showSizeChanger: false,
             showTotal: (total) => `Tổng ${total} thành tựu`,
           }}
         />
@@ -858,7 +911,7 @@ export default function AchievementsPage() {
         title={
           <div className="flex items-center gap-2">
             <TrophyOutlined className="text-yellow-500" />
-            <span>Chi tiết Thành tựu</span>
+            <span>Chi tiết thành tựu</span>
           </div>
         }
         open={isDetailModalVisible}
@@ -905,7 +958,7 @@ export default function AchievementsPage() {
                   <Descriptions.Item label="Mô tả" span={2}>
                     {achievementDetail.description}
                   </Descriptions.Item>
-                  <Descriptions.Item label="Loại">
+                  <Descriptions.Item label="Loại thành tựu">
                     <Tag color={getTypeColor(detailType)}>{getTypeText(detailType)}</Tag>
                   </Descriptions.Item>
                   <Descriptions.Item label="Trạng thái">
@@ -915,13 +968,13 @@ export default function AchievementsPage() {
                     />
                   </Descriptions.Item>
 
-                  {/* Type-specific conditions */}
+                  {/* Điều kiện theo từng loại thành tựu */}
                   {detailType === 'EVENT_COUNT' && (
                     <>
-                      <Descriptions.Item label="Event Name" span={2}>
+                      <Descriptions.Item label="Sự kiện" span={2}>
                         <Tag>{achievementDetail.eventName}</Tag>
                       </Descriptions.Item>
-                      <Descriptions.Item label="Mục tiêu" span={2}>
+                      <Descriptions.Item label="Mục tiêu (số lần)" span={2}>
                         <Text strong className="text-blue-600">
                           {achievementDetail.targetCount} lần
                         </Text>
@@ -931,19 +984,24 @@ export default function AchievementsPage() {
 
                   {detailType === 'PROPERTY_CHECK' && (
                     <>
-                      <Descriptions.Item label="Event Name">
+                      <Descriptions.Item label="Sự kiện">
                         <Tag>{achievementDetail.eventName}</Tag>
                       </Descriptions.Item>
-                      <Descriptions.Item label="Entity Name">
-                        <Tag>{achievementDetail.entityName}</Tag>
+                      <Descriptions.Item label="Đối tượng">
+                        <Tag>{getEntityLabel(achievementDetail.entityName)}</Tag>
                       </Descriptions.Item>
-                      <Descriptions.Item label="Property Name">
-                        <Tag>{achievementDetail.propertyName}</Tag>
+                      <Descriptions.Item label="Thuộc tính">
+                        <Tag>
+                          {getPropertyLabel(
+                            achievementDetail.entityName,
+                            achievementDetail.propertyName,
+                          )}
+                        </Tag>
                       </Descriptions.Item>
-                      <Descriptions.Item label="Comparison">
+                      <Descriptions.Item label="Toán tử so sánh">
                         <Tag>{achievementDetail.comparisonOperator}</Tag>
                       </Descriptions.Item>
-                      <Descriptions.Item label="Target Value" span={2}>
+                      <Descriptions.Item label="Giá trị cần đạt" span={2}>
                         <Text strong className="text-blue-600">
                           {achievementDetail.targetValue}
                         </Text>
@@ -953,21 +1011,21 @@ export default function AchievementsPage() {
 
                   {detailType === 'STREAK' && (
                     <>
-                      <Descriptions.Item label="Event Name" span={2}>
+                      <Descriptions.Item label="Sự kiện" span={2}>
                         <Tag>{achievementDetail.eventName}</Tag>
                       </Descriptions.Item>
-                      <Descriptions.Item label="Target Streak">
+                      <Descriptions.Item label="Độ dài chuỗi">
                         <Text strong className="text-blue-600">
                           {achievementDetail.targetStreakLength}
                         </Text>
                       </Descriptions.Item>
-                      <Descriptions.Item label="Streak Unit">
+                      <Descriptions.Item label="Đơn vị chuỗi">
                         <Tag>{achievementDetail.streakUnit}</Tag>
                       </Descriptions.Item>
                     </>
                   )}
 
-                  {/* Creator Info */}
+                  {/* Thông tin người tạo */}
                   <Descriptions.Item label="Người tạo" span={2}>
                     <Space direction="vertical" size={0}>
                       <Text strong>{achievementDetail.createdBy?.fullName || 'N/A'}</Text>
@@ -1011,6 +1069,7 @@ export default function AchievementsPage() {
         okText={isCreating ? 'Đang tạo...' : 'Tạo thành tựu'}
         cancelText="Hủy"
         width={700}
+        styles={{ body: { maxHeight: 'calc(100vh - 260px)', overflowY: 'auto' } }}
         maskClosable={!isCreating}
         closable={!isCreating}
       >
@@ -1026,13 +1085,13 @@ export default function AchievementsPage() {
               onChange={(value) => setCreateForm({ ...createForm, type: value })}
             >
               <Option value="EVENT_COUNT">
-                <ThunderboltOutlined /> Đếm sự kiện (EVENT_COUNT)
+                <ThunderboltOutlined /> Đếm sự kiện
               </Option>
               <Option value="PROPERTY_CHECK">
-                <SafetyOutlined /> Kiểm tra thuộc tính (PROPERTY_CHECK)
+                <SafetyOutlined /> Kiểm tra thuộc tính
               </Option>
               <Option value="STREAK">
-                <FireOutlined /> Chuỗi liên tiếp (STREAK)
+                <FireOutlined /> Chuỗi liên tiếp
               </Option>
             </Select>
           </div>
@@ -1067,7 +1126,7 @@ export default function AchievementsPage() {
           {/* Icon Upload */}
           <div>
             <Text strong>
-              Icon (Tải ảnh lên): <span className="text-gray-400">(không bắt buộc)</span>
+              Icon (tải ảnh lên): <span className="text-gray-400">(không bắt buộc)</span>
             </Text>
             <Upload
               maxCount={1}
@@ -1117,11 +1176,11 @@ export default function AchievementsPage() {
             <>
               <div>
                 <Text strong>
-                  Event Name: <span className="text-red-500">*</span>
+                  Tên sự kiện: <span className="text-red-500">*</span>
                 </Text>
                 <Input
                   style={{ marginTop: 8 }}
-                  placeholder="VD: LESSON_COMPLETED, SESSION_ATTENDED"
+                  placeholder="Nhập tên sự kiện"
                   value={createForm.eventName}
                   onChange={(e) => setCreateForm({ ...createForm, eventName: e.target.value })}
                 />
@@ -1144,7 +1203,7 @@ export default function AchievementsPage() {
             <>
               <div>
                 <Text strong>
-                  Event Name: <span className="text-red-500">*</span>
+                  Tên sự kiện (Event Name): <span className="text-red-500">*</span>
                 </Text>
                 <Input
                   style={{ marginTop: 8 }}
@@ -1155,30 +1214,52 @@ export default function AchievementsPage() {
               </div>
               <div>
                 <Text strong>
-                  Entity Name: <span className="text-red-500">*</span>
+                  Đối tượng: <span className="text-red-500">*</span>
                 </Text>
-                <Input
-                  style={{ marginTop: 8 }}
-                  placeholder="VD: LearnerProgress, QuizAttempt"
-                  value={createForm.entityName}
-                  onChange={(e) => setCreateForm({ ...createForm, entityName: e.target.value })}
+                <Select
+                  style={{ width: '100%', marginTop: 8 }}
+                  placeholder="Chọn đối tượng"
+                  options={ENTITY_OPTIONS}
+                  value={createForm.entityName || undefined}
+                  onChange={(value) =>
+                    setCreateForm({
+                      ...createForm,
+                      entityName: value,
+                      propertyName: '',
+                    })
+                  }
                 />
               </div>
               <div>
                 <Text strong>
-                  Property Name: <span className="text-red-500">*</span>
+                  Thuộc tính: <span className="text-red-500">*</span>
                 </Text>
-                <Input
-                  style={{ marginTop: 8 }}
-                  placeholder="VD: avgQuizScore, score"
-                  value={createForm.propertyName}
-                  onChange={(e) => setCreateForm({ ...createForm, propertyName: e.target.value })}
+                <Select
+                  style={{ width: '100%', marginTop: 8 }}
+                  placeholder={
+                    createForm.entityName
+                      ? 'Chọn thuộc tính trong đối tượng mà bạn muốn so sánh'
+                      : 'Chọn đối tượng trước'
+                  }
+                  options={
+                    createForm.entityName
+                      ? PROPERTY_OPTIONS_BY_ENTITY[createForm.entityName] || []
+                      : []
+                  }
+                  value={createForm.propertyName || undefined}
+                  onChange={(value) =>
+                    setCreateForm({
+                      ...createForm,
+                      propertyName: value,
+                    })
+                  }
+                  disabled={!createForm.entityName}
                 />
               </div>
               <Row gutter={16}>
                 <Col span={8}>
                   <Text strong>
-                    Toán tử: <span className="text-red-500">*</span>
+                    Toán tử so sánh: <span className="text-red-500">*</span>
                   </Text>
                   <Select
                     style={{ width: '100%', marginTop: 8 }}
@@ -1194,14 +1275,18 @@ export default function AchievementsPage() {
                     <Option value="<">&lt; (Less Than)</Option>
                     <Option value="<=">&lt;= (Less or Equal)</Option>
                   </Select>
+                  <Text type="secondary" className="text-xs mt-1 block">
+                    Với điểm / số lượng / % nên dùng &gt;, &gt;=, &lt;, &lt;=. Với điểm tuyệt đối
+                    hoặc trạng thái nên dùng == hoặc !=.
+                  </Text>
                 </Col>
                 <Col span={16}>
                   <Text strong>
-                    Target Value: <span className="text-red-500">*</span>
+                    Người dùng cần đạt được: <span className="text-red-500">*</span>
                   </Text>
                   <Input
                     style={{ marginTop: 8 }}
-                    placeholder="VD: 80, 100"
+                    placeholder="VD: 80, 100 (điểm, phần trăm, ...)"
                     value={createForm.targetValue}
                     onChange={(e) => setCreateForm({ ...createForm, targetValue: e.target.value })}
                   />
@@ -1214,7 +1299,7 @@ export default function AchievementsPage() {
             <>
               <div>
                 <Text strong>
-                  Event Name: <span className="text-red-500">*</span>
+                  Tên sự kiện: <span className="text-red-500">*</span>
                 </Text>
                 <Input
                   style={{ marginTop: 8 }}
@@ -1226,7 +1311,7 @@ export default function AchievementsPage() {
               <Row gutter={16}>
                 <Col span={12}>
                   <Text strong>
-                    Target Streak Length: <span className="text-red-500">*</span>
+                    Độ dài chuỗi: <span className="text-red-500">*</span>
                   </Text>
                   <InputNumber
                     style={{ width: '100%', marginTop: 8 }}
@@ -1240,7 +1325,7 @@ export default function AchievementsPage() {
                 </Col>
                 <Col span={12}>
                   <Text strong>
-                    Streak Unit: <span className="text-red-500">*</span>
+                    Đơn vị chuỗi: <span className="text-red-500">*</span>
                   </Text>
                   <Select
                     style={{ width: '100%', marginTop: 8 }}
@@ -1285,8 +1370,10 @@ export default function AchievementsPage() {
         okText={isUpdating ? 'Đang cập nhật...' : 'Cập nhật'}
         cancelText="Hủy"
         width={700}
+        styles={{ body: { maxHeight: 'calc(100vh - 260px)', overflowY: 'auto' } }}
         maskClosable={!isUpdating}
         closable={!isUpdating}
+        centered
       >
         <div className="space-y-4">
           {/* Type (Read only) */}
@@ -1329,9 +1416,6 @@ export default function AchievementsPage() {
 
           {/* Icon Upload */}
           <div>
-            <Text strong>
-              Icon mới (Tải ảnh lên): <span className="text-gray-400">(không bắt buộc)</span>
-            </Text>
             <Upload
               maxCount={1}
               beforeUpload={(file) => {
@@ -1370,6 +1454,9 @@ export default function AchievementsPage() {
                 Chọn file ảnh mới
               </Button>
             </Upload>
+            <Text strong>
+              Icon mới (tải ảnh lên): <span className="text-gray-400">(không bắt buộc)</span>
+            </Text>
             <div className="mt-2 text-xs text-gray-500">
               💡 Chấp nhận: JPG, PNG, GIF, SVG. Tối đa 5MB. Để trống nếu không muốn thay đổi icon.
             </div>
@@ -1390,11 +1477,11 @@ export default function AchievementsPage() {
             <>
               <div>
                 <Text strong>
-                  Event Name: <span className="text-red-500">*</span>
+                  Tên sự kiện: <span className="text-red-500">*</span>
                 </Text>
                 <Input
                   style={{ marginTop: 8 }}
-                  placeholder="VD: LESSON_COMPLETED, SESSION_ATTENDED"
+                  placeholder="Nhập tên sự kiện"
                   value={editForm.eventName}
                   onChange={(e) => setEditForm({ ...editForm, eventName: e.target.value })}
                 />
@@ -1417,7 +1504,7 @@ export default function AchievementsPage() {
             <>
               <div>
                 <Text strong>
-                  Event Name: <span className="text-red-500">*</span>
+                  Tên sự kiện: <span className="text-red-500">*</span>
                 </Text>
                 <Input
                   style={{ marginTop: 8 }}
@@ -1428,30 +1515,46 @@ export default function AchievementsPage() {
               </div>
               <div>
                 <Text strong>
-                  Entity Name: <span className="text-red-500">*</span>
+                  Đối tượng: <span className="text-red-500">*</span>
                 </Text>
-                <Input
-                  style={{ marginTop: 8 }}
-                  placeholder="VD: LearnerProgress, QuizAttempt"
-                  value={editForm.entityName}
-                  onChange={(e) => setEditForm({ ...editForm, entityName: e.target.value })}
+                <Select
+                  style={{ width: '100%', marginTop: 8 }}
+                  placeholder="Chọn đối tượng"
+                  options={ENTITY_OPTIONS}
+                  value={editForm.entityName || undefined}
+                  onChange={(value) =>
+                    setEditForm({
+                      ...editForm,
+                      entityName: value,
+                      propertyName: '',
+                    })
+                  }
                 />
               </div>
               <div>
                 <Text strong>
-                  Property Name: <span className="text-red-500">*</span>
+                  Thuộc tính cần áp dụng: <span className="text-red-500">*</span>
                 </Text>
-                <Input
-                  style={{ marginTop: 8 }}
-                  placeholder="VD: avgQuizScore, score"
-                  value={editForm.propertyName}
-                  onChange={(e) => setEditForm({ ...editForm, propertyName: e.target.value })}
+                <Select
+                  style={{ width: '100%', marginTop: 8 }}
+                  placeholder={editForm.entityName ? 'Chọn thuộc tính' : 'Chọn đối tượng trước'}
+                  options={
+                    editForm.entityName ? PROPERTY_OPTIONS_BY_ENTITY[editForm.entityName] || [] : []
+                  }
+                  value={editForm.propertyName || undefined}
+                  onChange={(value) =>
+                    setEditForm({
+                      ...editForm,
+                      propertyName: value,
+                    })
+                  }
+                  disabled={!editForm.entityName}
                 />
               </div>
               <Row gutter={16}>
                 <Col span={8}>
                   <Text strong>
-                    Toán tử: <span className="text-red-500">*</span>
+                    Toán tử so sánh: <span className="text-red-500">*</span>
                   </Text>
                   <Select
                     style={{ width: '100%', marginTop: 8 }}
@@ -1468,11 +1571,11 @@ export default function AchievementsPage() {
                 </Col>
                 <Col span={16}>
                   <Text strong>
-                    Target Value: <span className="text-red-500">*</span>
+                    Người dùng cần đạt được: <span className="text-red-500">*</span>
                   </Text>
                   <Input
                     style={{ marginTop: 8 }}
-                    placeholder="VD: 80, 100"
+                    placeholder="VD: 80, 100 (điểm, phần trăm, ...)"
                     value={editForm.targetValue}
                     onChange={(e) => setEditForm({ ...editForm, targetValue: e.target.value })}
                   />
@@ -1485,7 +1588,7 @@ export default function AchievementsPage() {
             <>
               <div>
                 <Text strong>
-                  Event Name: <span className="text-red-500">*</span>
+                  Tên sự kiện: <span className="text-red-500">*</span>
                 </Text>
                 <Input
                   style={{ marginTop: 8 }}
@@ -1497,7 +1600,7 @@ export default function AchievementsPage() {
               <Row gutter={16}>
                 <Col span={12}>
                   <Text strong>
-                    Target Streak Length: <span className="text-red-500">*</span>
+                    Độ dài chuỗi: <span className="text-red-500">*</span>
                   </Text>
                   <InputNumber
                     style={{ width: '100%', marginTop: 8 }}
@@ -1511,7 +1614,7 @@ export default function AchievementsPage() {
                 </Col>
                 <Col span={12}>
                   <Text strong>
-                    Streak Unit: <span className="text-red-500">*</span>
+                    Đơn vị chuỗi: <span className="text-red-500">*</span>
                   </Text>
                   <Select
                     style={{ width: '100%', marginTop: 8 }}

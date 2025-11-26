@@ -19,7 +19,7 @@ export default function AdminTabs() {
   };
 
   return (
-    <Card 
+    <Card
       className="mb-8"
       bodyStyle={{ padding: '8px 16px' }}
       style={{
@@ -48,7 +48,7 @@ export default function AdminTabs() {
           className="admin-tabs-centered"
           items={[
             { key: 'overview', label: 'Tổng quan' },
-            { key: 'users', label: 'Quản lý User' },
+            { key: 'users', label: 'Người dùng' },
             { key: 'coaches', label: 'Quản lý Huấn luyện viên' },
             { key: 'courses', label: 'Quản lý Khóa học' },
             { key: 'content', label: 'Quản lý Nội dung' },
@@ -60,4 +60,3 @@ export default function AdminTabs() {
     </Card>
   );
 }
-
