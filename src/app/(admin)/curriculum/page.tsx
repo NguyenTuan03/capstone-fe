@@ -1,142 +1,566 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card, Space, Input, Select, Modal, Typography, Row, Col, App } from 'antd';
-import { SearchOutlined } from '@ant-design/icons';
-import useRoleGuard from '@/@crema/hooks/useRoleGuard';
-import { useApiQuery } from '@/@crema/hooks/useApiQuery';
-import { useApproveRequest, useRejectRequest } from '@/@crema/services/apis/requests';
+import { useState, useEffect, useCallback } from 'react';
 import {
-  DetailedRequestItem,
-  RequestItem,
-  RequestsResponse,
-} from '@/@crema/types/models/curriculumn';
-import RequestsTable from '@/components/admin/request/RequestTable';
-import { RequestDetailModal } from '@/components/admin/request/RequestDetailModal';
+  Card,
+  Table,
+  Button,
+  Space,
+  Tag,
+  Input,
+  Select,
+  Avatar,
+  Modal,
+  Typography,
+  Row,
+  Col,
+  message,
+  Descriptions,
+  Tooltip,
+  Image,
+  Tabs,
+  Spin,
+  List,
+  Collapse,
+} from 'antd';
+import {
+  PlayCircleOutlined,
+  SearchOutlined,
+  EyeOutlined,
+  CheckOutlined,
+  CloseOutlined,
+  FilterOutlined,
+  UserOutlined,
+  QuestionCircleOutlined,
+  VideoCameraOutlined,
+  ClockCircleOutlined,
+  FileTextOutlined,
+} from '@ant-design/icons';
+import type { ColumnsType } from 'antd/es/table';
+import useRoleGuard from '@/@crema/hooks/useRoleGuard';
+import {
+  useGetRequests,
+  useApproveRequest,
+  useRejectRequest,
+  useGetRequestById,
+  formatDuration,
+  getVideoThumbnail,
+  getQuizStats,
+  getLessonStats,
+  type RequestWithContent,
+  type LessonWithDetails,
+} from '@/@crema/services/apis/requests';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
 const { Option } = Select;
 const { TextArea } = Input;
+const { Panel } = Collapse;
 
-export default function CurriculumPage() {
-  const { message } = App.useApp();
+// Types
+interface VideoData {
+  id: string;
+  title: string;
+  description: string;
+  tags: string[];
+  duration: number;
+  drillName?: string;
+  drillDescription?: string;
+  drillPracticeSets?: string;
+  publicUrl: string;
+  thumbnailUrl?: string;
+  status: string;
+  coachName: string;
+  coachEmail: string;
+  coachAvatar: string;
+  lessonName: string;
+  courseName: string;
+}
+
+interface CourseRequestData {
+  id: string;
+  courseName: string;
+  courseDescription: string;
+  level: string;
+  status: string;
+  coachName: string;
+  coachEmail: string;
+  coachAvatar: string;
+  totalLessons: number;
+  totalVideos: number;
+  totalQuizzes: number;
+  createdAt: string;
+  requestData: RequestWithContent;
+}
+
+export default function CourseVerificationPage() {
   const { isAuthorized, isChecking } = useRoleGuard(['ADMIN'], {
     unauthenticated: '/signin',
     COACH: '/summary',
     LEARNER: '/home',
   });
-  const [selectedRequest, setSelectedRequest] = useState<DetailedRequestItem | null>(null);
-  const [selectedRequestId, setSelectedRequestId] = useState<number | null>(null);
-  const [pendingActionRequest, setPendingActionRequest] = useState<RequestItem | null>(null);
-  const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
-  const [isApproveModalVisible, setIsApproveModalVisible] = useState(false);
-  const [isRejectModalVisible, setIsRejectModalVisible] = useState(false);
-  const [rejectReason, setRejectReason] = useState('');
 
-  // Filters
-  const [searchText, setSearchText] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-
-  // API call for list
+  // API hooks
   const {
     data: requestsData,
-    isLoading,
-    refetch,
-  } = useApiQuery<RequestsResponse>({
-    endpoint: 'requests',
-    params: {
-      page: currentPage,
-      pageSize,
-      ...(statusFilter !== 'all' && { status: statusFilter }),
-      ...(searchText && { search: searchText }),
-    },
+    isLoading: isLoadingRequests,
+    refetch: refetchRequests,
+  } = useGetRequests({
+    type: 'COURSE_APPROVAL',
+    status: 'PENDING',
   });
 
-  // API call for detailed request
-  const { data: detailedRequestData, isLoading: isLoadingDetail } =
-    useApiQuery<DetailedRequestItem>({
-      endpoint: selectedRequestId ? `requests/${selectedRequestId}` : '',
-      enabled: !!selectedRequestId && isDetailModalVisible,
-    });
-
-  const requests = requestsData?.items || [];
-  const total = requestsData?.total || 0;
-
-  // API mutations
   const approveRequestMutation = useApproveRequest();
   const rejectRequestMutation = useRejectRequest();
 
-  // Update selectedRequest when detailed data is fetched
+  const [activeTab, setActiveTab] = useState('courses');
+  const [isVideoPlayerModalVisible, setIsVideoPlayerModalVisible] = useState(false);
+
+  // Courses state
+  const [courses, setCourses] = useState<CourseRequestData[]>([]);
+  const [loadingCourses, setLoadingCourses] = useState(false);
+  const [selectedCourse, setSelectedCourse] = useState<CourseRequestData | null>(null);
+  const [isCourseDetailModalVisible, setIsCourseDetailModalVisible] = useState(false);
+  const [courseSearchText, setCourseSearchText] = useState('');
+  const [courseStatusFilter, setCourseStatusFilter] = useState<string>('ALL');
+
+  // Videos state
+  const [videos, setVideos] = useState<VideoData[]>([]);
+  const [selectedVideo, setSelectedVideo] = useState<VideoData | null>(null);
+  const [videoSearchText, setVideoSearchText] = useState('');
+
+  // Load courses data from API
+  const loadCourses = useCallback(() => {
+    if (!requestsData?.items) {
+      setCourses([]);
+      return;
+    }
+
+    const coursesList: CourseRequestData[] = requestsData.items
+      .filter((request: RequestWithContent) => {
+        // Apply status filter
+        if (courseStatusFilter === 'ALL') {
+          return true;
+        } else if (courseStatusFilter === 'PENDING') {
+          return request.status === 'PENDING';
+        } else if (courseStatusFilter === 'APPROVED') {
+          return request.status === 'APPROVED';
+        } else if (courseStatusFilter === 'REJECTED') {
+          return request.status === 'REJECTED';
+        }
+        return true;
+      })
+      .map((request: RequestWithContent) => {
+        const courseDetails = request.metadata.details;
+        const lessons = courseDetails.subject.lessons || [];
+        const createdBy = request.createdBy;
+
+        const totalVideos = lessons.filter((lesson: LessonWithDetails) => lesson.video).length;
+        const totalQuizzes = lessons.filter((lesson: LessonWithDetails) => lesson.quiz).length;
+
+        return {
+          id: request.id.toString(),
+          courseName: courseDetails.name || 'Unnamed Course',
+          courseDescription: courseDetails.description || '',
+          level: courseDetails.subject.level || 'BEGINNER',
+          status: request.status,
+          coachName: createdBy?.fullName || 'Unknown',
+          coachEmail: createdBy?.email || '',
+          coachAvatar: createdBy?.profilePicture || '',
+          totalLessons: lessons.length,
+          totalVideos,
+          totalQuizzes,
+          createdAt: request.createdAt,
+          requestData: request,
+        };
+      });
+
+    // Apply search filter
+    let filteredCourses = coursesList;
+    if (courseSearchText) {
+      const search = courseSearchText.toLowerCase();
+      filteredCourses = filteredCourses.filter(
+        (c) =>
+          c.courseName.toLowerCase().includes(search) || c.coachName.toLowerCase().includes(search),
+      );
+    }
+
+    console.log('Total courses:', coursesList.length);
+    console.log('Filtered courses:', filteredCourses.length);
+    setCourses(filteredCourses);
+  }, [requestsData, courseSearchText, courseStatusFilter]);
+
+  // Load videos from course lessons
+  const loadVideos = useCallback(() => {
+    if (!requestsData?.items) {
+      console.log('No requests data');
+      setVideos([]);
+      return;
+    }
+
+    console.log('Loading videos from', requestsData.items.length, 'requests');
+    const allVideos: VideoData[] = [];
+
+    requestsData.items.forEach((request: RequestWithContent) => {
+      const lessons = request.metadata.details.subject.lessons || [];
+      const createdBy = request.createdBy;
+      const courseName = request.metadata.details.name || 'Unknown Course';
+
+      console.log(`Course: ${courseName}, Lessons:`, lessons);
+
+      lessons.forEach((lesson: LessonWithDetails) => {
+        if (lesson.video) {
+          console.log('Found video in lesson:', lesson);
+          const video = lesson.video;
+          allVideos.push({
+            id: video.id.toString(),
+            title: video.title || lesson.name,
+            description: video.description || lesson.description || '',
+            tags: video.tags ? video.tags.split(',') : [],
+            duration: video.duration || 0,
+            drillName: video.drillName || undefined,
+            drillDescription: video.drillDescription || undefined,
+            drillPracticeSets: video.drillPracticeSets || undefined,
+            publicUrl: video.publicUrl || '',
+            thumbnailUrl: video.thumbnailUrl ?? undefined,
+            status: video.status || 'ACTIVE',
+            coachName: createdBy?.fullName || 'Unknown',
+            coachEmail: createdBy?.email || '',
+            coachAvatar: createdBy?.profilePicture || '',
+            lessonName: lesson.name,
+            courseName: courseName,
+          });
+        }
+      });
+    });
+
+    console.log('Total videos found:', allVideos.length);
+
+    // Apply search filter
+    let filteredVideos = allVideos;
+    if (videoSearchText) {
+      const search = videoSearchText.toLowerCase();
+      filteredVideos = filteredVideos.filter(
+        (v) =>
+          v.title.toLowerCase().includes(search) ||
+          v.coachName.toLowerCase().includes(search) ||
+          v.courseName.toLowerCase().includes(search),
+      );
+    }
+
+    console.log('Filtered videos:', filteredVideos.length);
+    setVideos(filteredVideos);
+  }, [requestsData, videoSearchText]);
+
   useEffect(() => {
-    if (detailedRequestData) {
-      setSelectedRequest(detailedRequestData);
-    }
-  }, [detailedRequestData]);
+    console.log('UseEffect triggered, isLoadingRequests:', isLoadingRequests);
+    setLoadingCourses(isLoadingRequests);
+    loadCourses();
+    loadVideos();
+  }, [loadCourses, loadVideos, isLoadingRequests]);
 
-  const handleViewDetails = (request: RequestItem) => {
-    setSelectedRequestId(request.id);
-    setIsDetailModalVisible(true);
+  // Helper functions
+  const getStatusColor = (status: string) => {
+    const colors: { [key: string]: string } = {
+      UPLOADING: 'blue',
+      PROCESSING: 'cyan',
+      PENDING: 'orange',
+      PENDING_APPROVAL: 'orange',
+      APPROVED: 'green',
+      REJECTED: 'red',
+      READY: 'green',
+    };
+    return colors[status] || 'default';
   };
 
-  const handleApproveRequest = (request: RequestItem) => {
-    setPendingActionRequest(request);
-    setIsApproveModalVisible(true);
+  const getStatusText = (status: string) => {
+    const texts: { [key: string]: string } = {
+      UPLOADING: 'Đang tải lên',
+      PROCESSING: 'Đang xử lý',
+      PENDING: 'Chờ phê duyệt',
+      PENDING_APPROVAL: 'Chờ phê duyệt',
+      APPROVED: 'Đã phê duyệt',
+      REJECTED: 'Đã từ chối',
+      READY: 'Sẵn sàng',
+    };
+    return texts[status] || status;
   };
 
-  const handleRejectRequest = (request: RequestItem) => {
-    setPendingActionRequest(request);
-    setIsRejectModalVisible(true);
+  const getLevelText = (level: string) => {
+    const texts: { [key: string]: string } = {
+      BEGINNER: 'Cơ bản',
+      INTERMEDIATE: 'Trung cấp',
+      ADVANCED: 'Nâng cao',
+      PROFESSIONAL: 'Chuyên nghiệp',
+    };
+    return texts[level] || level;
   };
 
-  const handleApproveFromDetail = async (request: DetailedRequestItem) => {
+  const getLevelColor = (level: string) => {
+    const colors: { [key: string]: string } = {
+      BEGINNER: 'green',
+      INTERMEDIATE: 'blue',
+      ADVANCED: 'orange',
+      PROFESSIONAL: 'red',
+    };
+    return colors[level] || 'default';
+  };
+
+  // Course handlers
+  const handleViewCourseDetails = async (course: CourseRequestData) => {
+    setIsCourseDetailModalVisible(true);
+    setSelectedCourse(course);
+  };
+
+  const handleApproveCourse = async (course: CourseRequestData) => {
     try {
-      await approveRequestMutation.mutateAsync(request.id);
-      message.success(`Đã phê duyệt yêu cầu "${request.description}"`);
-      setIsDetailModalVisible(false);
-      setSelectedRequest(null);
-      setSelectedRequestId(null);
-      refetch();
-    } catch (err: any) {
-      message.error(err?.response?.data?.message || err?.message || 'Phê duyệt yêu cầu thất bại');
+      await approveRequestMutation.mutateAsync(Number(course.id));
+      message.success(`Đã phê duyệt khóa học "${course.courseName}"`);
+      await refetchRequests();
+    } catch (error) {
+      message.error('Không thể phê duyệt khóa học');
     }
   };
 
-  const confirmApprove = async () => {
-    if (!pendingActionRequest) return;
-    try {
-      await approveRequestMutation.mutateAsync(pendingActionRequest.id);
-      message.success(`Đã phê duyệt yêu cầu "${pendingActionRequest.description}"`);
-      setIsApproveModalVisible(false);
-      setPendingActionRequest(null);
-      refetch();
-    } catch (err: any) {
-      message.error(err?.response?.data?.message || err?.message || 'Phê duyệt yêu cầu thất bại');
-    }
-  };
-
-  const confirmReject = async () => {
-    if (!pendingActionRequest) return;
-    if (!rejectReason.trim()) {
+  const handleRejectCourse = async (course: CourseRequestData, reason: string) => {
+    if (!reason.trim()) {
       message.error('Vui lòng nhập lý do từ chối');
       return;
     }
     try {
-      await rejectRequestMutation.mutateAsync({
-        id: pendingActionRequest.id,
-        reason: rejectReason,
-      });
-      message.success(`Đã từ chối yêu cầu "${pendingActionRequest.description}"`);
-      setIsRejectModalVisible(false);
-      setRejectReason('');
-      setPendingActionRequest(null);
-      refetch();
-    } catch (err: any) {
-      message.error(err?.response?.data?.message || err?.message || 'Từ chối yêu cầu thất bại');
+      await rejectRequestMutation.mutateAsync({ id: Number(course.id), reason });
+      message.success(`Đã từ chối khóa học "${course.courseName}"`);
+      await refetchRequests();
+    } catch (error) {
+      message.error('Không thể từ chối khóa học');
     }
   };
+
+  // Video handlers
+  const handlePlayVideo = (video: VideoData) => {
+    setSelectedVideo(video);
+    setIsVideoPlayerModalVisible(true);
+  };
+
+  // Course columns
+  const courseColumns: ColumnsType<CourseRequestData> = [
+    {
+      title: 'Khóa học',
+      key: 'course',
+      width: 300,
+      render: (_, record) => (
+        <div>
+          <div className="font-medium text-base">{record.courseName}</div>
+          <div className="text-sm text-gray-500 mt-1 line-clamp-2">{record.courseDescription}</div>
+          <div className="mt-2">
+            <Tag color={getLevelColor(record.level)}>{getLevelText(record.level)}</Tag>
+            <Tag>{record.totalLessons} bài học</Tag>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'Huấn luyện viên',
+      key: 'coach',
+      width: 200,
+      render: (_, record) => (
+        <div className="flex items-center gap-2">
+          <Avatar size={32} src={record.coachAvatar} icon={<UserOutlined />} />
+          <div>
+            <div className="text-sm font-medium">{record.coachName}</div>
+            <div className="text-xs text-gray-500">{record.coachEmail}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'Nội dung',
+      key: 'content',
+      width: 150,
+      render: (_, record) => (
+        <div className="text-sm">
+          <div>{record.totalVideos} videos</div>
+          <div>{record.totalQuizzes} quizzes</div>
+        </div>
+      ),
+    },
+    {
+      title: 'Trạng thái',
+      dataIndex: 'status',
+      key: 'status',
+      width: 130,
+      render: (status: string) => {
+        const colors: { [key: string]: string } = {
+          PENDING: 'orange',
+          APPROVED: 'green',
+          REJECTED: 'red',
+        };
+        const texts: { [key: string]: string } = {
+          PENDING: 'Chờ duyệt',
+          APPROVED: 'Đã duyệt',
+          REJECTED: 'Đã từ chối',
+        };
+        return <Tag color={colors[status]}>{texts[status] || status}</Tag>;
+      },
+    },
+    {
+      title: 'Thao tác',
+      key: 'actions',
+      width: 200,
+      align: 'center',
+      render: (_, record) => (
+        <Space size="small">
+          <Tooltip title="Xem chi tiết">
+            <Button
+              type="default"
+              size="small"
+              icon={<EyeOutlined />}
+              onClick={() => handleViewCourseDetails(record)}
+            />
+          </Tooltip>
+          {record.status === 'PENDING' && (
+            <>
+              <Tooltip title="Phê duyệt">
+                <Button
+                  type="primary"
+                  size="small"
+                  icon={<CheckOutlined />}
+                  onClick={() => handleApproveCourse(record)}
+                />
+              </Tooltip>
+              <Tooltip title="Từ chối">
+                <Button
+                  danger
+                  size="small"
+                  icon={<CloseOutlined />}
+                  onClick={() => {
+                    Modal.confirm({
+                      title: 'Từ chối khóa học',
+                      content: (
+                        <div>
+                          <p>Bạn có chắc muốn từ chối khóa học &quot;{record.courseName}&quot;?</p>
+                          <Input.TextArea
+                            id="reject-reason"
+                            rows={4}
+                            placeholder="Nhập lý do từ chối..."
+                            style={{ marginTop: 16 }}
+                          />
+                        </div>
+                      ),
+                      okText: 'Từ chối',
+                      okType: 'danger',
+                      cancelText: 'Hủy',
+                      onOk: () => {
+                        const reason = (
+                          document.getElementById('reject-reason') as HTMLTextAreaElement
+                        )?.value;
+                        return handleRejectCourse(record, reason);
+                      },
+                    });
+                  }}
+                />
+              </Tooltip>
+            </>
+          )}
+        </Space>
+      ),
+    },
+  ];
+
+  // Video columns
+  const videoColumns: ColumnsType<VideoData> = [
+    {
+      title: 'Video',
+      key: 'video',
+      width: 350,
+      render: (_, record) => (
+        <div className="flex items-start gap-3">
+          <div className="relative">
+            {record.thumbnailUrl ? (
+              <Image
+                src={record.thumbnailUrl}
+                alt={record.title}
+                width={100}
+                height={60}
+                style={{ objectFit: 'cover', borderRadius: '4px' }}
+                preview={false}
+              />
+            ) : (
+              <div className="w-[100px] h-[60px] bg-gray-200 rounded flex items-center justify-center">
+                <PlayCircleOutlined className="text-2xl text-gray-400" />
+              </div>
+            )}
+            <div className="absolute bottom-1 right-1 bg-black bg-opacity-75 text-white text-xs px-1 rounded">
+              {formatDuration(record.duration)}
+            </div>
+          </div>
+          <div className="flex-1">
+            <div className="font-medium">{record.title}</div>
+            <div className="text-xs text-gray-500 mt-1 line-clamp-2">{record.description}</div>
+            <div className="text-xs text-gray-400 mt-1">Bài học: {record.lessonName}</div>
+            {record.tags && record.tags.length > 0 && (
+              <div className="mt-1">
+                {record.tags.slice(0, 2).map((tag, idx) => (
+                  <Tag key={idx} className="text-xs">
+                    {tag}
+                  </Tag>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'Khóa học',
+      key: 'course',
+      width: 150,
+      render: (_, record) => (
+        <div className="text-sm">
+          <div className="font-medium">{record.courseName}</div>
+        </div>
+      ),
+    },
+    {
+      title: 'Huấn luyện viên',
+      key: 'coach',
+      width: 200,
+      render: (_, record) => (
+        <div className="flex items-center gap-2">
+          <Avatar size={32} src={record.coachAvatar} icon={<UserOutlined />} />
+          <div>
+            <div className="text-sm font-medium">{record.coachName}</div>
+            <div className="text-xs text-gray-500">{record.coachEmail}</div>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'Trạng thái',
+      dataIndex: 'status',
+      key: 'status',
+      width: 130,
+      render: (status: string) => <Tag color={getStatusColor(status)}>{getStatusText(status)}</Tag>,
+    },
+    {
+      title: 'Thao tác',
+      key: 'actions',
+      width: 180,
+      align: 'center',
+      render: (_, record) => (
+        <Space size="small">
+          <Tooltip title="Phát video">
+            <Button
+              type="primary"
+              size="small"
+              icon={<PlayCircleOutlined />}
+              onClick={() => handlePlayVideo(record)}
+            />
+          </Tooltip>
+        </Space>
+      ),
+    },
+  ];
 
   if (isChecking) {
     return <div>Đang tải...</div>;
@@ -149,199 +573,468 @@ export default function CurriculumPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <Title level={2}>Quản lý Yêu cầu</Title>
-        <Text className="text-gray-600">Quản lý và phê duyệt các yêu cầu trên nền tảng</Text>
+        <Title level={2}>Quản lý Nội dung</Title>
+        <Text className="text-gray-600">Quản lý và phê duyệt khóa học, xem video bài học</Text>
       </div>
 
-      {/* Filters */}
-      <Card>
-        <Space direction="vertical" style={{ width: '100%' }} size="middle">
-          <Row gutter={16}>
-            <Col xs={24} sm={12} md={8}>
-              <Search
-                placeholder="Tìm kiếm theo mô tả..."
-                allowClear
-                enterButton={<SearchOutlined />}
-                size="large"
-                value={searchText}
-                onChange={(e) => {
-                  setSearchText(e.target.value);
-                  setCurrentPage(1);
-                }}
-              />
-            </Col>
-            <Col xs={24} sm={12} md={8}>
-              <Select
-                placeholder="Lọc theo trạng thái"
-                size="large"
-                style={{ width: '100%' }}
-                value={statusFilter}
-                onChange={(value) => {
-                  setStatusFilter(value);
-                  setCurrentPage(1);
-                }}
-              >
-                <Option value="all">Tất cả</Option>
-                <Option value="PENDING">Chờ phê duyệt</Option>
-                <Option value="APPROVED">Đã phê duyệt</Option>
-                <Option value="REJECTED">Đã từ chối</Option>
-              </Select>
-            </Col>
-          </Row>
-        </Space>
+      {/* Main Card with Tabs */}
+      <Card className="card-3d">
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          items={[
+            {
+              key: 'courses',
+              label: (
+                <span>
+                  <CheckOutlined /> Phê Duyệt Khóa Học
+                </span>
+              ),
+              children: (
+                <>
+                  {/* Course Filters */}
+                  <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+                    <Col xs={24} sm={12} md={10}>
+                      <Search
+                        placeholder="Tìm kiếm theo tên khóa học, huấn luyện viên..."
+                        allowClear
+                        onSearch={setCourseSearchText}
+                        onChange={(e) => !e.target.value && setCourseSearchText('')}
+                        prefix={<SearchOutlined />}
+                      />
+                    </Col>
+                    <Col xs={12} sm={6} md={5}>
+                      <Select
+                        style={{ width: '100%' }}
+                        value={courseStatusFilter}
+                        onChange={setCourseStatusFilter}
+                        suffixIcon={<FilterOutlined />}
+                      >
+                        <Option value="ALL">Tất cả</Option>
+                        <Option value="PENDING">Chờ duyệt</Option>
+                        <Option value="APPROVED">Đã duyệt</Option>
+                        <Option value="REJECTED">Đã từ chối</Option>
+                      </Select>
+                    </Col>
+                  </Row>
+
+                  {/* Course Table */}
+                  <Table
+                    columns={courseColumns}
+                    dataSource={courses}
+                    loading={loadingCourses}
+                    rowKey="id"
+                    pagination={{
+                      pageSize: 10,
+                      showSizeChanger: true,
+                      showTotal: (total) => `Tổng ${total} khóa học`,
+                    }}
+                  />
+                </>
+              ),
+            },
+            {
+              key: 'videos',
+              label: (
+                <span>
+                  <VideoCameraOutlined /> Videos Bài Học
+                </span>
+              ),
+              children: (
+                <>
+                  {/* Video Filters */}
+                  <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+                    <Col xs={24} sm={12} md={10}>
+                      <Search
+                        placeholder="Tìm kiếm theo tên video, huấn luyện viên..."
+                        allowClear
+                        onSearch={setVideoSearchText}
+                        onChange={(e) => !e.target.value && setVideoSearchText('')}
+                        prefix={<SearchOutlined />}
+                      />
+                    </Col>
+                  </Row>
+
+                  {/* Video Table */}
+                  <Table
+                    columns={videoColumns}
+                    dataSource={videos}
+                    loading={isLoadingRequests}
+                    rowKey="id"
+                    pagination={{
+                      pageSize: 10,
+                      showSizeChanger: true,
+                      showTotal: (total) => `Tổng ${total} video`,
+                    }}
+                  />
+                </>
+              ),
+            },
+          ]}
+        />
       </Card>
 
-      {/* Table */}
-      <RequestsTable
-        requests={requests.map((req) => ({
-          id: req.id,
-          description: req.description,
-          type: req.type,
-          status: req.status as 'PENDING' | 'APPROVED' | 'REJECTED',
-          createdAt: req.createdAt,
-          createdBy: {
-            fullName: req.createdBy.fullName,
-            email: req.createdBy.email,
-            profilePicture: req.createdBy.profilePicture || undefined,
-          },
-        }))}
-        isLoading={isLoading}
-        total={total}
-        currentPage={currentPage}
-        pageSize={pageSize}
-        setCurrentPage={setCurrentPage}
-        setPageSize={setPageSize}
-        handleViewDetails={(r) => {
-          const original = requests.find((req) => req.id === r.id);
-          if (original) handleViewDetails(original);
-        }}
-        handleApproveRequest={(r) => {
-          const original = requests.find((req) => req.id === r.id);
-          if (original) handleApproveRequest(original);
-        }}
-        handleRejectRequest={(r) => {
-          const original = requests.find((req) => req.id === r.id);
-          if (original) handleRejectRequest(original);
-        }}
-      />
-
-      {/* Detail Modal */}
-      <RequestDetailModal
-        open={isDetailModalVisible}
-        onClose={() => {
-          setIsDetailModalVisible(false);
-          setSelectedRequest(null);
-          setSelectedRequestId(null);
-        }}
-        selectedRequest={selectedRequest}
-        isLoadingDetail={isLoadingDetail}
-        onApprove={handleApproveFromDetail}
-        onReject={(request) => {
-          if (request) {
-            // Create a minimal RequestItem for the reject modal
-            // We only need id and description for the reject flow
-            // Handle both formats: district/province can be number or object
-            const getDistrictId = (district: any): number => {
-              if (typeof district === 'number') return district;
-              if (district?.id) return district.id;
-              return 0;
-            };
-
-            const getProvinceId = (province: any): number => {
-              if (typeof province === 'number') return province;
-              if (province?.id) return province.id;
-              return 0;
-            };
-
-            const requestItem: RequestItem = {
-              id: request.id,
-              description: request.description,
-              type: request.type,
-              status: request.status,
-              metadata: {
-                id: request.metadata.id,
-                type: request.metadata.type,
-                details: {
-                  address: request.metadata.details.address || '',
-                  district: getDistrictId(request.metadata.details.district),
-                  province: getProvinceId(request.metadata.details.province),
-                  schedules: request.metadata.details.schedules || [],
-                  startDate: request.metadata.details.startDate,
-                  learningFormat: request.metadata.details.learningFormat,
-                  maxParticipants: request.metadata.details.maxParticipants,
-                  minParticipants: request.metadata.details.minParticipants,
-                  pricePerParticipant:
-                    typeof request.metadata.details.pricePerParticipant === 'string'
-                      ? parseFloat(request.metadata.details.pricePerParticipant) || 0
-                      : request.metadata.details.pricePerParticipant || 0,
-                },
-              },
-              createdAt: request.createdAt,
-              updatedAt: request.updatedAt,
-              createdBy: {
-                id: request.createdBy.id,
-                fullName: request.createdBy.fullName,
-                email: request.createdBy.email,
-                phoneNumber: request.createdBy.phoneNumber,
-                profilePicture: request.createdBy.profilePicture,
-              },
-            };
-            setPendingActionRequest(requestItem);
-            setIsRejectModalVisible(true);
-            setRejectReason('');
-            setIsDetailModalVisible(false);
-            setSelectedRequest(null);
-            setSelectedRequestId(null);
-          }
-        }}
-      />
-
-      {/* Approve Modal */}
+      {/* Video Player Modal */}
       <Modal
-        title="Xác nhận phê duyệt"
-        open={isApproveModalVisible}
-        onOk={confirmApprove}
+        title={selectedVideo?.title || 'Video Player'}
+        open={isVideoPlayerModalVisible}
         onCancel={() => {
-          setIsApproveModalVisible(false);
-          setPendingActionRequest(null);
+          setIsVideoPlayerModalVisible(false);
+          setSelectedVideo(null);
         }}
-        confirmLoading={approveRequestMutation.isPending}
-        okText="Phê duyệt"
-        cancelText="Hủy"
+        footer={[
+          <Button
+            key="close"
+            onClick={() => {
+              setIsVideoPlayerModalVisible(false);
+              setSelectedVideo(null);
+            }}
+          >
+            Đóng
+          </Button>,
+        ]}
+        width={900}
       >
-        <p>Bạn có chắc chắn muốn phê duyệt yêu cầu này?</p>
-        {pendingActionRequest && <Text type="secondary">{pendingActionRequest.description}</Text>}
+        {selectedVideo && (
+          <div className="space-y-4">
+            {/* Video Player */}
+            {selectedVideo.publicUrl ? (
+              <div className="relative" style={{ paddingTop: '56.25%' }}>
+                <video
+                  controls
+                  className="absolute top-0 left-0 w-full h-full rounded-lg"
+                  src={selectedVideo.publicUrl}
+                  poster={selectedVideo.thumbnailUrl || undefined}
+                >
+                  Trình duyệt của bạn không hỗ trợ phát video.
+                </video>
+              </div>
+            ) : (
+              <div className="bg-gray-100 rounded-lg p-8 text-center">
+                <VideoCameraOutlined className="text-6xl text-gray-400 mb-4" />
+                <Text className="text-gray-500">Video chưa sẵn sàng</Text>
+              </div>
+            )}
+
+            {/* Video Info */}
+            <Descriptions bordered column={2} size="small">
+              <Descriptions.Item label="Tiêu đề" span={2}>
+                {selectedVideo.title}
+              </Descriptions.Item>
+              {selectedVideo.description && (
+                <Descriptions.Item label="Mô tả" span={2}>
+                  {selectedVideo.description}
+                </Descriptions.Item>
+              )}
+              <Descriptions.Item label="Bài học">{selectedVideo.lessonName}</Descriptions.Item>
+              <Descriptions.Item label="Khóa học">{selectedVideo.courseName}</Descriptions.Item>
+              <Descriptions.Item label="Thời lượng">
+                <ClockCircleOutlined /> {formatDuration(selectedVideo.duration)}
+              </Descriptions.Item>
+              <Descriptions.Item label="Trạng thái">
+                <Tag color={getStatusColor(selectedVideo.status)}>
+                  {getStatusText(selectedVideo.status)}
+                </Tag>
+              </Descriptions.Item>
+              {selectedVideo.tags && selectedVideo.tags.length > 0 && (
+                <Descriptions.Item label="Tags" span={2}>
+                  {selectedVideo.tags.map((tag, idx) => (
+                    <Tag key={idx}>{tag}</Tag>
+                  ))}
+                </Descriptions.Item>
+              )}
+              {selectedVideo.drillName && (
+                <>
+                  <Descriptions.Item label="Bài tập" span={2}>
+                    <strong>{selectedVideo.drillName}</strong>
+                  </Descriptions.Item>
+                  {selectedVideo.drillDescription && (
+                    <Descriptions.Item label="Mô tả bài tập" span={2}>
+                      {selectedVideo.drillDescription}
+                    </Descriptions.Item>
+                  )}
+                  {selectedVideo.drillPracticeSets && (
+                    <Descriptions.Item label="Sets luyện tập" span={2}>
+                      {selectedVideo.drillPracticeSets}
+                    </Descriptions.Item>
+                  )}
+                </>
+              )}
+              <Descriptions.Item label="Huấn luyện viên" span={2}>
+                <div className="flex items-center gap-2">
+                  <Avatar src={selectedVideo.coachAvatar} icon={<UserOutlined />} />
+                  <div>
+                    <div className="font-medium">{selectedVideo.coachName}</div>
+                    <div className="text-sm text-gray-500">{selectedVideo.coachEmail}</div>
+                  </div>
+                </div>
+              </Descriptions.Item>
+            </Descriptions>
+          </div>
+        )}
       </Modal>
 
-      {/* Reject Modal */}
+      {/* Course Detail Modal */}
       <Modal
-        title="Từ chối yêu cầu"
-        open={isRejectModalVisible}
-        onOk={confirmReject}
-        onCancel={() => {
-          setIsRejectModalVisible(false);
-          setRejectReason('');
-          setPendingActionRequest(null);
-        }}
-        confirmLoading={rejectRequestMutation.isPending}
-        okText="Từ chối"
-        cancelText="Hủy"
-        okButtonProps={{ danger: true }}
+        title="Chi tiết Khóa học"
+        open={isCourseDetailModalVisible}
+        onCancel={() => setIsCourseDetailModalVisible(false)}
+        footer={[
+          <Button key="close" onClick={() => setIsCourseDetailModalVisible(false)}>
+            Đóng
+          </Button>,
+        ]}
+        width={1000}
       >
-        <Space direction="vertical" style={{ width: '100%' }}>
-          <Text>Vui lòng nhập lý do từ chối:</Text>
-          {pendingActionRequest && (
-            <Text type="secondary" style={{ display: 'block', marginBottom: '8px' }}>
-              Yêu cầu: {pendingActionRequest.description}
-            </Text>
-          )}
-          <TextArea
-            rows={4}
-            placeholder="Nhập lý do từ chối..."
-            value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
-          />
-        </Space>
+        {selectedCourse && (
+          <div className="space-y-6">
+            {/* Course Basic Info */}
+            <Descriptions bordered column={2} size="small">
+              <Descriptions.Item label="Tên khóa học" span={2}>
+                <strong>{selectedCourse.courseName}</strong>
+              </Descriptions.Item>
+              <Descriptions.Item label="Mô tả" span={2}>
+                {selectedCourse.courseDescription}
+              </Descriptions.Item>
+              <Descriptions.Item label="Cấp độ">
+                <Tag color={getLevelColor(selectedCourse.level)}>
+                  {getLevelText(selectedCourse.level)}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Trạng thái">
+                <Tag
+                  color={
+                    selectedCourse.status === 'PENDING'
+                      ? 'orange'
+                      : selectedCourse.status === 'APPROVED'
+                        ? 'green'
+                        : 'red'
+                  }
+                >
+                  {selectedCourse.status === 'PENDING'
+                    ? 'Chờ duyệt'
+                    : selectedCourse.status === 'APPROVED'
+                      ? 'Đã duyệt'
+                      : 'Đã từ chối'}
+                </Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Số bài học">
+                {selectedCourse.totalLessons} bài
+              </Descriptions.Item>
+              <Descriptions.Item label="Nội dung">
+                {selectedCourse.totalVideos} videos, {selectedCourse.totalQuizzes} quizzes
+              </Descriptions.Item>
+              <Descriptions.Item label="Huấn luyện viên" span={2}>
+                <div className="flex items-center gap-2">
+                  <Avatar src={selectedCourse.coachAvatar} icon={<UserOutlined />} />
+                  <div>
+                    <div className="font-medium">{selectedCourse.coachName}</div>
+                    <div className="text-sm text-gray-500">{selectedCourse.coachEmail}</div>
+                  </div>
+                </div>
+              </Descriptions.Item>
+            </Descriptions>
+
+            {/* Lessons List with Details */}
+            <div className="mt-4">
+              <Title level={5}>Danh sách bài học</Title>
+              {(() => {
+                const lessons = selectedCourse.requestData.metadata.details.subject.lessons;
+
+                if (!lessons || lessons.length === 0) {
+                  return (
+                    <div className="p-4 bg-gray-50 rounded text-center text-gray-500">
+                      Không có bài học nào
+                    </div>
+                  );
+                }
+
+                return (
+                  <Collapse>
+                    {lessons.map((lesson: LessonWithDetails, idx: number) => {
+                      const lessonStats = getLessonStats(lesson);
+
+                      return (
+                        <Panel
+                          key={lesson.id}
+                          header={
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <span className="font-medium">
+                                  Bài {idx + 1}: {lesson.name}
+                                </span>
+                                {lesson.description && (
+                                  <div className="text-sm text-gray-500 mt-1">
+                                    {lesson.description}
+                                  </div>
+                                )}
+                              </div>
+                              <div className="flex gap-2">
+                                {lesson.video && (
+                                  <Tag color="blue" icon={<VideoCameraOutlined />}>
+                                    Video
+                                  </Tag>
+                                )}
+                                {lesson.quiz && (
+                                  <Tag color="orange" icon={<QuestionCircleOutlined />}>
+                                    Quiz ({lesson.quiz.totalQuestions} câu)
+                                  </Tag>
+                                )}
+                              </div>
+                            </div>
+                          }
+                        >
+                          {/* Lesson Content */}
+                          <div className="space-y-4">
+                            {/* Video Section */}
+                            {lesson.video && (
+                              <Card size="small" title="Video Bài Học">
+                                <div className="flex gap-4">
+                                  {lesson.video.thumbnailUrl && (
+                                    <Image
+                                      src={lesson.video.thumbnailUrl}
+                                      alt={lesson.video.title}
+                                      width={120}
+                                      height={80}
+                                      style={{ objectFit: 'cover', borderRadius: '4px' }}
+                                      preview={false}
+                                    />
+                                  )}
+                                  <div className="flex-1">
+                                    <div className="font-medium">{lesson.video.title}</div>
+                                    <div className="text-sm text-gray-600 mt-1">
+                                      {lesson.video.description}
+                                    </div>
+                                    <div className="mt-2">
+                                      <Tag>Thời lượng: {lessonStats.videoDuration}</Tag>
+                                      <Tag>Trạng thái: {getStatusText(lesson.video.status)}</Tag>
+                                    </div>
+                                    {lesson.video.publicUrl && (
+                                      <Button
+                                        type="primary"
+                                        size="small"
+                                        icon={<PlayCircleOutlined />}
+                                        className="mt-2"
+                                        onClick={() =>
+                                          handlePlayVideo({
+                                            id: `${lesson.id}-${lesson.video!.id}`,
+                                            title: lesson.video!.title,
+                                            description: lesson.video!.description,
+                                            tags: lesson.video!.tags
+                                              ? lesson.video!.tags.split(',')
+                                              : [],
+                                            duration: lesson.video!.duration,
+                                            drillName: lesson.video!.drillName || undefined,
+                                            drillDescription:
+                                              lesson.video!.drillDescription || undefined,
+                                            drillPracticeSets:
+                                              lesson.video!.drillPracticeSets || undefined,
+                                            publicUrl: lesson.video!.publicUrl,
+                                            thumbnailUrl: lesson.video!.thumbnailUrl ?? undefined,
+                                            status: lesson.video!.status,
+                                            coachName: selectedCourse.coachName,
+                                            coachEmail: selectedCourse.coachEmail,
+                                            coachAvatar: selectedCourse.coachAvatar,
+                                            lessonName: lesson.name,
+                                            courseName: selectedCourse.courseName,
+                                          })
+                                        }
+                                      >
+                                        Phát Video
+                                      </Button>
+                                    )}
+                                  </div>
+                                </div>
+                              </Card>
+                            )}
+
+                            {/* Quiz Section */}
+                            {lesson.quiz && (
+                              <Card size="small" title="Quiz">
+                                <div className="space-y-3">
+                                  <div className="font-medium">{lesson.quiz.title}</div>
+                                  {lesson.quiz.description && (
+                                    <div className="text-sm text-gray-600">
+                                      {lesson.quiz.description}
+                                    </div>
+                                  )}
+                                  <div className="text-sm">
+                                    <Tag icon={<QuestionCircleOutlined />}>
+                                      {lesson.quiz.totalQuestions} câu hỏi
+                                    </Tag>
+                                  </div>
+
+                                  {/* Questions List */}
+                                  {lesson.quiz.questions && lesson.quiz.questions.length > 0 && (
+                                    <div className="mt-3">
+                                      <div className="font-medium mb-2">Danh sách câu hỏi:</div>
+                                      <List
+                                        size="small"
+                                        dataSource={lesson.quiz.questions}
+                                        renderItem={(question, qIdx) => (
+                                          <List.Item>
+                                            <div className="w-full">
+                                              <div className="font-medium">
+                                                Câu {qIdx + 1}: {question.title}
+                                              </div>
+                                              {question.explanation && (
+                                                <div className="text-sm text-gray-600 mt-1">
+                                                  Giải thích: {question.explanation}
+                                                </div>
+                                              )}
+                                              <div className="mt-2 space-y-1">
+                                                {question.options.map((option, oIdx) => (
+                                                  <div
+                                                    key={option.id}
+                                                    className={`text-sm p-2 rounded ${
+                                                      option.isCorrect
+                                                        ? 'bg-green-50 border border-green-200'
+                                                        : 'bg-gray-50'
+                                                    }`}
+                                                  >
+                                                    {oIdx + 1}. {option.content}
+                                                    {option.isCorrect && (
+                                                      <Tag color="green" className="ml-2">
+                                                        Đáp án đúng
+                                                      </Tag>
+                                                    )}
+                                                  </div>
+                                                ))}
+                                              </div>
+                                            </div>
+                                          </List.Item>
+                                        )}
+                                      />
+                                    </div>
+                                  )}
+                                </div>
+                              </Card>
+                            )}
+
+                            {/* Lesson Info */}
+                            <Card size="small" title="Thông tin Bài Học">
+                              <Descriptions column={2} size="small">
+                                <Descriptions.Item label="Thời lượng">
+                                  {lessonStats.totalDuration}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="Số thứ tự">
+                                  Bài {lesson.lessonNumber}
+                                </Descriptions.Item>
+                                <Descriptions.Item label="Ngày tạo">
+                                  {new Date(lesson.createdAt).toLocaleDateString('vi-VN')}
+                                </Descriptions.Item>
+                              </Descriptions>
+                            </Card>
+                          </div>
+                        </Panel>
+                      );
+                    })}
+                  </Collapse>
+                );
+              })()}
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   );
