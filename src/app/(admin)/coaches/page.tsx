@@ -11,17 +11,13 @@ import {
   Avatar,
   Modal,
   Typography,
-  Row,
-  Col,
   message,
   Descriptions,
   Tooltip,
   Badge,
   Rate,
   Tabs,
-  List,
   Empty,
-  Divider,
   Skeleton,
 } from 'antd';
 import {
@@ -40,7 +36,6 @@ import {
   PhoneOutlined,
   MailOutlined,
   MessageOutlined,
-  BookOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -55,7 +50,6 @@ import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
 const { Title, Text, Paragraph } = Typography;
 const { Search } = Input;
-const { TextArea } = Input;
 
 /**
  * TYPES
@@ -88,16 +82,6 @@ interface CredentialData {
   issuedAt?: string;
   expiresAt?: string;
   description?: string;
-}
-
-interface FeedbackItem {
-  id: string | number;
-  rating: number;
-  learnerName: string;
-  courseName: string;
-  comment?: string;
-  createdAt: string;
-  courseId: string | number;
 }
 
 /**
@@ -154,7 +138,7 @@ export default function CoachesPage() {
   const [isApproveModalVisible, setIsApproveModalVisible] = useState(false);
   const [isRejectModalVisible, setIsRejectModalVisible] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
-  const [isFeedbackModalVisible, setIsFeedbackModalVisible] = useState(false);
+  const [_isFeedbackModalVisible, setIsFeedbackModalVisible] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(10);
@@ -281,7 +265,7 @@ export default function CoachesPage() {
   );
 
   /** ACTIONS */
-  const openDetail = (coach: CoachData) => {
+  const _openDetail = (coach: CoachData) => {
     setSelectedCoach(coach);
     setIsDetailModalVisible(true);
   };
@@ -360,6 +344,7 @@ export default function CoachesPage() {
     {
       title: 'Thông tin',
       key: 'info',
+      align: 'center',
       render: (_, record) => <InfoCell record={record} />,
     },
     {
@@ -381,6 +366,7 @@ export default function CoachesPage() {
       title: 'Ngày đăng ký',
       dataIndex: 'registrationDate',
       key: 'registrationDate',
+      align: 'center',
       width: 140,
       render: (date: string) => formatDate(date),
     },
@@ -409,6 +395,7 @@ export default function CoachesPage() {
     {
       title: 'Thông tin',
       key: 'info',
+      align: 'center',
       render: (_, record) => <InfoCell record={record} showBadge />,
     },
     {
@@ -442,6 +429,7 @@ export default function CoachesPage() {
       title: 'Trạng thái',
       dataIndex: 'status',
       key: 'status',
+      align: 'center',
       width: 170,
       render: (status: CoachVerificationStatus | null, record) => {
         const key = (status || 'UNKNOWN') as keyof typeof statusColor;
@@ -492,10 +480,14 @@ export default function CoachesPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <Card className="rounded-2xl shadow-sm border-gray-100">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <Card
+        className="rounded-2xl shadow-sm border-gray-100"
+        bodyStyle={{ padding: '16px 24px' }}
+        style={{ marginBottom: 16 }}
+      >
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-1">Quản lý Huấn luyện viên</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-0.5">Quản lý Huấn luyện viên</h2>
             <p className="text-gray-500 text-sm">
               Phê duyệt và quản lý huấn luyện viên trong hệ thống
             </p>
@@ -504,7 +496,7 @@ export default function CoachesPage() {
           <Search
             placeholder="Tìm kiếm theo tên, email, số điện thoại..."
             allowClear
-            size="large"
+            size="middle"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             prefix={<SearchOutlined className="text-gray-400" />}
@@ -525,7 +517,7 @@ export default function CoachesPage() {
             {
               key: 'pending',
               label: (
-                <span>
+                <span style={{ marginLeft: 25 }}>
                   <ClockCircleOutlined /> Chờ phê duyệt ({pendingCoaches.length})
                 </span>
               ),
@@ -645,163 +637,209 @@ export default function CoachesPage() {
               dc.teachingMethods || selectedCoach?.teachingMethods,
             );
 
-            <div className="space-y-6">
-              {/* Profile */}
-              <div className="flex items-start gap-4">
-                <Avatar size={84} src={avatarToShow} icon={<UserOutlined />} />
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Title level={4} className="mb-0 truncate">
-                      {nameToShow}
-                    </Title>
-                    {ratingToShow >= 4.5 && <TrophyOutlined className="text-yellow-500 text-xl" />}
-                  </div>
-                  <div className="mb-2 flex items-center gap-3">
-                    <Badge
-                      status={statusColor[(statusToShow || 'UNKNOWN') as keyof typeof statusColor]}
-                      text={statusLabel[(statusToShow || 'UNKNOWN') as keyof typeof statusLabel]}
-                    />
-                    {statusToShow === CoachVerificationStatus.VERIFIED && (
-                      <div className="flex items-center gap-2">
-                        <Rate disabled value={ratingToShow} allowHalf />
-                        <Text className="font-medium">{Number(ratingToShow || 0).toFixed(1)}</Text>
-                      </div>
-                    )}
-                  </div>
-                  <div className="text-gray-500 text-sm truncate">{emailToShow}</div>
-                </div>
-              </div>
-
-              {/* Basic Info */}
-              <Descriptions title="Thông tin cơ bản" column={2} bordered>
-                <Descriptions.Item
-                  label={
-                    <>
-                      <MailOutlined /> Email
-                    </>
-                  }
-                  span={2}
-                >
-                  {emailToShow}
-                </Descriptions.Item>
-                <Descriptions.Item
-                  label={
-                    <>
-                      <PhoneOutlined /> Số điện thoại
-                    </>
-                  }
-                >
-                  {' '}
-                  {phoneToShow}{' '}
-                </Descriptions.Item>
-                <Descriptions.Item
-                  label={
-                    <>
-                      <EnvironmentOutlined /> Khu vực
-                    </>
-                  }
-                >
-                  {' '}
-                  {locationToShow}{' '}
-                </Descriptions.Item>
-                <Descriptions.Item label="Kinh nghiệm"> {yearsToShow} năm </Descriptions.Item>
-                <Descriptions.Item label="Ngày đăng ký">
-                  {' '}
-                  {formatDate(createdAtToShow)}{' '}
-                </Descriptions.Item>
-              </Descriptions>
-
-              {bioToShow && (
-                <div>
-                  <Title level={5}>Giới thiệu</Title>
-                  <Paragraph>{bioToShow}</Paragraph>
-                </div>
-              )}
-
-              {specialtiesToShow.length > 0 && (
-                <div>
-                  <Title level={5}>
-                    <BookOutlined /> Chuyên môn
-                  </Title>
-                  <List
-                    size="small"
-                    bordered
-                    dataSource={specialtiesToShow}
-                    renderItem={(item) => <List.Item>{item}</List.Item>}
-                  />
-                </div>
-              )}
-
-              {teachingMethodsToShow.length > 0 && (
-                <div>
-                  <Title level={5}>
-                    <BookOutlined /> Phương pháp giảng dạy
-                  </Title>
-                  <List
-                    size="small"
-                    bordered
-                    dataSource={teachingMethodsToShow}
-                    renderItem={(item) => <List.Item>{item}</List.Item>}
-                  />
-                </div>
-              )}
-
-              {/* Credentials */}
-              <div>
-                <Title level={5}>
-                  <SafetyCertificateOutlined /> Chứng chỉ ({credentialsToShow.length})
-                </Title>
-                <Space direction="vertical" className="w-full" size="middle">
-                  {credentialsToShow.map((cred: any) => (
-                    <Card key={cred.id} size="small">
-                      <div className="flex items-start justify-between gap-4">
-                        <div className="flex-1 min-w-0">
-                          <div className="font-medium mb-1 truncate">{cred.name}</div>
-                          <div className="text-sm text-gray-500 mb-2">
-                            <Tag color="blue">{cred.type}</Tag>
-                          </div>
-                          {cred.description && (
-                            <div className="text-sm text-gray-600 mb-2">{cred.description}</div>
+            return (
+              <div className="space-y-6">
+                {/* Profile Header */}
+                <div className="pb-4 border-b">
+                  <div className="flex items-start gap-4">
+                    {/* Left side: Avatar, Name, Rating, Email, Bio */}
+                    <div className="flex items-start gap-4 flex-1" style={{ paddingRight: '20px' }}>
+                      <Avatar size={84} src={avatarToShow} icon={<UserOutlined />} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Title level={4} className="mb-0 truncate">
+                            {nameToShow}
+                          </Title>
+                          {ratingToShow >= 4.5 && (
+                            <TrophyOutlined className="text-yellow-500 text-xl" />
                           )}
-                          <Space size="middle" className="text-xs text-gray-500">
-                            {cred.issuedAt && (
-                              <span>
-                                <CalendarOutlined /> Cấp: {formatDate(cred.issuedAt)}
-                              </span>
-                            )}
-                            {cred.expiresAt && <span>Hết hạn: {formatDate(cred.expiresAt)}</span>}
-                          </Space>
                         </div>
-                        {cred.publicUrl && (
-                          <Button
-                            type="link"
-                            icon={<LinkOutlined />}
-                            onClick={() => window.open(cred.publicUrl!, '_blank')}
-                          >
-                            Xem
-                          </Button>
+                        <div className="mb-2 flex flex-wrap items-center gap-3">
+                          <Badge
+                            status={
+                              statusColor[(statusToShow || 'UNKNOWN') as keyof typeof statusColor]
+                            }
+                            text={
+                              statusLabel[(statusToShow || 'UNKNOWN') as keyof typeof statusLabel]
+                            }
+                          />
+                          {statusToShow === CoachVerificationStatus.VERIFIED && (
+                            <div className="flex items-center gap-2">
+                              <Rate disabled value={ratingToShow} allowHalf />
+                              <Text className="font-medium">
+                                {Number(ratingToShow || 0).toFixed(1)}
+                              </Text>
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-gray-500 text-sm mb-3">{emailToShow}</div>
+
+                        {/* Bio */}
+                        {bioToShow && (
+                          <div className="mt-3">
+                            <Title level={5} className="mb-2">
+                              Giới thiệu
+                            </Title>
+                            <Paragraph className="mb-0 text-sm">{bioToShow}</Paragraph>
+                          </div>
                         )}
                       </div>
-                    </Card>
-                  ))}
-                </Space>
-              </div>
+                    </div>
 
-              {/* Stats for approved */}
-              {statusToShow === CoachVerificationStatus.VERIFIED && (
-                <Descriptions title="Thống kê hoạt động" column={2} bordered>
-                  <Descriptions.Item label="Tổng khóa học">{totalCoursesToShow}</Descriptions.Item>
-                  <Descriptions.Item label="Tổng buổi học">{totalSessionsToShow}</Descriptions.Item>
-                </Descriptions>
-              )}
+                    {/* Right side: Specialties & Teaching Methods Cards */}
+                    <div className="flex flex-col gap-3" style={{ minWidth: '280px' }}>
+                      {/* Chuyên môn Card */}
+                      {specialtiesToShow.length > 0 && (
+                        <Card size="small" className="shadow-sm">
+                          <div className="text-center">
+                            <div className="font-semibold text-gray-700 mb-2">Chuyên môn</div>
+                            <div className="flex flex-wrap gap-1 justify-center">
+                              {specialtiesToShow.map((spec: string, idx: number) => (
+                                <Tag key={idx} color="blue" className="text-xs">
+                                  {spec}
+                                </Tag>
+                              ))}
+                            </div>
+                          </div>
+                        </Card>
+                      )}
 
-              {/* Feedback quick open */}
-              <div className="flex justify-end">
-                <Button icon={<MessageOutlined />} onClick={() => setIsFeedbackModalVisible(true)}>
-                  Xem feedback
-                </Button>
+                      {/* Phương pháp giảng dạy Card */}
+                      {teachingMethodsToShow.length > 0 && (
+                        <Card size="small" className="shadow-sm">
+                          <div className="text-center">
+                            <div className="font-semibold text-gray-700 mb-2">
+                              Phương pháp giảng dạy
+                            </div>
+                            <div className="flex flex-wrap gap-1 justify-center">
+                              {teachingMethodsToShow.map((method: string, idx: number) => (
+                                <Tag key={idx} color="green" className="text-xs">
+                                  {method}
+                                </Tag>
+                              ))}
+                            </div>
+                          </div>
+                        </Card>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Basic Info */}
+                <Card>
+                  <Descriptions
+                    title="Thông tin cơ bản"
+                    column={2}
+                    bordered
+                    labelStyle={{ textAlign: 'center' }}
+                  >
+                    <Descriptions.Item
+                      label={
+                        <>
+                          <MailOutlined /> Email
+                        </>
+                      }
+                      span={2}
+                    >
+                      {emailToShow}
+                    </Descriptions.Item>
+                    <Descriptions.Item
+                      label={
+                        <>
+                          <PhoneOutlined /> Số điện thoại
+                        </>
+                      }
+                    >
+                      {' '}
+                      {phoneToShow}{' '}
+                    </Descriptions.Item>
+                    <Descriptions.Item
+                      label={
+                        <>
+                          <EnvironmentOutlined /> Khu vực
+                        </>
+                      }
+                    >
+                      {' '}
+                      {locationToShow}{' '}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Kinh nghiệm"> {yearsToShow} năm </Descriptions.Item>
+                    <Descriptions.Item label="Ngày đăng ký">
+                      {' '}
+                      {formatDate(createdAtToShow)}{' '}
+                    </Descriptions.Item>
+                  </Descriptions>
+                </Card>
+
+                {/* Credentials */}
+                <div>
+                  <Title level={5}>
+                    <SafetyCertificateOutlined /> Chứng chỉ ({credentialsToShow.length})
+                  </Title>
+                  <Space direction="vertical" className="w-full" size="middle">
+                    {credentialsToShow.map((cred: any) => (
+                      <Card key={cred.id} size="small">
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="font-medium mb-1 truncate">{cred.name}</div>
+                            <div className="text-sm text-gray-500 mb-2">
+                              <Tag color="blue">{cred.type}</Tag>
+                            </div>
+                            {cred.description && (
+                              <div className="text-sm text-gray-600 mb-2">{cred.description}</div>
+                            )}
+                            <Space size="middle" className="text-xs text-gray-500">
+                              {cred.issuedAt && (
+                                <span>
+                                  <CalendarOutlined /> Cấp: {formatDate(cred.issuedAt)}
+                                </span>
+                              )}
+                              {cred.expiresAt && <span>Hết hạn: {formatDate(cred.expiresAt)}</span>}
+                            </Space>
+                          </div>
+                          {cred.publicUrl && (
+                            <Button
+                              type="link"
+                              icon={<LinkOutlined />}
+                              onClick={() => window.open(cred.publicUrl!, '_blank')}
+                            >
+                              Xem
+                            </Button>
+                          )}
+                        </div>
+                      </Card>
+                    ))}
+                  </Space>
+                </div>
+
+                {/* Stats for approved */}
+                {statusToShow === CoachVerificationStatus.VERIFIED && (
+                  <Descriptions
+                    title="Thống kê hoạt động"
+                    column={2}
+                    bordered
+                    labelStyle={{ textAlign: 'center' }}
+                  >
+                    <Descriptions.Item label="Tổng khóa học">
+                      {totalCoursesToShow}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Tổng buổi học">
+                      {totalSessionsToShow}
+                    </Descriptions.Item>
+                  </Descriptions>
+                )}
+
+                {/* Feedback quick open */}
+                <div className="flex justify-end">
+                  <Button
+                    icon={<MessageOutlined />}
+                    onClick={() => setIsFeedbackModalVisible(true)}
+                  >
+                    Xem feedback
+                  </Button>
+                </div>
               </div>
-            </div>;
+            );
           })()}
       </Modal>
 
@@ -844,126 +882,145 @@ export default function CoachesPage() {
             return (
               <div className="space-y-6">
                 {/* Profile Header */}
-                <div className="flex items-start gap-4 pb-4 border-b">
-                  <Avatar
-                    size={96}
-                    src={user.profilePicture || undefined}
-                    icon={<UserOutlined />}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Title level={3} className="mb-0 truncate">
-                        {user.fullName || user.name || '-'}
-                      </Title>
-                      {ratingToShow >= 4.5 && (
-                        <TrophyOutlined className="text-yellow-500 text-2xl" />
+                <div className="pb-4 border-b">
+                  <div className="flex items-start gap-4">
+                    {/* Left side: Avatar, Name, Rating, Email, Bio */}
+                    <div className="flex items-start gap-4 flex-1" style={{ paddingRight: '20px' }}>
+                      <Avatar
+                        size={96}
+                        src={user.profilePicture || undefined}
+                        icon={<UserOutlined />}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Title level={3} className="mb-0 truncate">
+                            {user.fullName || user.name || '-'}
+                          </Title>
+                          {ratingToShow >= 4.5 && (
+                            <TrophyOutlined className="text-yellow-500 text-2xl" />
+                          )}
+                        </div>
+                        <div className="mb-2 flex flex-wrap items-center gap-3">
+                          <Badge
+                            status={
+                              statusColor[(statusToShow || 'UNKNOWN') as keyof typeof statusColor]
+                            }
+                            text={
+                              statusLabel[(statusToShow || 'UNKNOWN') as keyof typeof statusLabel]
+                            }
+                          />
+                          {statusToShow === CoachVerificationStatus.VERIFIED && (
+                            <div className="flex items-center gap-2">
+                              <Rate disabled value={ratingToShow} allowHalf />
+                              <Text className="font-medium text-lg">
+                                {Number(ratingToShow || 0).toFixed(1)}
+                              </Text>
+                            </div>
+                          )}
+                        </div>
+                        <div className="text-gray-500 mb-3">{user.email || '-'}</div>
+                      </div>
+                    </div>
+
+                    {/* Right side: Specialties & Teaching Methods Cards */}
+                    <div className="flex flex-col gap-3" style={{ minWidth: '280px' }}>
+                      {/* Chuyên môn Card */}
+                      {specialtiesToShow.length > 0 && (
+                        <Card size="small" className="shadow-sm">
+                          <div className="text-center">
+                            <div className="font-semibold text-gray-700 mb-2">Chuyên môn</div>
+                            <div className="flex flex-wrap gap-1 justify-center">
+                              {specialtiesToShow.map((spec: string, idx: number) => (
+                                <Tag key={idx} color="blue" className="text-xs">
+                                  {spec}
+                                </Tag>
+                              ))}
+                            </div>
+                          </div>
+                        </Card>
+                      )}
+
+                      {/* Phương pháp giảng dạy Card */}
+                      {teachingMethodsToShow.length > 0 && (
+                        <Card size="small" className="shadow-sm">
+                          <div className="text-center">
+                            <div className="font-semibold text-gray-700 mb-2">
+                              Phương pháp giảng dạy
+                            </div>
+                            <div className="flex flex-wrap gap-1 justify-center">
+                              {teachingMethodsToShow.map((method: string, idx: number) => (
+                                <Tag key={idx} color="green" className="text-xs">
+                                  {method}
+                                </Tag>
+                              ))}
+                            </div>
+                          </div>
+                        </Card>
                       )}
                     </div>
-                    <div className="mb-2 flex items-center gap-3">
+                  </div>
+                </div>
+                {/* Bio */}
+                {data.bio && (
+                  <div className="mt-3">
+                    <Title level={5} className="mb-2">
+                      Giới thiệu
+                    </Title>
+                    <Paragraph className="text-gray-700 mb-0">{data.bio}</Paragraph>
+                  </div>
+                )}
+                {/* Basic Information */}
+                <Card>
+                  <Descriptions
+                    title="Thông tin cơ bản"
+                    column={2}
+                    bordered
+                    labelStyle={{ textAlign: 'center' }}
+                  >
+                    <Descriptions.Item
+                      label={
+                        <>
+                          <MailOutlined /> Email
+                        </>
+                      }
+                      span={2}
+                    >
+                      {user.email || '-'}
+                    </Descriptions.Item>
+                    <Descriptions.Item
+                      label={
+                        <>
+                          <PhoneOutlined /> Số điện thoại
+                        </>
+                      }
+                    >
+                      {user.phoneNumber || '-'}
+                    </Descriptions.Item>
+                    <Descriptions.Item
+                      label={
+                        <>
+                          <EnvironmentOutlined /> Khu vực
+                        </>
+                      }
+                    >
+                      {user.location || '-'}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Kinh nghiệm">
+                      {data.yearOfExperience ?? 0} năm
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Ngày đăng ký">
+                      {formatDate(data.createdAt)}
+                    </Descriptions.Item>
+                    <Descriptions.Item label="Trạng thái xác thực">
                       <Badge
                         status={
                           statusColor[(statusToShow || 'UNKNOWN') as keyof typeof statusColor]
                         }
                         text={statusLabel[(statusToShow || 'UNKNOWN') as keyof typeof statusLabel]}
                       />
-                      {statusToShow === CoachVerificationStatus.VERIFIED && (
-                        <div className="flex items-center gap-2">
-                          <Rate disabled value={ratingToShow} allowHalf />
-                          <Text className="font-medium text-lg">
-                            {Number(ratingToShow || 0).toFixed(1)}
-                          </Text>
-                        </div>
-                      )}
-                    </div>
-                    <div className="text-gray-500">{user.email || '-'}</div>
-                  </div>
-                </div>
-
-                {/* Basic Information */}
-                <Descriptions title="Thông tin cơ bản" column={2} bordered>
-                  <Descriptions.Item
-                    label={
-                      <>
-                        <MailOutlined /> Email
-                      </>
-                    }
-                    span={2}
-                  >
-                    {user.email || '-'}
-                  </Descriptions.Item>
-                  <Descriptions.Item
-                    label={
-                      <>
-                        <PhoneOutlined /> Số điện thoại
-                      </>
-                    }
-                  >
-                    {user.phoneNumber || '-'}
-                  </Descriptions.Item>
-                  <Descriptions.Item
-                    label={
-                      <>
-                        <EnvironmentOutlined /> Khu vực
-                      </>
-                    }
-                  >
-                    {user.location || '-'}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Kinh nghiệm">
-                    {data.yearOfExperience ?? 0} năm
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Ngày đăng ký">
-                    {formatDate(data.createdAt)}
-                  </Descriptions.Item>
-                  <Descriptions.Item label="Trạng thái xác thực">
-                    <Badge
-                      status={statusColor[(statusToShow || 'UNKNOWN') as keyof typeof statusColor]}
-                      text={statusLabel[(statusToShow || 'UNKNOWN') as keyof typeof statusLabel]}
-                    />
-                  </Descriptions.Item>
-                </Descriptions>
-
-                {/* Bio */}
-                {data.bio && (
-                  <div>
-                    <Title level={5}>Giới thiệu</Title>
-                    <Paragraph className="text-gray-700">{data.bio}</Paragraph>
-                  </div>
-                )}
-
-                {/* Specialties */}
-                {specialtiesToShow.length > 0 && (
-                  <div>
-                    <Title level={5}>
-                      <BookOutlined /> Chuyên môn
-                    </Title>
-                    <div className="flex flex-wrap gap-2">
-                      {specialtiesToShow.map((spec: string, idx: number) => (
-                        <Tag key={idx} color="blue" className="text-sm py-1 px-3">
-                          {spec}
-                        </Tag>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Teaching Methods */}
-                {teachingMethodsToShow.length > 0 && (
-                  <div>
-                    <Title level={5}>
-                      <BookOutlined /> Phương pháp giảng dạy
-                    </Title>
-                    <List
-                      size="small"
-                      dataSource={teachingMethodsToShow}
-                      renderItem={(method: string) => (
-                        <List.Item>
-                          <Text>{method}</Text>
-                        </List.Item>
-                      )}
-                    />
-                  </div>
-                )}
+                    </Descriptions.Item>
+                  </Descriptions>
+                </Card>
 
                 {/* Credentials */}
                 <div>
@@ -1014,7 +1071,12 @@ export default function CoachesPage() {
 
                 {/* Stats for verified coaches */}
                 {statusToShow === CoachVerificationStatus.VERIFIED && (
-                  <Descriptions title="Thống kê hoạt động" column={2} bordered>
+                  <Descriptions
+                    title="Thống kê hoạt động"
+                    column={2}
+                    bordered
+                    labelStyle={{ textAlign: 'center' }}
+                  >
                     <Descriptions.Item label="Tổng khóa học">
                       {data.totalCourses ?? 0}
                     </Descriptions.Item>
