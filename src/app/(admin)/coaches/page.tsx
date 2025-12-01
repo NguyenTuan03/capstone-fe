@@ -482,7 +482,7 @@ export default function CoachesPage() {
       {/* Header */}
       <Card
         className="rounded-2xl shadow-sm border-gray-100"
-        bodyStyle={{ padding: '16px 24px' }}
+        styles={{ body: { padding: '16px 24px' } }}
         style={{ marginBottom: 16 }}
       >
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -1183,7 +1183,7 @@ function KpiCard({
   return (
     <Card
       className="rounded-2xl border-0 shadow-sm hover:shadow-md transition-shadow duration-300"
-      bodyStyle={{ padding: 24 }}
+      styles={{ body: { padding: 24 } }}
     >
       <div className="flex items-center justify-between">
         <div>

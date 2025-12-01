@@ -1,6 +1,6 @@
-import jwtAxios from '@/@crema/services/jwt-auth';
+import jwtAxios, { ApiUrl } from '@/@crema/services/jwt-auth';
 
-const API_URL = `${process.env.NEXT_PUBLIC_API_URL}/${process.env.NEXT_PUBLIC_VERSION}/users`;
+const API_URL = `${ApiUrl}/users`;
 
 // -------------------- Interfaces --------------------
 export interface Role {
