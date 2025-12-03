@@ -26,7 +26,9 @@ interface RefreshTokenResponse {
 
 // Constants used throughout the service
 const AUTH_ERROR_STATUS = 401;
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL + '/' + process.env.NEXT_PUBLIC_VERSION;
+const API_BASE_URL = `${(process.env.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '')}/${(
+  process.env.NEXT_PUBLIC_VERSION || ''
+).replace(/^\/+/, '')}`;
 /**
  * Check if code is running in browser environment
  * This is important for Next.js SSR compatibility

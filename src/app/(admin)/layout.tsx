@@ -303,7 +303,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Dropdown
               placement="bottomRight"
               trigger={['click']}
-              dropdownRender={() => notificationDropdown}
+              popupRender={() => notificationDropdown}
               open={notificationDropdownOpen}
               onOpenChange={setNotificationDropdownOpen}
             >
