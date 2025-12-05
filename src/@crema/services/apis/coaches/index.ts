@@ -38,6 +38,7 @@ export const useGetCoachById = (id: string) => {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
+      console.log('Coach response:', response.data);
       return response.data;
     },
     enabled: !!id, // chỉ fetch khi có id
