@@ -47,6 +47,7 @@ import {
 } from '@/@crema/services/apis/coaches';
 import { CoachVerificationStatus } from '@/types/enums';
 import useRoleGuard from '@/@crema/hooks/useRoleGuard';
+import { User } from '@/types/user';
 
 const { Title, Text, Paragraph } = Typography;
 const { Search } = Input;
@@ -72,6 +73,7 @@ interface CoachData {
   bio?: string;
   specialties?: string[];
   teachingMethods?: string[];
+  user?: User;
 }
 
 interface CredentialData {
