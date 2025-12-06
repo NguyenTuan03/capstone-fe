@@ -917,6 +917,34 @@ export default function CoachesPage() {
           setViewDetailCoachId(null);
         }}
         footer={[
+          // Show Approve/Reject buttons for UNVERIFIED or PENDING status
+          ...(viewDetailData?.verificationStatus === CoachVerificationStatus.UNVERIFIED || 
+          viewDetailData?.verificationStatus === CoachVerificationStatus.PENDING
+            ? [
+                <Button
+                  key="reject"
+                  danger
+                  onClick={() => {
+                    setSelectedCoach(viewDetailData);
+                    setRejectReason('');
+                    setIsRejectModalVisible(true);
+                  }}
+                >
+                  Từ chối
+                </Button>,
+                <Button
+                  key="approve"
+                  type="primary"
+                  onClick={() => {
+                    setSelectedCoach(viewDetailData);
+                    confirmApprove();
+                  }}
+                >
+                  Phê duyệt
+                </Button>,
+              ]
+            : []
+          ),
           <Button
             key="close"
             onClick={() => {
