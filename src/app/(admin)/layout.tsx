@@ -1,7 +1,7 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Layout, Menu, Avatar, Dropdown, Badge, Button, Spin, Empty } from 'antd';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Layout, Menu, Avatar, Dropdown, Badge, Button, Spin, Empty, message } from 'antd';
 import {
   DashboardOutlined,
   UserOutlined,
@@ -18,27 +18,24 @@ import {
 } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
 import jwtAxios from '@/@crema/services/jwt-auth';
+import { useWebSocket } from '@/@crema/hooks/useWebSocket';
+import type { Notification as NotificationType } from '@/types/notification';
 import type { MenuProps } from 'antd';
+import { Toaster, toast } from 'react-hot-toast';
 
 const { Header, Sider, Content } = Layout;
 
-interface NotificationItem {
-  id: number;
-  title: string;
-  body: string;
-  navigateTo: string;
-  type: string;
-  isRead: boolean;
-  createdAt: string;
-}
-
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [notifications, setNotifications] = useState<NotificationType[]>([]);
   const [notificationLoading, setNotificationLoading] = useState(false);
   const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  // Track notifications that have already shown toast to prevent duplicates
+  const shownToastIdsRef = useRef<Set<number>>(new Set());
+  // Track notifications that have already been processed to prevent duplicates in state
+  const processedNotificationIdsRef = useRef<Set<number>>(new Set());
 
   const fetchNotifications = useCallback(async () => {
     setNotificationLoading(true);
@@ -47,11 +44,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         params: {
           page: 1,
           pageSize: 10,
+          filter: 'user.id_eq_1',
         },
       });
-      setNotifications(response.data?.items || []);
+      const fetchedNotifications = (response.data?.items || []).filter(
+        (n: NotificationType) => n && n.id !== undefined && n.id !== null,
+      );
+      setNotifications(fetchedNotifications);
+
+      // Reset processed notifications ref with current notification IDs
+      // This ensures we can process new notifications from socket even if they were in the fetched list
+      processedNotificationIdsRef.current = new Set(
+        fetchedNotifications.map((n: NotificationType) => n.id),
+      );
     } catch (error) {
-      console.error('Failed to load notifications:', error);
+      message.error('Không thể tải thông báo');
     } finally {
       setNotificationLoading(false);
     }
@@ -61,35 +68,177 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     fetchNotifications();
   }, [fetchNotifications]);
 
+  // WebSocket connection for real-time notifications
+  const { isConnected, markAsRead: markNotificationAsReadSocket } = useWebSocket({
+    onNotification: (notification: NotificationType) => {
+      // Validate notification has an id
+      if (
+        !notification ||
+        !notification.id ||
+        notification.id === undefined ||
+        notification.id === null
+      ) {
+        console.error('Invalid notification received from socket:', notification);
+        return;
+      }
+
+      // Early return if this notification has already been processed
+      if (processedNotificationIdsRef.current.has(notification.id)) {
+        return;
+      }
+
+      // Mark as processed immediately to prevent duplicate processing
+      processedNotificationIdsRef.current.add(notification.id);
+
+      // Add new notification to the beginning of the list
+      setNotifications((prev) => {
+        // Double-check if notification already exists in state to avoid duplicates
+        const exists = prev.some((n) => n.id === notification.id);
+        if (exists) {
+          // If already in state, remove from processed set to allow re-processing if needed
+          processedNotificationIdsRef.current.delete(notification.id);
+          return prev;
+        }
+
+        // Check if toast has already been shown for this notification
+        if (!shownToastIdsRef.current.has(notification.id)) {
+          // Mark as shown
+          shownToastIdsRef.current.add(notification.id);
+
+          // Show a subtle notification toast using react-hot-toast
+          toast(
+            () => (
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400/20 to-purple-400/20 flex items-center justify-center backdrop-blur-sm">
+                    <BellOutlined className="text-blue-500 text-base" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-700">{notification.title}</p>
+                  <p className="mt-0.5 text-xs text-gray-500">{notification.body}</p>
+                </div>
+              </div>
+            ),
+            {
+              duration: 5000,
+              position: 'top-right',
+              style: {
+                padding: '12px 16px',
+                minWidth: '300px',
+                background: 'rgba(255, 255, 255, 0.95)',
+                backdropFilter: 'blur(10px)',
+                border: 'none',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+              },
+            },
+          );
+        }
+
+        return [notification, ...prev];
+      });
+    },
+    onConnect: () => {},
+    onDisconnect: (reason) => {
+      if (reason === 'io server disconnect') {
+        message.warning('Mất kết nối với server. Đang thử kết nối lại...');
+      }
+    },
+    onError: (error) => {
+      // Don't show error message for every connection attempt to avoid spam
+    },
+    enabled: true,
+  });
+
   const unreadCount = useMemo(
     () => notifications.filter((item) => !item.isRead).length,
     [notifications],
   );
 
-  const handleNotificationClick = async (notification: NotificationItem) => {
-    setNotificationDropdownOpen(false);
-    try {
-      await jwtAxios.patch(`/notifications/${notification.id}/read`);
-    } catch (error) {
-      console.error('Failed to mark notification as read:', error);
+  const handleNotificationClick = async (notification: NotificationType) => {
+    // Validate notification has an id
+    if (!notification || !notification.id) {
+      console.error('Invalid notification: missing id', notification);
+      message.error('Thông báo không hợp lệ');
+      return;
     }
 
+    setNotificationDropdownOpen(false);
+
+    // Update local state immediately for better UX
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n)),
+    );
+
+    // Mark as read via API
+    try {
+      await jwtAxios.put(`/notifications/${notification.id}/read`);
+      // Reload notifications list to ensure data sync with server
+      await fetchNotifications();
+    } catch (error) {
+      // Revert local state on error
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notification.id ? { ...n, isRead: false } : n)),
+      );
+      message.error('Không thể đánh dấu thông báo đã đọc');
+    }
+
+    // Emit socket event to mark as read (if connected)toast
+    if (isConnected && notification.id) {
+      markNotificationAsReadSocket(notification.id);
+    }
+
+    // Navigate if needed
     if (notification.navigateTo) {
       router.push(notification.navigateTo);
     }
+  };
 
-    fetchNotifications();
+  const handleMarkAllAsRead = async () => {
+    try {
+      await jwtAxios.put('/notifications/read');
+      // Reload notifications list to ensure data sync with server
+      await fetchNotifications();
+      message.success('Đã đánh dấu tất cả thông báo đã đọc');
+    } catch (error) {
+      message.error('Không thể đánh dấu tất cả thông báo đã đọc');
+    }
   };
 
   const notificationDropdown = (
     <div className="w-96 max-h-[500px] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-100">
       <div className="px-5 py-4 bg-gradient-to-r from-blue-500 to-purple-600">
         <div className="flex items-center justify-between">
-          <div>
-            <div className="text-base font-bold text-white">Thông báo</div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <div className="text-base font-bold text-white">Thông báo</div>
+              {isConnected ? (
+                <span
+                  className="w-2 h-2 bg-green-300 rounded-full animate-pulse"
+                  title="Đã kết nối"
+                />
+              ) : (
+                <span className="w-2 h-2 bg-red-300 rounded-full" title="Chưa kết nối" />
+              )}
+            </div>
             <div className="text-xs text-blue-50">{unreadCount} chưa đọc</div>
           </div>
-          <Badge count={unreadCount} showZero={false} />
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <Button
+                type="text"
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMarkAllAsRead();
+                }}
+                className="text-white hover:bg-white/20 text-xs"
+              >
+                Đánh dấu tất cả đã đọc
+              </Button>
+            )}
+            <Badge count={unreadCount} showZero={false} />
+          </div>
         </div>
       </div>
       <div className="max-h-[420px] overflow-y-auto">
@@ -312,6 +461,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   type="text"
                   icon={<BellOutlined className="text-lg" />}
                   className="w-10 h-10 flex items-center justify-center hover:bg-gradient-to-br hover:from-blue-50 hover:to-purple-50 rounded-lg transition-all relative"
+                  title={isConnected ? 'Đã kết nối WebSocket' : 'Chưa kết nối WebSocket'}
                 />
                 {unreadCount > 0 && (
                   <span className="absolute top-1 -right-1 w-5 h-5 bg-gradient-to-br from-red-500 to-pink-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-lg">
@@ -412,6 +562,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           }
         }
       `}</style>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 5000,
+          style: {
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(10px)',
+            color: '#363636',
+            border: 'none',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+          },
+          success: {
+            duration: 3000,
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            duration: 4000,
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
     </Layout>
   );
 }
