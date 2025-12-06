@@ -224,6 +224,10 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
   }, [enabled, getToken, getApiUrl, onNotification, onConnect, onDisconnect, onError]);
 
   const markAsRead = useCallback((notificationId: number) => {
+    if (!notificationId || typeof notificationId !== 'number') {
+      console.warn('[useWebSocket] Invalid notification ID:', notificationId);
+      return;
+    }
     if (socketRef.current && socketRef.current.connected) {
       socketRef.current.emit('notification.read', notificationId);
     } else {

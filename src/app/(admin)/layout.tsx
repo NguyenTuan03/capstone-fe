@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Layout, Menu, Avatar, Dropdown, Badge, Button, Spin, Empty, message } from 'antd';
 import {
   DashboardOutlined,
@@ -21,6 +21,7 @@ import jwtAxios from '@/@crema/services/jwt-auth';
 import { useWebSocket } from '@/@crema/hooks/useWebSocket';
 import type { Notification as NotificationType } from '@/types/notification';
 import type { MenuProps } from 'antd';
+import { Toaster, toast } from 'react-hot-toast';
 
 const { Header, Sider, Content } = Layout;
 
@@ -31,6 +32,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
+  // Track notifications that have already shown toast to prevent duplicates
+  const shownToastIdsRef = useRef<Set<number>>(new Set());
+  // Track notifications that have already been processed to prevent duplicates in state
+  const processedNotificationIdsRef = useRef<Set<number>>(new Set());
 
   const fetchNotifications = useCallback(async () => {
     setNotificationLoading(true);
@@ -42,7 +47,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           filter: 'user.id_eq_1',
         },
       });
-      setNotifications(response.data?.items || []);
+      const fetchedNotifications = (response.data?.items || []).filter(
+        (n: NotificationType) => n && n.id !== undefined && n.id !== null,
+      );
+      setNotifications(fetchedNotifications);
+
+      // Reset processed notifications ref with current notification IDs
+      // This ensures we can process new notifications from socket even if they were in the fetched list
+      processedNotificationIdsRef.current = new Set(
+        fetchedNotifications.map((n: NotificationType) => n.id),
+      );
     } catch (error) {
       message.error('Không thể tải thông báo');
     } finally {
@@ -57,22 +71,70 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   // WebSocket connection for real-time notifications
   const { isConnected, markAsRead: markNotificationAsReadSocket } = useWebSocket({
     onNotification: (notification: NotificationType) => {
+      // Validate notification has an id
+      if (
+        !notification ||
+        !notification.id ||
+        notification.id === undefined ||
+        notification.id === null
+      ) {
+        console.error('Invalid notification received from socket:', notification);
+        return;
+      }
+
+      // Early return if this notification has already been processed
+      if (processedNotificationIdsRef.current.has(notification.id)) {
+        return;
+      }
+
+      // Mark as processed immediately to prevent duplicate processing
+      processedNotificationIdsRef.current.add(notification.id);
+
       // Add new notification to the beginning of the list
       setNotifications((prev) => {
-        // Check if notification already exists to avoid duplicates
+        // Double-check if notification already exists in state to avoid duplicates
         const exists = prev.some((n) => n.id === notification.id);
-        if (exists) return prev;
-        // Show a subtle notification toast
-        message.info({
-          content: (
-            <div>
-              <div className="font-semibold">{notification.title}</div>
-              <div className="text-sm text-gray-600 mt-1">{notification.body}</div>
-            </div>
-          ),
-          duration: 4,
-          icon: <BellOutlined />,
-        });
+        if (exists) {
+          // If already in state, remove from processed set to allow re-processing if needed
+          processedNotificationIdsRef.current.delete(notification.id);
+          return prev;
+        }
+
+        // Check if toast has already been shown for this notification
+        if (!shownToastIdsRef.current.has(notification.id)) {
+          // Mark as shown
+          shownToastIdsRef.current.add(notification.id);
+
+          // Show a subtle notification toast using react-hot-toast
+          toast(
+            () => (
+              <div className="flex items-start gap-3">
+                <div className="flex-shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400/20 to-purple-400/20 flex items-center justify-center backdrop-blur-sm">
+                    <BellOutlined className="text-blue-500 text-base" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-700">{notification.title}</p>
+                  <p className="mt-0.5 text-xs text-gray-500">{notification.body}</p>
+                </div>
+              </div>
+            ),
+            {
+              duration: 5000,
+              position: 'top-right',
+              style: {
+                padding: '12px 16px',
+                minWidth: '300px',
+                background: 'rgba(255, 255, 255, 0.95)',
+                backdropFilter: 'blur(10px)',
+                border: 'none',
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+              },
+            },
+          );
+        }
+
         return [notification, ...prev];
       });
     },
@@ -94,6 +156,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   );
 
   const handleNotificationClick = async (notification: NotificationType) => {
+    // Validate notification has an id
+    if (!notification || !notification.id) {
+      console.error('Invalid notification: missing id', notification);
+      message.error('Thông báo không hợp lệ');
+      return;
+    }
+
     setNotificationDropdownOpen(false);
 
     // Update local state immediately for better UX
@@ -104,6 +173,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // Mark as read via API
     try {
       await jwtAxios.put(`/notifications/${notification.id}/read`);
+      // Reload notifications list to ensure data sync with server
+      await fetchNotifications();
     } catch (error) {
       // Revert local state on error
       setNotifications((prev) =>
@@ -112,8 +183,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       message.error('Không thể đánh dấu thông báo đã đọc');
     }
 
-    // Emit socket event to mark as read (if connected)
-    if (isConnected) {
+    // Emit socket event to mark as read (if connected)toast
+    if (isConnected && notification.id) {
       markNotificationAsReadSocket(notification.id);
     }
 
@@ -126,7 +197,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const handleMarkAllAsRead = async () => {
     try {
       await jwtAxios.put('/notifications/read');
-      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      // Reload notifications list to ensure data sync with server
+      await fetchNotifications();
       message.success('Đã đánh dấu tất cả thông báo đã đọc');
     } catch (error) {
       message.error('Không thể đánh dấu tất cả thông báo đã đọc');
@@ -396,13 +468,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
-                {/* WebSocket connection indicator */}
-                <span
-                  className={`absolute bottom-1 right-1 top-[25%] w-2 h-2 rounded-full ${
-                    isConnected ? 'bg-green-500' : 'bg-gray-400'
-                  }`}
-                  title={isConnected ? 'Đã kết nối' : 'Chưa kết nối'}
-                />
               </div>
             </Dropdown>
 
@@ -497,6 +562,33 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           }
         }
       `}</style>
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 5000,
+          style: {
+            background: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(10px)',
+            color: '#363636',
+            border: 'none',
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
+          },
+          success: {
+            duration: 3000,
+            iconTheme: {
+              primary: '#10b981',
+              secondary: '#fff',
+            },
+          },
+          error: {
+            duration: 4000,
+            iconTheme: {
+              primary: '#ef4444',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
     </Layout>
   );
 }

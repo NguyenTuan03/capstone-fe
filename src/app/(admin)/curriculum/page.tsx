@@ -494,7 +494,7 @@ export default function CourseVerificationPage() {
           loading={loadingCourses}
           rowKey="id"
           pagination={{
-            pageSize: 10,
+            pageSize: 4,
             showSizeChanger: true,
             showTotal: (total) => `Tổng ${total} khóa học`,
           }}
