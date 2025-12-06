@@ -47,6 +47,7 @@ import {
 } from '@/@crema/services/apis/coaches';
 import { CoachVerificationStatus } from '@/types/enums';
 import useRoleGuard from '@/@crema/hooks/useRoleGuard';
+import { User } from '@/types/user';
 
 const { Title, Text, Paragraph } = Typography;
 const { Search } = Input;
@@ -72,16 +73,20 @@ interface CoachData {
   bio?: string;
   specialties?: string[];
   teachingMethods?: string[];
+  user?: User;
 }
 
 interface CredentialData {
   id: string;
-  name: string;
-  type: string;
-  publicUrl?: string;
+  baseCredential: {
+    id: number;
+    name: string;
+    description?: string;
+    type: string;
+    publicUrl?: string;
+  };
   issuedAt?: string;
   expiresAt?: string;
-  description?: string;
 }
 
 /**
@@ -227,14 +232,17 @@ export default function CoachesPage() {
             null) as CoachVerificationStatus | null,
           registrationDate: item.createdAt || item.registrationDate || new Date().toISOString(),
           credentials: Array.isArray(item.credentials)
-            ? item.credentials.map((c: any) => ({
+            ? item.credentials.map((c: CredentialData) => ({
                 id: String(c.id),
-                name: c.name,
-                type: c.type,
-                publicUrl: c.publicUrl || undefined,
+                baseCredential: {
+                  id: c.baseCredential?.id,
+                  name: c.baseCredential?.name,
+                  description: c.baseCredential?.description || undefined,
+                  type: c.baseCredential?.type,
+                  publicUrl: c.baseCredential?.publicUrl || undefined,
+                },
                 issuedAt: c.issuedAt || undefined,
                 expiresAt: c.expiresAt || undefined,
-                description: c.description || undefined,
               }))
             : [],
           bio: item.bio,
@@ -404,12 +412,18 @@ export default function CoachesPage() {
       key: 'rating',
       align: 'center',
       width: 130,
-      render: (rating: number) => (
-        <div className="text-center">
-          <div className="font-medium">{Number(rating || 0).toFixed(1)}</div>
-          <Rate disabled value={rating} allowHalf style={{ fontSize: 12 }} />
-        </div>
-      ),
+      render: (rating: number) => {
+        // Handle if rating is an object with 'overall' property
+        const ratingValue =
+          typeof rating === 'object' && rating !== null ? (rating as any).overall : rating;
+
+        return (
+          <div className="text-center">
+            <div className="font-medium">{Number(ratingValue || 0).toFixed(1)}</div>
+            <Rate disabled value={ratingValue} allowHalf style={{ fontSize: 12 }} />
+          </div>
+        );
+      },
     },
     {
       title: 'Khóa học',
@@ -616,7 +630,11 @@ export default function CoachesPage() {
           (() => {
             const dc: any = coachDetail || selectedCoach;
             const ratingToShow =
-              typeof coachRating === 'number' ? coachRating : selectedCoach?.rating || 0;
+              typeof coachRating === 'object' && coachRating?.overall
+                ? coachRating.overall
+                : typeof coachRating === 'number'
+                  ? coachRating
+                  : selectedCoach?.rating || 0;
             const statusToShow =
               (dc.verificationStatus as CoachVerificationStatus) ||
               (selectedCoach?.status as CoachVerificationStatus) ||
@@ -777,16 +795,20 @@ export default function CoachesPage() {
                     <SafetyCertificateOutlined /> Chứng chỉ ({credentialsToShow.length})
                   </Title>
                   <Space direction="vertical" className="w-full" size="middle">
-                    {credentialsToShow.map((cred: any) => (
+                    {credentialsToShow.map((cred: CredentialData) => (
                       <Card key={cred.id} size="small">
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1 min-w-0">
-                            <div className="font-medium mb-1 truncate">{cred.name}</div>
-                            <div className="text-sm text-gray-500 mb-2">
-                              <Tag color="blue">{cred.type}</Tag>
+                            <div className="font-medium mb-1 truncate">
+                              {cred.baseCredential.name}
                             </div>
-                            {cred.description && (
-                              <div className="text-sm text-gray-600 mb-2">{cred.description}</div>
+                            <div className="text-sm text-gray-500 mb-2">
+                              <Tag color="blue">{cred.baseCredential.type}</Tag>
+                            </div>
+                            {cred.baseCredential.description && (
+                              <div className="text-sm text-gray-600 mb-2">
+                                {cred.baseCredential.description}
+                              </div>
                             )}
                             <Space size="middle" className="text-xs text-gray-500">
                               {cred.issuedAt && (
@@ -797,11 +819,11 @@ export default function CoachesPage() {
                               {cred.expiresAt && <span>Hết hạn: {formatDate(cred.expiresAt)}</span>}
                             </Space>
                           </div>
-                          {cred.publicUrl && (
+                          {cred.baseCredential.publicUrl && (
                             <Button
                               type="link"
                               icon={<LinkOutlined />}
-                              onClick={() => window.open(cred.publicUrl!, '_blank')}
+                              onClick={() => window.open(cred.baseCredential.publicUrl!, '_blank')}
                             >
                               Xem
                             </Button>
@@ -1003,7 +1025,7 @@ export default function CoachesPage() {
                         </>
                       }
                     >
-                      {user.location || '-'}
+                      {`${user.district?.name} - ${user.province?.name}`}
                     </Descriptions.Item>
                     <Descriptions.Item label="Kinh nghiệm">
                       {data.yearOfExperience ?? 0} năm
@@ -1029,16 +1051,20 @@ export default function CoachesPage() {
                   </Title>
                   {credentialsToShow.length > 0 ? (
                     <Space direction="vertical" className="w-full" size="middle">
-                      {credentialsToShow.map((cred: any) => (
+                      {credentialsToShow.map((cred: CredentialData) => (
                         <Card key={cred.id} size="small">
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1 min-w-0">
-                              <div className="font-medium mb-1 truncate">{cred.name}</div>
-                              <div className="text-sm text-gray-500 mb-2">
-                                <Tag color="blue">{cred.type}</Tag>
+                              <div className="font-medium mb-1 truncate">
+                                {cred.baseCredential.name}
                               </div>
-                              {cred.description && (
-                                <div className="text-sm text-gray-600 mb-2">{cred.description}</div>
+                              <div className="text-sm text-gray-500 mb-2">
+                                <Tag color="blue">{cred.baseCredential.type}</Tag>
+                              </div>
+                              {cred.baseCredential.description && (
+                                <div className="text-sm text-gray-600 mb-2">
+                                  {cred.baseCredential.description}
+                                </div>
                               )}
                               <Space size="middle" className="text-xs text-gray-500">
                                 {cred.issuedAt && (
@@ -1051,11 +1077,13 @@ export default function CoachesPage() {
                                 )}
                               </Space>
                             </div>
-                            {cred.publicUrl && (
+                            {cred.baseCredential.publicUrl && (
                               <Button
                                 type="link"
                                 icon={<LinkOutlined />}
-                                onClick={() => window.open(cred.publicUrl!, '_blank')}
+                                onClick={() =>
+                                  window.open(cred.baseCredential.publicUrl!, '_blank')
+                                }
                               >
                                 Xem
                               </Button>
