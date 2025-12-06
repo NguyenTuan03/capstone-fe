@@ -308,6 +308,20 @@ export default function UsersPage() {
     }
   };
 
+  // Hàm chuyển đổi vai trò sang tiếng Việt
+  const getRoleName = (roleName: string): string => {
+    switch (roleName) {
+      case 'ADMIN':
+        return 'Quản trị viên';
+      case 'COACH':
+        return 'Huấn luyện viên';
+      case 'LEARNER':
+        return 'Học viên';
+      default:
+        return roleName;
+    }
+  };
+
   const handleViewDetails = (user: User) => {
     setSelectedUser(user);
     setIsDetailModalVisible(true);
@@ -361,6 +375,7 @@ export default function UsersPage() {
       key: 'role',
       sorter: (a, b) => a.role.name.localeCompare(b.role.name),
       sortDirections: ['ascend', 'descend'],
+      render: (roleName: string) => getRoleName(roleName),
     },
     {
       title: 'Ngày tạo',

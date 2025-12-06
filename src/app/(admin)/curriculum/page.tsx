@@ -69,6 +69,7 @@ interface VideoData {
   coachAvatar: string;
   lessonName: string;
   courseName: string;
+  createdAt?: string;
 }
 
 interface CourseRequestData {
@@ -86,6 +87,21 @@ interface CourseRequestData {
   createdAt: string;
   requestData: RequestWithContent;
 }
+
+// Hàm định dạng ngày tháng an toàn
+const formatDateSafe = (dateString?: string | null) => {
+  if (!dateString) return '-';
+  try {
+    // Chuyển đổi về dạng YYYY-MM-DD để đảm bảo nhất quán
+    const [datePart] = dateString.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString('vi-VN');
+  } catch (error) {
+    console.error('Lỗi khi định dạng ngày:', error);
+    return dateString || '-';
+  }
+};
 
 export default function CourseVerificationPage() {
   const router = useRouter();
@@ -187,12 +203,16 @@ export default function CourseVerificationPage() {
       }
       return;
     }
-    const foundCourse = courses.find((course) => course.id === requestId);
-    if (foundCourse) {
-      setSelectedCourse(foundCourse);
-      setIsCourseDetailModalVisible(true);
+    
+    // Only proceed if we don't already have the course selected or if the selected course ID doesn't match
+    if (!selectedCourse || selectedCourse.id !== requestId) {
+      const foundCourse = courses.find((course: CourseRequestData) => course.id === requestId);
+      if (foundCourse) {
+        setSelectedCourse(foundCourse);
+        setIsCourseDetailModalVisible(true);
+      }
     }
-  }, [searchParams, courses, isCourseDetailModalVisible]);
+  }, [searchParams, courses, selectedCourse]); // Removed isCourseDetailModalVisible from dependencies
 
   // Helper functions
   const getStatusColor = (status: string) => {
@@ -763,7 +783,7 @@ export default function CourseVerificationPage() {
                                       {lesson.video.description}
                                     </div>
                                     <div className="mt-2">
-                                      <Tag>Thời lượng: {lessonStats.videoDuration}</Tag>
+                                      <Tag>Thời lượng: {lessonStats.videoDurationFormatted}</Tag>
                                       <Tag>Trạng thái: {getStatusText(lesson.video.status)}</Tag>
                                     </div>
                                     {lesson.video.publicUrl && (
@@ -792,6 +812,9 @@ export default function CourseVerificationPage() {
                                             coachAvatar: selectedCourse.coachAvatar,
                                             lessonName: lesson.name,
                                             courseName: selectedCourse.courseName,
+                                            createdAt: selectedCourse?.createdAt
+                                              ? formatDateSafe(selectedCourse.createdAt)
+                                              : '-',
                                           })
                                         }
                                       >
@@ -809,7 +832,7 @@ export default function CourseVerificationPage() {
                                 <div className="space-y-3">
                                   <div className="font-medium">{lesson.quiz.title}</div>
                                   {lesson.quiz.description && (
-                                    <div className="text-sm text-gray-600">
+                                    <div className="text-sm text-gray-500">
                                       {lesson.quiz.description}
                                     </div>
                                   )}
@@ -870,13 +893,13 @@ export default function CourseVerificationPage() {
                             <Card size="small" title="Thông tin Bài Học">
                               <Descriptions column={2} size="small">
                                 <Descriptions.Item label="Thời lượng">
-                                  {lessonStats.totalDuration}
+                                  {lessonStats.totalDurationFormatted}
                                 </Descriptions.Item>
                                 <Descriptions.Item label="Số thứ tự">
                                   Bài {lesson.lessonNumber}
                                 </Descriptions.Item>
                                 <Descriptions.Item label="Ngày tạo">
-                                  {new Date(lesson.createdAt).toLocaleDateString('vi-VN')}
+                                  {lesson?.createdAt ? formatDateSafe(lesson.createdAt) : '-'}
                                 </Descriptions.Item>
                               </Descriptions>
                             </Card>
