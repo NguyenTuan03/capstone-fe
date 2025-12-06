@@ -32,6 +32,7 @@ import {
   QuestionCircleOutlined,
   VideoCameraOutlined,
   ClockCircleOutlined,
+  ReloadOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import useRoleGuard from '@/@crema/hooks/useRoleGuard';
@@ -435,26 +436,6 @@ export default function CourseVerificationPage() {
               onClick={() => handleViewCourseDetails(record)}
             />
           </Tooltip>
-          {record.status === 'PENDING' && (
-            <>
-              <Tooltip title="Phê duyệt">
-                <Button
-                  type="primary"
-                  size="small"
-                  icon={<CheckOutlined />}
-                  onClick={() => openApproveModal(record)}
-                />
-              </Tooltip>
-              <Tooltip title="Từ chối">
-                <Button
-                  danger
-                  size="small"
-                  icon={<CloseOutlined />}
-                  onClick={() => openRejectModal(record)}
-                />
-              </Tooltip>
-            </>
-          )}
         </Space>
       ),
     },

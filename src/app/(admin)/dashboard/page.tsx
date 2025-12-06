@@ -112,7 +112,7 @@ export default function DashboardPage() {
       color: 'yellow' as const,
     },
     {
-      title: 'Báo Cáo Hệ Thống',
+      title: 'Phê Duyệt',
       value: data.systemReports.approved + data.systemReports.pending + data.systemReports.rejected,
       icon: AlertCircle,
       color: 'red' as const,

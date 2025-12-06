@@ -197,18 +197,6 @@ export default function ConfigurationsPage() {
   // Table columns
   const columns: ColumnsType<Configuration> = [
     {
-      title: 'Key',
-      dataIndex: 'key',
-      key: 'key',
-      width: 200,
-      fixed: 'left',
-      render: (key: string) => (
-        <Text strong className="font-mono">
-          {key}
-        </Text>
-      ),
-    },
-    {
       title: 'Value',
       dataIndex: 'value',
       key: 'value',
@@ -303,9 +291,9 @@ export default function ConfigurationsPage() {
           <Button icon={<ReloadOutlined />} onClick={() => refetch()}>
             Làm mới
           </Button>
-          <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
+          {/* <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
             Tạo cấu hình
-          </Button>
+          </Button> */}
         </Space>
       </div>
 

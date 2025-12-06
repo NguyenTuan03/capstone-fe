@@ -27,6 +27,7 @@ import {
   SafetyCertificateOutlined,
   CheckOutlined,
   CloseOutlined,
+  ReloadOutlined,
   TrophyOutlined,
   CheckCircleOutlined,
   ClockCircleOutlined,
@@ -319,6 +320,35 @@ export default function CoachesPage() {
     }
   };
 
+  // Hàm xử lý khi nhấn nút Kiểm tra lại
+  const handleRecheck = async (coach: CoachData) => {
+    try {
+      // Mô phỏng gọi API
+      console.log('Gọi API kiểm tra lại huấn luyện viên:', coach.id);
+      
+      // Hiển thị loading
+      const hide = message.loading('Đang xử lý yêu cầu kiểm tra lại...', 0);
+      
+      // Giả lập thời gian chờ 1.5 giây
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Ẩn loading
+      hide();
+      
+      // Hiển thị thông báo thành công
+      message.success(`Đã gửi yêu cầu kiểm tra lại cho huấn luyện viên ${coach.name}`);
+      
+      // Đóng modal chi tiết
+      setIsDetailModalVisible(false);
+      
+      // Làm mới dữ liệu
+      await refetch();
+    } catch (error) {
+      message.error('Có lỗi xảy ra khi gửi yêu cầu kiểm tra lại');
+      console.error('Lỗi khi kiểm tra lại huấn luyện viên:', error);
+    }
+  };
+
   /** TABLE COLUMNS */
   const InfoCell: React.FC<{ record: CoachData; showBadge?: boolean }> = ({
     record,
@@ -379,12 +409,6 @@ export default function CoachesPage() {
         <Space size="small">
           <Tooltip title="Xem chi tiết">
             <Button icon={<EyeOutlined />} onClick={() => openViewDetail(record.id)} />
-          </Tooltip>
-          <Tooltip title="Phê duyệt">
-            <Button type="primary" icon={<CheckOutlined />} onClick={() => openApprove(record)} />
-          </Tooltip>
-          <Tooltip title="Từ chối">
-            <Button danger icon={<CloseOutlined />} onClick={() => openReject(record)} />
           </Tooltip>
         </Space>
       ),
@@ -602,6 +626,23 @@ export default function CoachesPage() {
                   }
                 >
                   <CheckOutlined /> Phê duyệt
+                </Button>,
+              ]
+            : (coachDetail?.verificationStatus || selectedCoach?.status) ===
+              CoachVerificationStatus.REJECTED
+            ? [
+                <Button key="close" onClick={() => setIsDetailModalVisible(false)}>
+                  Đóng
+                </Button>,
+                <Button
+                  key="recheck"
+                  type="primary"
+                  onClick={() =>
+                    (coachDetail || selectedCoach) &&
+                    handleRecheck((coachDetail as any) || selectedCoach!)
+                  }
+                >
+                  <ReloadOutlined /> Kiểm tra lại
                 </Button>,
               ]
             : [
