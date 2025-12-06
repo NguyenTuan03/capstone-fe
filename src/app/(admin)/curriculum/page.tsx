@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   Table,
@@ -26,13 +26,11 @@ import {
   SearchOutlined,
   EyeOutlined,
   CheckOutlined,
-  CloseOutlined,
   FilterOutlined,
   UserOutlined,
   QuestionCircleOutlined,
   VideoCameraOutlined,
   ClockCircleOutlined,
-  ReloadOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import useRoleGuard from '@/@crema/hooks/useRoleGuard';
@@ -99,10 +97,11 @@ export default function CourseVerificationPage() {
     LEARNER: '/home',
   });
 
-  // API hooks
+  // API hooks - fetch up to 1000 items, then paginate on client-side
   const { data: requestsData, refetch: refetchRequests } = useGetRequests({
     type: 'COURSE_APPROVAL',
     status: 'PENDING',
+    pageSize: 1000,
   });
 
   const approveRequestMutation = useApproveRequest();
@@ -142,8 +141,8 @@ export default function CourseVerificationPage() {
         return true;
       })
       .map((request: RequestWithContent) => {
-        const courseDetails = request.metadata.details;
-        const lessons = courseDetails.subject.lessons || [];
+        const courseDetails = request.metadata?.details;
+        const lessons = courseDetails?.subject?.lessons || [];
         const createdBy = request.createdBy;
 
         const totalVideos = lessons.filter((lesson: LessonWithDetails) => lesson.video).length;
@@ -151,9 +150,9 @@ export default function CourseVerificationPage() {
 
         return {
           id: request.id.toString(),
-          courseName: courseDetails.name || 'Unnamed Course',
-          courseDescription: courseDetails.description || '',
-          level: courseDetails.subject.level || 'BEGINNER',
+          courseName: courseDetails?.name || 'Unnamed Course',
+          courseDescription: courseDetails?.description || '',
+          level: courseDetails?.subject?.level || 'BEGINNER',
           status: request.status,
           coachName: createdBy?.fullName || 'Unknown',
           coachEmail: createdBy?.email || '',
@@ -696,7 +695,8 @@ export default function CourseVerificationPage() {
             <div className="mt-4">
               <Title level={5}>Danh sách bài học</Title>
               {(() => {
-                const lessons = selectedCourse.requestData.metadata.details.subject.lessons;
+                const lessons =
+                  selectedCourse.requestData?.metadata?.details?.subject?.lessons || [];
 
                 if (!lessons || lessons.length === 0) {
                   return (
