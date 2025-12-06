@@ -133,6 +133,7 @@ export class StatisticsApiService {
         data: sessionAnalytics,
       };
     } catch (error) {
+      console.error('Error fetching session analytics:', error);
       return {
         success: false,
         message: 'Failed to fetch session analytics',
@@ -159,6 +160,7 @@ export class StatisticsApiService {
         data: revenueAnalytics,
       };
     } catch (error) {
+      console.error('Error fetching revenue analytics:', error);
       return {
         success: false,
         message: 'Failed to fetch revenue analytics',
@@ -179,6 +181,7 @@ export class StatisticsApiService {
         data: allStatistics.engagementAnalytics,
       };
     } catch (error) {
+      console.error('Error fetching engagement analytics:', error);
       return {
         success: false,
         message: 'Failed to fetch engagement analytics',
@@ -199,6 +202,7 @@ export class StatisticsApiService {
         data: allStatistics.geographicData,
       };
     } catch (error) {
+      console.error('Error fetching geographic data:', error);
       return {
         success: false,
         message: 'Failed to fetch geographic data',
