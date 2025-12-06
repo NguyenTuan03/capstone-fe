@@ -91,12 +91,6 @@ const apiCall = async <TData = unknown>(
       localStorage.getItem('token') ||
       sessionStorage.getItem(TOKEN_KEY) ||
       sessionStorage.getItem('token');
-    console.log('[apiCall]', method, url, {
-      hasToken: !!token,
-      tokenLength: token?.length || 0,
-      tokenPreview: token ? `${token.substring(0, 20)}...` : 'none',
-      authHeader: authHeaders,
-    });
     if (!token) {
       console.warn('[apiCall] No token found in storage for', method, url);
     }
