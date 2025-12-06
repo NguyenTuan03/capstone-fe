@@ -618,9 +618,10 @@ export default function CoachesPage() {
         open={isDetailModalVisible}
         onCancel={() => setIsDetailModalVisible(false)}
         footer={
-          [CoachVerificationStatus.UNVERIFIED, CoachVerificationStatus.PENDING].includes(
-          (coachDetail?.verificationStatus || selectedCoach?.status) as CoachVerificationStatus
-        )
+          (coachDetail?.verificationStatus === CoachVerificationStatus.UNVERIFIED || 
+         coachDetail?.verificationStatus === CoachVerificationStatus.PENDING ||
+         selectedCoach?.status === CoachVerificationStatus.UNVERIFIED ||
+         selectedCoach?.status === CoachVerificationStatus.PENDING)
             ? [
                 <Button
                   key="reject"
