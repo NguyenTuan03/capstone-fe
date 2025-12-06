@@ -18,6 +18,7 @@ export const useGetAllCoaches = (params?: Record<string, any>) => {
         },
         params,
       });
+      console.log('Coaches response:', response.data);
       return response.data;
     },
   });
@@ -27,17 +28,19 @@ export const useGetAllCoaches = (params?: Record<string, any>) => {
 // Get a single coach by ID
 // -------------------------
 export const useGetCoachById = (id: string) => {
+  console.log('Fetching coach with ID:', id);
   return useQuery({
     queryKey: ['coach', id],
     queryFn: async () => {
       if (!id) return null;
       const token = typeof window !== 'undefined' ? localStorage.getItem('token') || '' : '';
-      const url = buildUrl(`coaches/${id}`);
+      const url = buildUrl(`coaches/${id}?isUser=false`);
       const response = await axios.get(url, {
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
       });
+      console.log('Coach response:', response.data);
       return response.data;
     },
     enabled: !!id, // chỉ fetch khi có id
