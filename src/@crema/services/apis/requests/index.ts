@@ -207,14 +207,71 @@ export const transformLessonData = (lesson: Lesson): LessonWithDetails => {
   };
 };
 
-export const transformSubjectData = (subject: Subject): SubjectWithLessons => {
+export const transformSubjectData = (subject: Subject | null | undefined): SubjectWithLessons => {
+  if (!subject) {
+    // Return a default subject with empty lessons
+    return {
+      id: 0,
+      name: '',
+      level: '',
+      status: '',
+      lessons: [],
+      createdAt: '',
+      deletedAt: null,
+      publicUrl: null,
+      updatedAt: '',
+      description: '',
+    };
+  }
   return {
     ...subject,
     lessons: subject.lessons?.map(transformLessonData) || [],
   };
 };
 
-export const transformCourseDetails = (details: CourseDetails): CourseDetailsWithContent => {
+export const transformCourseDetails = (
+  details: CourseDetails | null | undefined,
+): CourseDetailsWithContent => {
+  if (!details) {
+    // Return a default course details object
+    return {
+      id: 0,
+      name: '',
+      court: { id: 0 },
+      level: '',
+      status: '',
+      endDate: '',
+      subject: {
+        id: 0,
+        name: '',
+        level: '',
+        status: '',
+        lessons: [],
+        createdAt: '',
+        deletedAt: null,
+        publicUrl: null,
+        updatedAt: '',
+        description: '',
+      },
+      createdAt: '',
+      createdBy: { id: 0 },
+      deletedAt: null,
+      publicUrl: null,
+      schedules: [],
+      startDate: '',
+      updatedAt: '',
+      description: '',
+      progressPct: 0,
+      totalEarnings: '0',
+      totalSessions: 0,
+      learningFormat: '',
+      maxParticipants: 0,
+      minParticipants: 0,
+      cancellingReason: null,
+      currentParticipants: 0,
+      pricePerParticipant: '0',
+    };
+  }
   return {
     ...details,
     subject: transformSubjectData(details.subject),
@@ -226,7 +283,7 @@ export const transformRequestData = (request: Request): RequestWithContent => {
     ...request,
     metadata: {
       ...request.metadata,
-      details: transformCourseDetails(request.metadata.details),
+      details: transformCourseDetails(request.metadata?.details),
     },
   };
 };
@@ -249,9 +306,6 @@ export const useGetRequests = (params?: GetRequestsParams) => {
         populate:
           'metadata.details.subject.lessons.quiz.questions,metadata.details.subject.lessons.video',
       };
-
-      console.log('Request URL:', url);
-      console.log('Request Params:', requestParams);
 
       const response = await axios.get<GetRequestsResponse>(url, {
         params: requestParams,

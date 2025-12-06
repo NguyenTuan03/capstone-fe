@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Layout, Menu, Avatar, Dropdown, Badge, Button, Spin, Empty } from 'antd';
+import { Layout, Menu, Avatar, Dropdown, Badge, Button, Spin, Empty, message } from 'antd';
 import {
   DashboardOutlined,
   UserOutlined,
@@ -18,23 +18,15 @@ import {
 } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
 import jwtAxios from '@/@crema/services/jwt-auth';
+import { useWebSocket } from '@/@crema/hooks/useWebSocket';
+import type { Notification as NotificationType } from '@/types/notification';
 import type { MenuProps } from 'antd';
 
 const { Header, Sider, Content } = Layout;
 
-interface NotificationItem {
-  id: number;
-  title: string;
-  body: string;
-  navigateTo: string;
-  type: string;
-  isRead: boolean;
-  createdAt: string;
-}
-
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false);
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [notifications, setNotifications] = useState<NotificationType[]>([]);
   const [notificationLoading, setNotificationLoading] = useState(false);
   const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
   const router = useRouter();
@@ -47,11 +39,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         params: {
           page: 1,
           pageSize: 10,
+          filter: 'user.id_eq_1',
         },
       });
       setNotifications(response.data?.items || []);
     } catch (error) {
-      console.error('Failed to load notifications:', error);
+      message.error('Không thể tải thông báo');
     } finally {
       setNotificationLoading(false);
     }
@@ -61,35 +54,119 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     fetchNotifications();
   }, [fetchNotifications]);
 
+  // WebSocket connection for real-time notifications
+  const { isConnected, markAsRead: markNotificationAsReadSocket } = useWebSocket({
+    onNotification: (notification: NotificationType) => {
+      // Add new notification to the beginning of the list
+      setNotifications((prev) => {
+        // Check if notification already exists to avoid duplicates
+        const exists = prev.some((n) => n.id === notification.id);
+        if (exists) return prev;
+        // Show a subtle notification toast
+        message.info({
+          content: (
+            <div>
+              <div className="font-semibold">{notification.title}</div>
+              <div className="text-sm text-gray-600 mt-1">{notification.body}</div>
+            </div>
+          ),
+          duration: 4,
+          icon: <BellOutlined />,
+        });
+        return [notification, ...prev];
+      });
+    },
+    onConnect: () => {},
+    onDisconnect: (reason) => {
+      if (reason === 'io server disconnect') {
+        message.warning('Mất kết nối với server. Đang thử kết nối lại...');
+      }
+    },
+    onError: (error) => {
+      // Don't show error message for every connection attempt to avoid spam
+    },
+    enabled: true,
+  });
+
   const unreadCount = useMemo(
     () => notifications.filter((item) => !item.isRead).length,
     [notifications],
   );
 
-  const handleNotificationClick = async (notification: NotificationItem) => {
+  const handleNotificationClick = async (notification: NotificationType) => {
     setNotificationDropdownOpen(false);
+
+    // Update local state immediately for better UX
+    setNotifications((prev) =>
+      prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n)),
+    );
+
+    // Mark as read via API
     try {
-      await jwtAxios.patch(`/notifications/${notification.id}/read`);
+      await jwtAxios.put(`/notifications/${notification.id}/read`);
     } catch (error) {
-      console.error('Failed to mark notification as read:', error);
+      // Revert local state on error
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notification.id ? { ...n, isRead: false } : n)),
+      );
+      message.error('Không thể đánh dấu thông báo đã đọc');
     }
 
+    // Emit socket event to mark as read (if connected)
+    if (isConnected) {
+      markNotificationAsReadSocket(notification.id);
+    }
+
+    // Navigate if needed
     if (notification.navigateTo) {
       router.push(notification.navigateTo);
     }
+  };
 
-    fetchNotifications();
+  const handleMarkAllAsRead = async () => {
+    try {
+      await jwtAxios.put('/notifications/read');
+      setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+      message.success('Đã đánh dấu tất cả thông báo đã đọc');
+    } catch (error) {
+      message.error('Không thể đánh dấu tất cả thông báo đã đọc');
+    }
   };
 
   const notificationDropdown = (
     <div className="w-96 max-h-[500px] overflow-hidden rounded-2xl bg-white shadow-2xl border border-gray-100">
       <div className="px-5 py-4 bg-gradient-to-r from-blue-500 to-purple-600">
         <div className="flex items-center justify-between">
-          <div>
-            <div className="text-base font-bold text-white">Thông báo</div>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <div className="text-base font-bold text-white">Thông báo</div>
+              {isConnected ? (
+                <span
+                  className="w-2 h-2 bg-green-300 rounded-full animate-pulse"
+                  title="Đã kết nối"
+                />
+              ) : (
+                <span className="w-2 h-2 bg-red-300 rounded-full" title="Chưa kết nối" />
+              )}
+            </div>
             <div className="text-xs text-blue-50">{unreadCount} chưa đọc</div>
           </div>
-          <Badge count={unreadCount} showZero={false} />
+          <div className="flex items-center gap-2">
+            {unreadCount > 0 && (
+              <Button
+                type="text"
+                size="small"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleMarkAllAsRead();
+                }}
+                className="text-white hover:bg-white/20 text-xs"
+              >
+                Đánh dấu tất cả đã đọc
+              </Button>
+            )}
+            <Badge count={unreadCount} showZero={false} />
+          </div>
         </div>
       </div>
       <div className="max-h-[420px] overflow-y-auto">
@@ -312,12 +389,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   type="text"
                   icon={<BellOutlined className="text-lg" />}
                   className="w-10 h-10 flex items-center justify-center hover:bg-gradient-to-br hover:from-blue-50 hover:to-purple-50 rounded-lg transition-all relative"
+                  title={isConnected ? 'Đã kết nối WebSocket' : 'Chưa kết nối WebSocket'}
                 />
                 {unreadCount > 0 && (
                   <span className="absolute top-1 -right-1 w-5 h-5 bg-gradient-to-br from-red-500 to-pink-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-lg">
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
+                {/* WebSocket connection indicator */}
+                <span
+                  className={`absolute bottom-1 right-1 top-[25%] w-2 h-2 rounded-full ${
+                    isConnected ? 'bg-green-500' : 'bg-gray-400'
+                  }`}
+                  title={isConnected ? 'Đã kết nối' : 'Chưa kết nối'}
+                />
               </div>
             </Dropdown>
 

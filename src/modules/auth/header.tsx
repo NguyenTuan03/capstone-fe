@@ -1,13 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { Button, Dropdown, Typography } from 'antd';
-import {
-  ArrowLeftOutlined,
-  SettingOutlined,
-  SunOutlined,
-  MoonOutlined,
-  GlobalOutlined,
-} from '@ant-design/icons';
+import { SettingOutlined, SunOutlined, MoonOutlined, GlobalOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import type { MenuProps } from 'antd';
 
@@ -17,10 +11,6 @@ const Header = () => {
   const router = useRouter();
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [currentLanguage, setCurrentLanguage] = useState('vi');
-
-  const handleBack = () => {
-    router.back();
-  };
 
   const handleToggleTheme = () => {
     setIsDarkMode(!isDarkMode);
@@ -62,7 +52,7 @@ const Header = () => {
             <div className="w-10 h-10 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
               <span className="text-white font-bold text-lg">PL</span>
             </div>
-            
+
             {/* Title and subtitle */}
             <div className="flex flex-col">
               <h1 className="text-xl font-bold text-gray-800 mb-0">PICKLE-LEARN Admin</h1>
