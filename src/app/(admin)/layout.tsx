@@ -101,31 +101,51 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
     const nextPage = notificationPage + 1;
     setNotificationPage(nextPage);
+    // fetchNotifications will handle notificationLoadingMore state
     await fetchNotifications(nextPage, true);
   }, [notificationPage, notificationLoadingMore, hasMoreNotifications, fetchNotifications]);
 
   // Handle scroll event for infinite scroll
   useEffect(() => {
+    // Only attach scroll listener when dropdown is open
+    if (!notificationDropdownOpen) return;
+
     const scrollElement = notificationScrollRef.current;
     if (!scrollElement) return;
 
+    let scrollTimer: NodeJS.Timeout | null = null;
+
     const handleScroll = () => {
-      const { scrollTop, scrollHeight, clientHeight } = scrollElement;
-      // Load more when user scrolls to within 50px of the bottom
-      if (
-        scrollHeight - scrollTop - clientHeight < 50 &&
-        hasMoreNotifications &&
-        !notificationLoadingMore
-      ) {
-        loadMoreNotifications();
+      // Debounce scroll events to avoid too many calls
+      if (scrollTimer) {
+        clearTimeout(scrollTimer);
       }
+
+      scrollTimer = setTimeout(() => {
+        const { scrollTop, scrollHeight, clientHeight } = scrollElement;
+        const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+
+        // Load more when user scrolls to within 50px of the bottom
+        if (distanceFromBottom < 50 && hasMoreNotifications && !notificationLoadingMore) {
+          loadMoreNotifications();
+        }
+      }, 100); // 100ms debounce
     };
 
-    scrollElement.addEventListener('scroll', handleScroll);
+    scrollElement.addEventListener('scroll', handleScroll, { passive: true });
+
     return () => {
+      if (scrollTimer) {
+        clearTimeout(scrollTimer);
+      }
       scrollElement.removeEventListener('scroll', handleScroll);
     };
-  }, [hasMoreNotifications, notificationLoadingMore, loadMoreNotifications]);
+  }, [
+    notificationDropdownOpen,
+    hasMoreNotifications,
+    notificationLoadingMore,
+    loadMoreNotifications,
+  ]);
 
   // WebSocket connection for real-time notifications - using SocketContext
   // SocketContext handles notification queue and toast display automatically (similar to mobile app)

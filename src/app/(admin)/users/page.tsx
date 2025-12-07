@@ -113,7 +113,7 @@ export default function UsersPage() {
     // 2. Tìm kiếm theo tên
     if (searchText.trim()) {
       const keyword = searchText.trim().toLowerCase();
-      result = result.filter((user) => user.fullName.toLowerCase().includes(keyword));
+      result = result.filter((user) => (user.fullName || '').toLowerCase().includes(keyword));
     }
 
     // 3. Filter theo trạng thái
@@ -350,14 +350,22 @@ export default function UsersPage() {
       title: 'Họ tên',
       dataIndex: 'fullName',
       key: 'fullName',
-      sorter: (a, b) => a.fullName.localeCompare(b.fullName),
+      sorter: (a, b) => {
+        const aName = a.fullName || '';
+        const bName = b.fullName || '';
+        return aName.localeCompare(bName);
+      },
       sortDirections: ['ascend', 'descend'],
     },
     {
       title: 'Email',
       dataIndex: 'email',
       key: 'email',
-      sorter: (a, b) => a.email.localeCompare(b.email),
+      sorter: (a, b) => {
+        const aEmail = a.email || '';
+        const bEmail = b.email || '';
+        return aEmail.localeCompare(bEmail);
+      },
       sortDirections: ['ascend', 'descend'],
     },
     {
@@ -373,7 +381,11 @@ export default function UsersPage() {
       title: 'Vai trò',
       dataIndex: ['role', 'name'],
       key: 'role',
-      sorter: (a, b) => a.role.name.localeCompare(b.role.name),
+      sorter: (a, b) => {
+        const aRoleName = a.role?.name || '';
+        const bRoleName = b.role?.name || '';
+        return aRoleName.localeCompare(bRoleName);
+      },
       sortDirections: ['ascend', 'descend'],
       render: (roleName: string) => getRoleName(roleName),
     },
@@ -381,9 +393,13 @@ export default function UsersPage() {
       title: 'Ngày tạo',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      sorter: (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+      sorter: (a, b) => {
+        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return aTime - bTime;
+      },
       sortDirections: ['descend', 'ascend'],
-      render: (date: string) => new Date(date).toLocaleDateString('vi-VN'),
+      render: (date: string) => (date ? new Date(date).toLocaleDateString('vi-VN') : '-'),
     },
     {
       title: 'Thao tác',

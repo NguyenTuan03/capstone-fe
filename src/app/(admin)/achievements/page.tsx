@@ -13,7 +13,6 @@ import {
   Typography,
   Row,
   Col,
-  message,
   Descriptions,
   Tooltip,
   Switch,
@@ -22,6 +21,7 @@ import {
   App,
   Upload,
 } from 'antd';
+import { toast } from 'react-hot-toast';
 import {
   TrophyOutlined,
   SearchOutlined,
@@ -328,16 +328,16 @@ export default function AchievementsPage() {
   const handleConfirmCreate = async () => {
     // Validate common fields
     if (!createForm.name.trim()) {
-      message.error('Vui lòng nhập tên thành tựu');
+      toast.error('Vui lòng nhập tên thành tựu');
       return;
     }
     if (!createForm.description.trim()) {
-      message.error('Vui lòng nhập mô tả');
+      toast.error('Vui lòng nhập mô tả');
       return;
     }
     // Icon file is optional - không bắt buộc
     // if (!createIconFile) {
-    //   message.error('Vui lòng chọn file icon');
+    //   toast.error('Vui lòng chọn file icon');
     //   return;
     // }
 
@@ -345,22 +345,23 @@ export default function AchievementsPage() {
     setIsCreating(true);
 
     try {
+      let response;
       // Call API based on type
       if (createForm.type === 'EVENT_COUNT') {
         // Validate EVENT_COUNT fields
         if (!createForm.eventName.trim()) {
-          message.error('Vui lòng nhập tên event');
+          toast.error('Vui lòng nhập tên event');
           setIsCreating(false);
           return;
         }
         if (createForm.targetCount < 1) {
-          message.error('Mục tiêu phải lớn hơn 0');
+          toast.error('Mục tiêu phải lớn hơn 0');
           setIsCreating(false);
           return;
         }
 
         // Call EVENT_COUNT API
-        await createEventCountMutation.mutateAsync({
+        response = await createEventCountMutation.mutateAsync({
           name: createForm.name,
           description: createForm.description,
           icon: createIconFile || undefined,
@@ -376,13 +377,13 @@ export default function AchievementsPage() {
           !createForm.propertyName.trim() ||
           !createForm.targetValue.trim()
         ) {
-          message.error('Vui lòng điền đầy đủ thông tin');
+          toast.error('Vui lòng điền đầy đủ thông tin');
           setIsCreating(false);
           return;
         }
 
         // Call PROPERTY_CHECK API
-        await createPropertyCheckMutation.mutateAsync({
+        response = await createPropertyCheckMutation.mutateAsync({
           name: createForm.name,
           description: createForm.description,
           icon: createIconFile || undefined,
@@ -396,18 +397,18 @@ export default function AchievementsPage() {
       } else if (createForm.type === 'STREAK') {
         // Validate STREAK fields
         if (!createForm.eventName.trim()) {
-          message.error('Vui lòng nhập tên event');
+          toast.error('Vui lòng nhập tên event');
           setIsCreating(false);
           return;
         }
         if (createForm.targetStreakLength < 1) {
-          message.error('Target streak phải lớn hơn 0');
+          toast.error('Target streak phải lớn hơn 0');
           setIsCreating(false);
           return;
         }
 
         // Call STREAK API
-        await createStreakMutation.mutateAsync({
+        response = await createStreakMutation.mutateAsync({
           name: createForm.name,
           description: createForm.description,
           icon: createIconFile || undefined,
@@ -418,11 +419,14 @@ export default function AchievementsPage() {
         });
       }
 
-      // Success - close modal, reset form, and refetch
-      refetch();
+      // Success - show toast, close modal, reset form, and refetch
+      const successMessage = response?.message || 'Tạo thành tựu thành công';
+      toast.success(successMessage);
+      await refetch();
     } catch (error: any) {
-      // Error already handled by mutation onError
+      // Error handling
       console.error('Create achievement error:', error);
+      toast.error(error?.message || 'Không thể tạo thành tựu');
     } finally {
       // Always close modal and reset state (whether success or error)
       setIsCreating(false);
@@ -445,17 +449,23 @@ export default function AchievementsPage() {
         centered: true,
         onOk: async () => {
           try {
+            let response;
             // Call the appropriate API based on new status
             if (newStatus) {
               console.log('🟢 Activating achievement ID:', achievement.id);
-              await activateAchievementMutation.mutateAsync(achievement.id);
+              response = await activateAchievementMutation.mutateAsync(achievement.id);
             } else {
               console.log('🔴 Deactivating achievement ID:', achievement.id);
-              await deactivateAchievementMutation.mutateAsync(achievement.id);
+              response = await deactivateAchievementMutation.mutateAsync(achievement.id);
             }
-            refetch();
-          } catch (error) {
+            const successMessage =
+              response?.message ||
+              `${statusText.charAt(0).toUpperCase() + statusText.slice(1)} thành tựu thành công`;
+            toast.success(successMessage);
+            await refetch();
+          } catch (error: any) {
             console.error('Toggle status error:', error);
+            toast.error(error?.message || `Không thể ${statusText} thành tựu`);
           }
         },
       });
@@ -480,11 +490,14 @@ export default function AchievementsPage() {
             console.log('🚀 Sending DELETE request for ID:', achievement.id);
             const result = await deleteAchievementMutation.mutateAsync(achievement.id);
             console.log('✅ Delete successful:', result);
-            refetch();
+            const successMessage = result?.message || 'Xóa thành tựu thành công';
+            toast.success(successMessage);
+            await refetch();
           } catch (error: any) {
             console.error('❌ Delete achievement error:', error);
             console.error('Error response:', error?.response?.data);
             console.error('Error status:', error?.response?.status);
+            toast.error(error?.message || 'Không thể xóa thành tựu');
           }
         },
       });
@@ -535,11 +548,11 @@ export default function AchievementsPage() {
 
     // Validate common fields
     if (!editForm.name.trim()) {
-      message.error('Vui lòng nhập tên thành tựu');
+      toast.error('Vui lòng nhập tên thành tựu');
       return;
     }
     if (!editForm.description.trim()) {
-      message.error('Vui lòng nhập mô tả');
+      toast.error('Vui lòng nhập mô tả');
       return;
     }
     // Icon file is optional - không bắt buộc khi edit
@@ -548,22 +561,23 @@ export default function AchievementsPage() {
 
     try {
       const id = editingAchievement.id;
+      let response;
 
       // Call API based on type
       if (editForm.type === 'EVENT_COUNT') {
         // Validate EVENT_COUNT fields
         if (!editForm.eventName.trim()) {
-          message.error('Vui lòng nhập tên event');
+          toast.error('Vui lòng nhập tên event');
           setIsUpdating(false);
           return;
         }
         if (editForm.targetCount < 1) {
-          message.error('Mục tiêu phải lớn hơn 0');
+          toast.error('Mục tiêu phải lớn hơn 0');
           setIsUpdating(false);
           return;
         }
 
-        await updateEventCountMutation.mutateAsync({
+        response = await updateEventCountMutation.mutateAsync({
           id,
           data: {
             name: editForm.name,
@@ -582,12 +596,12 @@ export default function AchievementsPage() {
           !editForm.propertyName.trim() ||
           !editForm.targetValue.trim()
         ) {
-          message.error('Vui lòng điền đầy đủ thông tin');
+          toast.error('Vui lòng điền đầy đủ thông tin');
           setIsUpdating(false);
           return;
         }
 
-        await updatePropertyCheckMutation.mutateAsync({
+        response = await updatePropertyCheckMutation.mutateAsync({
           id,
           data: {
             name: editForm.name,
@@ -604,17 +618,17 @@ export default function AchievementsPage() {
       } else if (editForm.type === 'STREAK') {
         // Validate STREAK fields
         if (!editForm.eventName.trim()) {
-          message.error('Vui lòng nhập tên event');
+          toast.error('Vui lòng nhập tên event');
           setIsUpdating(false);
           return;
         }
         if (editForm.targetStreakLength < 1) {
-          message.error('Target streak phải lớn hơn 0');
+          toast.error('Target streak phải lớn hơn 0');
           setIsUpdating(false);
           return;
         }
 
-        await updateStreakMutation.mutateAsync({
+        response = await updateStreakMutation.mutateAsync({
           id,
           data: {
             name: editForm.name,
@@ -628,11 +642,14 @@ export default function AchievementsPage() {
         });
       }
 
-      // Success - close modal, reset form, and refetch
-      refetch();
+      // Success - show toast, close modal, reset form, and refetch
+      const successMessage = response?.message || 'Cập nhật thành tựu thành công';
+      toast.success(successMessage);
+      await refetch();
     } catch (error: any) {
-      // Error already handled by mutation onError
+      // Error handling
       console.error('Update achievement error:', error);
+      toast.error(error?.message || 'Không thể cập nhật thành tựu');
     } finally {
       // Always close modal and reset state (whether success or error)
       setIsUpdating(false);
@@ -1134,13 +1151,13 @@ export default function AchievementsPage() {
                 // Kiểm tra loại file
                 const isImage = file.type.startsWith('image/');
                 if (!isImage) {
-                  message.error('Chỉ được upload file ảnh!');
+                  toast.error('Chỉ được upload file ảnh!');
                   return Upload.LIST_IGNORE;
                 }
                 // Kiểm tra kích thước (max 5MB)
                 const isLt5M = file.size / 1024 / 1024 < 5;
                 if (!isLt5M) {
-                  message.error('Ảnh phải nhỏ hơn 5MB!');
+                  toast.error('Ảnh phải nhỏ hơn 5MB!');
                   return Upload.LIST_IGNORE;
                 }
                 setCreateIconFile(file);
@@ -1422,13 +1439,13 @@ export default function AchievementsPage() {
                 // Kiểm tra loại file
                 const isImage = file.type.startsWith('image/');
                 if (!isImage) {
-                  message.error('Chỉ được upload file ảnh!');
+                  toast.error('Chỉ được upload file ảnh!');
                   return Upload.LIST_IGNORE;
                 }
                 // Kiểm tra kích thước (max 5MB)
                 const isLt5M = file.size / 1024 / 1024 < 5;
                 if (!isLt5M) {
-                  message.error('Ảnh phải nhỏ hơn 5MB!');
+                  toast.error('Ảnh phải nhỏ hơn 5MB!');
                   return Upload.LIST_IGNORE;
                 }
                 setEditIconFile(file);

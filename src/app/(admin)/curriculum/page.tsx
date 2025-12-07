@@ -14,13 +14,13 @@ import {
   Typography,
   Row,
   Col,
-  message,
   Descriptions,
   Tooltip,
   Image,
   List,
   Collapse,
 } from 'antd';
+import { toast } from 'react-hot-toast';
 import {
   PlayCircleOutlined,
   SearchOutlined,
@@ -203,7 +203,7 @@ export default function CourseVerificationPage() {
       }
       return;
     }
-    
+
     // Only proceed if we don't already have the course selected or if the selected course ID doesn't match
     if (!selectedCourse || selectedCourse.id !== requestId) {
       const foundCourse = courses.find((course: CourseRequestData) => course.id === requestId);
@@ -315,27 +315,29 @@ export default function CourseVerificationPage() {
 
   const handleApproveCourse = async (course: CourseRequestData) => {
     try {
-      await approveRequestMutation.mutateAsync(Number(course.id));
-      message.success(`Đã phê duyệt khóa học "${course.courseName}"`);
+      const response = await approveRequestMutation.mutateAsync(Number(course.id));
+      const successMessage = response?.message || `Đã phê duyệt khóa học "${course.courseName}"`;
+      toast.success(successMessage);
       await refetchRequests();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      message.error('Không thể phê duyệt khóa học');
+      toast.error(err?.message || 'Không thể phê duyệt khóa học');
     }
   };
 
   const handleRejectCourse = async (course: CourseRequestData, reason: string) => {
     if (!reason.trim()) {
-      message.error('Vui lòng nhập lý do từ chối');
+      toast.error('Vui lòng nhập lý do từ chối');
       return;
     }
     try {
-      await rejectRequestMutation.mutateAsync({ id: Number(course.id), reason });
-      message.success(`Đã từ chối khóa học "${course.courseName}"`);
+      const response = await rejectRequestMutation.mutateAsync({ id: Number(course.id), reason });
+      const successMessage = response?.message || `Đã từ chối khóa học "${course.courseName}"`;
+      toast.success(successMessage);
       await refetchRequests();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      message.error('Không thể từ chối khóa học');
+      toast.error(err?.message || 'Không thể từ chối khóa học');
     }
   };
 

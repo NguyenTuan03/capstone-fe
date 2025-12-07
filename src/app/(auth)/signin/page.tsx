@@ -203,9 +203,6 @@ export default function Login() {
 
           {/* Forgot Password & Register */}
           <div className="flex justify-between items-center text-sm mb-6">
-            <Link href="/register" className="text-gray-600 hover:text-gray-800 font-medium">
-              Chưa có tài khoản? <span className="text-blue-600 hover:text-blue-700">Đăng ký</span>
-            </Link>
             <Link href="/forgot-password" className="text-blue-600 hover:text-blue-700 font-medium">
               Quên mật khẩu?
             </Link>

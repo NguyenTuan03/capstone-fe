@@ -347,7 +347,7 @@ export default function CoachesPage() {
     try {
       const id = (displayCoach?.id || selectedCoach?.id)!;
       const response = await rejectCoachMutation.mutateAsync({ id, reason: rejectReason.trim() });
-      const successMessage = response?.message || 'Xác minh hồ sơ huấn luyện viên thành công';
+      const successMessage = response?.message || 'Từ chối hồ sơ huấn luyện viên thành công';
       toast.success(successMessage);
       setIsRejectModalVisible(false);
       setIsDetailModalVisible(false);
