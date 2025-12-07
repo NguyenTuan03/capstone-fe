@@ -36,6 +36,7 @@ import {
   PhoneOutlined,
   MailOutlined,
   MessageOutlined,
+  InfoCircleOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -337,9 +338,9 @@ export default function CoachesPage() {
       <div className="min-w-0">
         <div className="flex items-center gap-1">
           <span className="font-medium truncate max-w-[220px] block">{record.name}</span>
-          {showBadge && record.rating >= 4.5 && (
-            <Tooltip title="Huấn luyện viên xuất sắc">
-              <TrophyOutlined className="text-yellow-500" />
+          {record.bio && (
+            <Tooltip title={record.bio}>
+              <InfoCircleOutlined className="text-gray-400" />
             </Tooltip>
           )}
         </div>
