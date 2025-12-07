@@ -50,6 +50,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           page,
           pageSize: 10,
           filter: 'user.id_eq_1',
+          sort: 'createdAt_desc',
         },
       });
       const fetchedNotifications = (response.data?.items || []).filter(
