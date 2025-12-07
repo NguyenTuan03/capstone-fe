@@ -18,10 +18,9 @@ import {
 } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
 import jwtAxios from '@/@crema/services/jwt-auth';
-import { useWebSocket } from '@/@crema/hooks/useWebSocket';
+import { useSocket } from '@/@crema/context/SocketContext';
 import type { Notification as NotificationType } from '@/types/notification';
 import type { MenuProps } from 'antd';
-import { Toaster, toast } from 'react-hot-toast';
 
 const { Header, Sider, Content } = Layout;
 
@@ -29,20 +28,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [collapsed, setCollapsed] = useState(false);
   const [notifications, setNotifications] = useState<NotificationType[]>([]);
   const [notificationLoading, setNotificationLoading] = useState(false);
+  const [notificationLoadingMore, setNotificationLoadingMore] = useState(false);
   const [notificationDropdownOpen, setNotificationDropdownOpen] = useState(false);
+  const [notificationPage, setNotificationPage] = useState(1);
+  const [hasMoreNotifications, setHasMoreNotifications] = useState(true);
+  const notificationScrollRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const pathname = usePathname();
-  // Track notifications that have already shown toast to prevent duplicates
-  const shownToastIdsRef = useRef<Set<number>>(new Set());
   // Track notifications that have already been processed to prevent duplicates in state
   const processedNotificationIdsRef = useRef<Set<number>>(new Set());
 
-  const fetchNotifications = useCallback(async () => {
-    setNotificationLoading(true);
+  const fetchNotifications = useCallback(async (page: number = 1, append: boolean = false) => {
+    if (append) {
+      setNotificationLoadingMore(true);
+    } else {
+      setNotificationLoading(true);
+    }
     try {
       const response = await jwtAxios.get('/notifications', {
         params: {
-          page: 1,
+          page,
           pageSize: 10,
           filter: 'user.id_eq_1',
         },
@@ -50,27 +55,91 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       const fetchedNotifications = (response.data?.items || []).filter(
         (n: NotificationType) => n && n.id !== undefined && n.id !== null,
       );
-      setNotifications(fetchedNotifications);
 
-      // Reset processed notifications ref with current notification IDs
-      // This ensures we can process new notifications from socket even if they were in the fetched list
-      processedNotificationIdsRef.current = new Set(
-        fetchedNotifications.map((n: NotificationType) => n.id),
-      );
-    } catch (error) {
+      if (append) {
+        // Append new notifications to existing list, avoiding duplicates
+        setNotifications((prev) => {
+          const existingIds = new Set(prev.map((n: NotificationType) => n.id));
+          const newNotifications = fetchedNotifications.filter(
+            (n: NotificationType) => !existingIds.has(n.id),
+          );
+          const updatedList = [...prev, ...newNotifications];
+          // Check if there are more notifications
+          const total = response.data?.total || 0;
+          setHasMoreNotifications(updatedList.length < total);
+          return updatedList;
+        });
+      } else {
+        setNotifications(fetchedNotifications);
+        // Reset processed notifications ref with current notification IDs
+        processedNotificationIdsRef.current = new Set(
+          fetchedNotifications.map((n: NotificationType) => n.id),
+        );
+        // Check if there are more notifications
+        const total = response.data?.total || 0;
+        setHasMoreNotifications(fetchedNotifications.length < total);
+      }
+    } catch {
       message.error('Không thể tải thông báo');
     } finally {
       setNotificationLoading(false);
+      setNotificationLoadingMore(false);
     }
   }, []);
 
   useEffect(() => {
-    fetchNotifications();
-  }, [fetchNotifications]);
+    fetchNotifications(1, false);
+    setNotificationPage(1);
+    setHasMoreNotifications(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only fetch on mount
 
-  // WebSocket connection for real-time notifications
-  const { isConnected, markAsRead: markNotificationAsReadSocket } = useWebSocket({
-    onNotification: (notification: NotificationType) => {
+  // Load more notifications when scrolling
+  const loadMoreNotifications = useCallback(async () => {
+    if (notificationLoadingMore || !hasMoreNotifications) return;
+
+    const nextPage = notificationPage + 1;
+    setNotificationPage(nextPage);
+    await fetchNotifications(nextPage, true);
+  }, [notificationPage, notificationLoadingMore, hasMoreNotifications, fetchNotifications]);
+
+  // Handle scroll event for infinite scroll
+  useEffect(() => {
+    const scrollElement = notificationScrollRef.current;
+    if (!scrollElement) return;
+
+    const handleScroll = () => {
+      const { scrollTop, scrollHeight, clientHeight } = scrollElement;
+      // Load more when user scrolls to within 50px of the bottom
+      if (
+        scrollHeight - scrollTop - clientHeight < 50 &&
+        hasMoreNotifications &&
+        !notificationLoadingMore
+      ) {
+        loadMoreNotifications();
+      }
+    };
+
+    scrollElement.addEventListener('scroll', handleScroll);
+    return () => {
+      scrollElement.removeEventListener('scroll', handleScroll);
+    };
+  }, [hasMoreNotifications, notificationLoadingMore, loadMoreNotifications]);
+
+  // WebSocket connection for real-time notifications - using SocketContext
+  // SocketContext handles notification queue and toast display automatically (similar to mobile app)
+  // We just need to listen for new notifications to update the UI list
+  const { socket, isConnected, markNotificationAsRead: markNotificationAsReadSocket } = useSocket();
+
+  // Listen for new notifications from socket to update the list
+  // Note: SocketContext already handles toast display via queue, so we only update the list here
+  useEffect(() => {
+    if (!socket || !isConnected) return;
+
+    // Debounce timer to avoid too many fetches if multiple notifications arrive quickly
+    let refreshTimer: NodeJS.Timeout | null = null;
+
+    const handleNotification = (notification: NotificationType) => {
       // Validate notification has an id
       if (
         !notification ||
@@ -78,7 +147,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         notification.id === undefined ||
         notification.id === null
       ) {
-        console.error('Invalid notification received from socket:', notification);
+        console.error('[Layout] Invalid notification received from socket:', notification);
         return;
       }
 
@@ -90,7 +159,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       // Mark as processed immediately to prevent duplicate processing
       processedNotificationIdsRef.current.add(notification.id);
 
-      // Add new notification to the beginning of the list
+      // Add new notification to the beginning of the list immediately for better UX
       setNotifications((prev) => {
         // Double-check if notification already exists in state to avoid duplicates
         const exists = prev.some((n) => n.id === notification.id);
@@ -100,55 +169,36 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           return prev;
         }
 
-        // Check if toast has already been shown for this notification
-        if (!shownToastIdsRef.current.has(notification.id)) {
-          // Mark as shown
-          shownToastIdsRef.current.add(notification.id);
-
-          // Show a subtle notification toast using react-hot-toast
-          toast(
-            () => (
-              <div className="flex items-start gap-3">
-                <div className="flex-shrink-0">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-400/20 to-purple-400/20 flex items-center justify-center backdrop-blur-sm">
-                    <BellOutlined className="text-blue-500 text-base" />
-                  </div>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-gray-700">{notification.title}</p>
-                  <p className="mt-0.5 text-xs text-gray-500">{notification.body}</p>
-                </div>
-              </div>
-            ),
-            {
-              duration: 5000,
-              position: 'top-right',
-              style: {
-                padding: '12px 16px',
-                minWidth: '300px',
-                background: 'rgba(255, 255, 255, 0.95)',
-                backdropFilter: 'blur(10px)',
-                border: 'none',
-                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-              },
-            },
-          );
-        }
-
+        // SocketContext already handles toast display, so we just add to list
         return [notification, ...prev];
       });
-    },
-    onConnect: () => {},
-    onDisconnect: (reason) => {
-      if (reason === 'io server disconnect') {
-        message.warning('Mất kết nối với server. Đang thử kết nối lại...');
+
+      // Clear existing timer if any
+      if (refreshTimer) {
+        clearTimeout(refreshTimer);
       }
-    },
-    onError: (error) => {
-      // Don't show error message for every connection attempt to avoid spam
-    },
-    enabled: true,
-  });
+
+      // Refresh notifications list from server after a short delay
+      // This ensures we have the latest data from server including all metadata
+      refreshTimer = setTimeout(() => {
+        fetchNotifications(1, false).catch((error) => {
+          console.error(
+            '[Layout] Failed to refresh notifications after socket notification:',
+            error,
+          );
+        });
+      }, 500); // 500ms delay to batch multiple notifications if they arrive quickly
+    };
+
+    socket.on('notification.send', handleNotification);
+
+    return () => {
+      if (refreshTimer) {
+        clearTimeout(refreshTimer);
+      }
+      socket.off('notification.send', handleNotification);
+    };
+  }, [socket, isConnected, fetchNotifications]);
 
   const unreadCount = useMemo(
     () => notifications.filter((item) => !item.isRead).length,
@@ -163,6 +213,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       return;
     }
 
+    // Don't do anything if already read
+    if (notification.isRead) {
+      setNotificationDropdownOpen(false);
+      // Just navigate if needed
+      if (notification.navigateTo) {
+        router.push(notification.navigateTo);
+      }
+      return;
+    }
+
     setNotificationDropdownOpen(false);
 
     // Update local state immediately for better UX
@@ -170,20 +230,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       prev.map((n) => (n.id === notification.id ? { ...n, isRead: true } : n)),
     );
 
-    // Mark as read via API
+    // Mark as read via API - ONLY when user clicks on notification
     try {
       await jwtAxios.put(`/notifications/${notification.id}/read`);
-      // Reload notifications list to ensure data sync with server
-      await fetchNotifications();
     } catch (error) {
       // Revert local state on error
       setNotifications((prev) =>
         prev.map((n) => (n.id === notification.id ? { ...n, isRead: false } : n)),
       );
       message.error('Không thể đánh dấu thông báo đã đọc');
+      console.error('Failed to mark notification as read:', error);
+      return; // Don't proceed with navigation if mark failed
     }
 
-    // Emit socket event to mark as read (if connected)toast
+    // Emit socket event to mark as read (if connected)
+    // This is just to notify backend, API call above is the main action
     if (isConnected && notification.id) {
       markNotificationAsReadSocket(notification.id);
     }
@@ -198,9 +259,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     try {
       await jwtAxios.put('/notifications/read');
       // Reload notifications list to ensure data sync with server
-      await fetchNotifications();
+      setNotificationPage(1);
+      await fetchNotifications(1, false);
       message.success('Đã đánh dấu tất cả thông báo đã đọc');
-    } catch (error) {
+    } catch {
       message.error('Không thể đánh dấu tất cả thông báo đã đọc');
     }
   };
@@ -241,7 +303,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         </div>
       </div>
-      <div className="max-h-[420px] overflow-y-auto">
+      <div ref={notificationScrollRef} className="max-h-[420px] overflow-y-auto">
         {notificationLoading ? (
           <div className="flex items-center justify-center py-12">
             <Spin size="large" />
@@ -251,49 +313,62 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Empty description="Không có thông báo" image={Empty.PRESENTED_IMAGE_SIMPLE} />
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
-            {notifications.map((notification) => (
-              <div
-                key={notification.id}
-                className={`px-5 py-4 cursor-pointer transition-all hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 ${
-                  !notification.isRead ? 'bg-blue-50/50' : ''
-                }`}
-                onClick={() => handleNotificationClick(notification)}
-              >
-                <div className="flex gap-3">
-                  <div className="flex-shrink-0">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center ${
-                        !notification.isRead
-                          ? 'bg-gradient-to-br from-blue-500 to-purple-600'
-                          : 'bg-gray-200'
-                      }`}
-                    >
-                      <BellOutlined
-                        className={!notification.isRead ? 'text-white' : 'text-gray-500'}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="font-semibold text-sm text-gray-900 line-clamp-1">
-                        {notification.title}
+          <>
+            <div className="divide-y divide-gray-100">
+              {notifications.map((notification) => (
+                <div
+                  key={notification.id}
+                  className={`px-5 py-4 cursor-pointer transition-all hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 ${
+                    !notification.isRead ? 'bg-blue-50/50' : ''
+                  }`}
+                  onClick={() => handleNotificationClick(notification)}
+                >
+                  <div className="flex gap-3">
+                    <div className="flex-shrink-0">
+                      <div
+                        className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                          !notification.isRead
+                            ? 'bg-gradient-to-br from-blue-500 to-purple-600'
+                            : 'bg-gray-200'
+                        }`}
+                      >
+                        <BellOutlined
+                          className={!notification.isRead ? 'text-white' : 'text-gray-500'}
+                        />
                       </div>
-                      {!notification.isRead && (
-                        <span className="flex-shrink-0 w-2 h-2 rounded-full bg-blue-500 mt-1.5" />
-                      )}
                     </div>
-                    <div className="text-xs text-gray-600 mt-1 line-clamp-2">
-                      {notification.body}
-                    </div>
-                    <div className="text-[11px] text-gray-400 mt-2">
-                      {new Date(notification.createdAt).toLocaleString('vi-VN')}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="font-semibold text-sm text-gray-900 line-clamp-1">
+                          {notification.title}
+                        </div>
+                        {!notification.isRead && (
+                          <span className="flex-shrink-0 w-2 h-2 rounded-full bg-blue-500 mt-1.5" />
+                        )}
+                      </div>
+                      <div className="text-xs text-gray-600 mt-1 line-clamp-2">
+                        {notification.body}
+                      </div>
+                      <div className="text-[11px] text-gray-400 mt-2">
+                        {new Date(notification.createdAt).toLocaleString('vi-VN')}
+                      </div>
                     </div>
                   </div>
                 </div>
+              ))}
+            </div>
+            {notificationLoadingMore && (
+              <div className="flex items-center justify-center py-4">
+                <Spin size="small" />
+                <span className="ml-2 text-sm text-gray-500">Đang tải thêm...</span>
               </div>
-            ))}
-          </div>
+            )}
+            {!hasMoreNotifications && notifications.length > 0 && (
+              <div className="text-center py-4 text-sm text-gray-400">
+                Đã hiển thị tất cả thông báo
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -562,33 +637,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           }
         }
       `}</style>
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 5000,
-          style: {
-            background: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(10px)',
-            color: '#363636',
-            border: 'none',
-            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.08)',
-          },
-          success: {
-            duration: 3000,
-            iconTheme: {
-              primary: '#10b981',
-              secondary: '#fff',
-            },
-          },
-          error: {
-            duration: 4000,
-            iconTheme: {
-              primary: '#ef4444',
-              secondary: '#fff',
-            },
-          },
-        }}
-      />
     </Layout>
   );
 }

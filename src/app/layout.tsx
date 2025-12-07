@@ -7,6 +7,7 @@ import viVN from 'antd/locale/vi_VN';
 import AppLocaleProvider from '@/@crema/context/AppLocaleProvider';
 import AppQueryProvider from '@/@crema/context/AppQueryProvider';
 import { App as AntdApp, ConfigProvider } from 'antd';
+import { Toaster } from 'react-hot-toast';
 const inter = Inter({
   variable: '--font-inter',
   subsets: ['latin'],
@@ -37,6 +38,34 @@ export default function RootLayout({
                 </AppContextProvider>
               </AppLocaleProvider>
             </AntdApp>
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 5000,
+                style: {
+                  padding: 0,
+                  background: 'transparent',
+                  boxShadow: 'none',
+                },
+                success: {
+                  duration: 5000,
+                  iconTheme: {
+                    primary: '#10b981',
+                    secondary: '#fff',
+                  },
+                },
+                error: {
+                  duration: 5000,
+                  iconTheme: {
+                    primary: '#ef4444',
+                    secondary: '#fff',
+                  },
+                },
+              }}
+              containerStyle={{
+                top: 20,
+              }}
+            />
           </ConfigProvider>
         </AppQueryProvider>
       </body>

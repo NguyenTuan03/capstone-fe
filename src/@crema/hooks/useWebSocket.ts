@@ -82,8 +82,12 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
   const connect = useCallback(() => {
     if (typeof window === 'undefined' || !enabled) return;
 
-    // Don't create a new connection if one already exists and is connected
+    // If socket exists and is connected, ensure event listeners are registered
     if (socketRef.current?.connected) {
+      // Re-register event listeners in case they were lost
+      socketRef.current.on('notification.send', (data: NotificationData) => {
+        onNotification?.(data);
+      });
       return;
     }
 
@@ -169,6 +173,7 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
 
     // Listen for notification.send event
     socket.on('notification.send', (data: NotificationData) => {
+      console.log('[useWebSocket] Received notification.send event:', data);
       onNotification?.(data);
     });
 
@@ -207,6 +212,10 @@ export const useWebSocket = (options: UseWebSocketOptions = {}): UseWebSocketRet
       setIsConnected(true);
       setIsConnecting(false);
       setError(null);
+      // Re-register event listeners after reconnect
+      socket.on('notification.send', (data: NotificationData) => {
+        onNotification?.(data);
+      });
     });
 
     socket.on('reconnect_attempt', () => {
