@@ -40,7 +40,7 @@ export interface Wallet {
     fullName: string;
     email: string;
   };
-  // ...existing code...
+  withdrawalRequests?: WithdrawalRequest[];
 }
 
 export default function WalletsPage() {
