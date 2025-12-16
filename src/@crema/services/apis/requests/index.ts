@@ -306,7 +306,7 @@ export const useGetRequests = (params?: GetRequestsParams) => {
       const filterString = filters.length > 0 ? filters.join(',') : '';
 
       const url = buildUrl(
-        `requests?page=${params?.page || 1}&size=${params?.pageSize || 10}${filterString ? `&filter=${filterString}` : ''}`,
+        `requests?sort=createdAt_desc&page=${params?.page || 1}&size=${params?.pageSize || 10}${filterString ? `&filter=${filterString}` : ''}`,
       );
       const token = getAuthToken();
 

@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   Card,
   Table,
@@ -15,7 +14,11 @@ import {
   Descriptions,
 } from 'antd';
 import { EyeOutlined } from '@ant-design/icons';
-import { getWalletsWithUserInfo } from '@/services/walletApi';
+import {
+  getWalletsWithUserInfo,
+  approveWithdrawalRequest,
+  rejectWithdrawalRequest,
+} from '@/services/walletApi';
 
 const { Title } = Typography;
 
@@ -51,12 +54,24 @@ export default function WalletsPage() {
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
+  const [approveDialog, setApproveDialog] = useState<{ visible: boolean; record: any | null }>({
+    visible: false,
+    record: null,
+  });
+  const [rejectDialog, setRejectDialog] = useState<{ visible: boolean; record: any | null }>({
+    visible: false,
+    record: null,
+  });
 
-  useEffect(() => {
+  const fetchWallets = () => {
     setLoading(true);
     getWalletsWithUserInfo()
       .then((data) => setWallets(data))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchWallets();
   }, []);
 
   const columns = [
@@ -118,26 +133,34 @@ export default function WalletsPage() {
   ];
 
   const showApproveConfirm = (record: any) => {
-    Modal.confirm({
-      title: 'Xác nhận duyệt yêu cầu rút tiền?',
-      content: `Bạn có chắc muốn duyệt yêu cầu rút tiền #${record.id}?`,
-      okText: 'Duyệt',
-      cancelText: 'Hủy',
-      onOk: () => {
-        // TODO: Call approve API here
-      },
-    });
+    setApproveDialog({ visible: true, record });
   };
   const showRejectConfirm = (record: any) => {
-    Modal.confirm({
-      title: 'Xác nhận từ chối yêu cầu rút tiền?',
-      content: `Bạn có chắc muốn từ chối yêu cầu rút tiền #${record.id}?`,
-      okText: 'Từ chối',
-      cancelText: 'Hủy',
-      onOk: () => {
-        // TODO: Call reject API here
-      },
-    });
+    setRejectDialog({ visible: true, record });
+  };
+
+  const handleApprove = async () => {
+    if (!approveDialog.record) return;
+    try {
+      await approveWithdrawalRequest(approveDialog.record.id);
+      setApproveDialog({ visible: false, record: null });
+      setSelectedWallet(null); // Close detail modal after action
+      fetchWallets(); // Refresh data
+    } catch (e) {
+      Modal.error({ title: 'Lỗi', content: 'Không thể duyệt yêu cầu.' });
+    }
+  };
+
+  const handleReject = async () => {
+    if (!rejectDialog.record) return;
+    try {
+      await rejectWithdrawalRequest(rejectDialog.record.id);
+      setRejectDialog({ visible: false, record: null });
+      setSelectedWallet(null); // Close detail modal after action
+      fetchWallets(); // Refresh data
+    } catch (e) {
+      Modal.error({ title: 'Lỗi', content: 'Không thể từ chối yêu cầu.' });
+    }
   };
 
   return (
@@ -291,6 +314,37 @@ export default function WalletsPage() {
           </>
         )}
       </Modal>
+
+      {/* Approve Confirm Dialog */}
+      <Modal
+        open={approveDialog.visible}
+        title="Xác nhận duyệt yêu cầu rút tiền?"
+        onCancel={() => setApproveDialog({ visible: false, record: null })}
+        onOk={handleApprove}
+        okText="Duyệt"
+        cancelText="Hủy"
+        destroyOnClose
+      >
+        {approveDialog.record && (
+          <div>Bạn có chắc muốn duyệt yêu cầu rút tiền #{approveDialog.record.id}?</div>
+        )}
+      </Modal>
+
+      {/* Reject Confirm Dialog */}
+      <Modal
+        open={rejectDialog.visible}
+        title="Xác nhận từ chối yêu cầu rút tiền?"
+        onCancel={() => setRejectDialog({ visible: false, record: null })}
+        onOk={handleReject}
+        okText="Từ chối"
+        cancelText="Hủy"
+        destroyOnClose
+      >
+        {rejectDialog.record && (
+          <div>Bạn có chắc muốn từ chối yêu cầu rút tiền #{rejectDialog.record.id}?</div>
+        )}
+      </Modal>
+
       <style jsx global>{`
         .wallet-row-pending {
           background: #fffbe6 !important;

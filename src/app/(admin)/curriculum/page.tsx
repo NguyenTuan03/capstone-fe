@@ -85,6 +85,7 @@ interface CourseRequestData {
   totalVideos: number;
   totalQuizzes: number;
   createdAt: string;
+  updatedAt: string;
   requestData: RequestWithContent;
 }
 
@@ -92,11 +93,19 @@ interface CourseRequestData {
 const formatDateSafe = (dateString?: string | null) => {
   if (!dateString) return '-';
   try {
-    // Chuyển đổi về dạng YYYY-MM-DD để đảm bảo nhất quán
-    const [datePart] = dateString.split('T');
-    const [year, month, day] = datePart.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
-    return date.toLocaleDateString('vi-VN');
+    // Parse ISO string to Date object
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString || '-';
+    // Show both date and time in vi-VN format
+    return date.toLocaleString('vi-VN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
   } catch (error) {
     console.error('Lỗi khi định dạng ngày:', error);
     return dateString || '-';
@@ -116,8 +125,7 @@ export default function CourseVerificationPage() {
   // API hooks - fetch up to 1000 items, then paginate on client-side
   const { data: requestsData, refetch: refetchRequests } = useGetRequests({
     type: 'COURSE-APPROVAL',
-    status: 'PENDING',
-    pageSize: 1000,
+    pageSize: 100,
   });
 
   const approveRequestMutation = useApproveRequest();
@@ -129,7 +137,6 @@ export default function CourseVerificationPage() {
   const [courses, setCourses] = useState<CourseRequestData[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<CourseRequestData | null>(null);
-  const [isCourseDetailModalVisible, setIsCourseDetailModalVisible] = useState(false);
   const [pendingActionCourse, setPendingActionCourse] = useState<CourseRequestData | null>(null);
   const [isApproveModalVisible, setIsApproveModalVisible] = useState(false);
   const [isRejectModalVisible, setIsRejectModalVisible] = useState(false);
@@ -177,6 +184,7 @@ export default function CourseVerificationPage() {
           totalVideos,
           totalQuizzes,
           createdAt: request.createdAt,
+          updatedAt: request.updatedAt,
           requestData: request,
         };
       });
@@ -197,22 +205,17 @@ export default function CourseVerificationPage() {
   useEffect(() => {
     const requestId = searchParams.get('request');
     if (!requestId) {
-      if (isCourseDetailModalVisible) {
-        setIsCourseDetailModalVisible(false);
-        setSelectedCourse(null);
-      }
+      setSelectedCourse(null);
       return;
     }
-
-    // Only proceed if we don't already have the course selected or if the selected course ID doesn't match
+    // Only set selectedCourse if not already set or ID changed
     if (!selectedCourse || selectedCourse.id !== requestId) {
       const foundCourse = courses.find((course: CourseRequestData) => course.id === requestId);
       if (foundCourse) {
         setSelectedCourse(foundCourse);
-        setIsCourseDetailModalVisible(true);
       }
     }
-  }, [searchParams, courses, selectedCourse]); // Removed isCourseDetailModalVisible from dependencies
+  }, [searchParams, courses, selectedCourse]);
 
   // Helper functions
   const getStatusColor = (status: string) => {
@@ -302,14 +305,10 @@ export default function CourseVerificationPage() {
   };
 
   const handleViewCourseDetails = (course: CourseRequestData) => {
-    setIsCourseDetailModalVisible(true);
-    setSelectedCourse(course);
     updateQueryParam(course.id);
   };
 
   const handleCloseCourseDetails = () => {
-    setIsCourseDetailModalVisible(false);
-    setSelectedCourse(null);
     updateQueryParam();
   };
 
@@ -346,7 +345,7 @@ export default function CourseVerificationPage() {
 
     await handleApproveCourse(pendingActionCourse);
     setIsApproveModalVisible(false);
-    if (isCourseDetailModalVisible && selectedCourse?.id === pendingActionCourse.id) {
+    if (selectedCourse?.id === pendingActionCourse.id) {
       handleCloseCourseDetails();
     }
     setPendingActionCourse(null);
@@ -358,7 +357,7 @@ export default function CourseVerificationPage() {
     await handleRejectCourse(pendingActionCourse, rejectReason);
     setIsRejectModalVisible(false);
     setRejectReason('');
-    if (isCourseDetailModalVisible && selectedCourse?.id === pendingActionCourse.id) {
+    if (selectedCourse?.id === pendingActionCourse.id) {
       handleCloseCourseDetails();
     }
     setPendingActionCourse(null);
@@ -413,15 +412,18 @@ export default function CourseVerificationPage() {
       ),
     },
     {
-      title: 'Nội dung',
-      key: 'content',
-      width: 150,
-      render: (_, record) => (
-        <div className="text-sm">
-          <div>{record.totalVideos} videos</div>
-          <div>{record.totalQuizzes} quizzes</div>
-        </div>
-      ),
+      title: 'Ngày tạo',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      width: 120,
+      render: (createdAt: string) => formatDateSafe(createdAt),
+    },
+    {
+      title: 'Cập nhật',
+      dataIndex: 'updatedAt',
+      key: 'updatedAt',
+      width: 120,
+      render: (updatedAt: string) => formatDateSafe(updatedAt),
     },
     {
       title: 'Trạng thái',
@@ -487,13 +489,16 @@ export default function CourseVerificationPage() {
 
         <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
           <Col xs={24} sm={12} md={10}>
-            <Search
-              placeholder="Tìm kiếm theo tên khóa học, huấn luyện viên..."
-              allowClear
-              onSearch={setCourseSearchText}
-              onChange={(e) => !e.target.value && setCourseSearchText('')}
-              prefix={<SearchOutlined />}
-            />
+            <Space.Compact style={{ width: '100%' }}>
+              <Search
+                placeholder="Tìm kiếm theo tên khóa học, huấn luyện viên..."
+                allowClear
+                onSearch={setCourseSearchText}
+                onChange={(e) => !e.target.value && setCourseSearchText('')}
+                prefix={<SearchOutlined />}
+                style={{ width: '100%' }}
+              />
+            </Space.Compact>
           </Col>
           <Col xs={12} sm={6} md={5}>
             <Select
@@ -633,7 +638,7 @@ export default function CourseVerificationPage() {
       {/* Course Detail Modal */}
       <Modal
         title="Chi tiết Khóa học"
-        open={isCourseDetailModalVisible}
+        open={!!searchParams.get('request')}
         onCancel={handleCloseCourseDetails}
         footer={[
           <Button key="close" onClick={handleCloseCourseDetails}>
@@ -698,9 +703,6 @@ export default function CourseVerificationPage() {
               </Descriptions.Item>
               <Descriptions.Item label="Số bài học">
                 {selectedCourse.totalLessons} bài
-              </Descriptions.Item>
-              <Descriptions.Item label="Nội dung">
-                {selectedCourse.totalVideos} videos, {selectedCourse.totalQuizzes} quizzes
               </Descriptions.Item>
               <Descriptions.Item label="Huấn luyện viên" span={2}>
                 <div className="flex items-center gap-2">
