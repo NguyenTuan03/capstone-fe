@@ -12,8 +12,8 @@ import {
 } from '@ant-design/icons';
 
 import { useRouter } from 'next/navigation';
-import DashboardApiService from '@/services/dashboardApi';
 import { PendingApproval, RecentReport } from '@/types/dashboard';
+import { DashboardApiService } from '@/services/dashboardApi';
 
 const { Text } = Typography;
 const { TabPane } = Tabs;

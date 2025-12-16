@@ -13,8 +13,8 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons';
 
-import DashboardApiService from '@/services/dashboardApi';
 import { ActivityFeedItem, SystemAlert } from '@/types/dashboard';
+import { DashboardApiService } from '@/services/dashboardApi';
 
 const { Text, Title } = Typography;
 
