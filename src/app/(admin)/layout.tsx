@@ -15,6 +15,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   ControlOutlined,
+  WalletOutlined,
 } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
 import jwtAxios from '@/@crema/services/jwt-auth';
@@ -417,6 +418,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       label: 'Khóa học',
     },
     {
+      key: '/wallets',
+      icon: <WalletOutlined />,
+      label: 'Ví người dùng',
+    },
+    {
       key: '/achievements',
       icon: <TrophyOutlined />,
       label: 'Thành tựu',
@@ -477,6 +483,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (pathname.includes('/achievements')) return '/achievements';
     if (pathname.includes('/configurations')) return '/configurations';
     if (pathname.includes('/statistics')) return '/statistics';
+    if (pathname.includes('/wallets')) return '/wallets';
     return '/dashboard';
   };
 
