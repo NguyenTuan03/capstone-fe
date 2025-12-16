@@ -14,19 +14,18 @@ import {
   Typography,
   Row,
   Col,
-  message,
   Descriptions,
   Tooltip,
   Image,
   List,
   Collapse,
 } from 'antd';
+import { toast } from 'react-hot-toast';
 import {
   PlayCircleOutlined,
   SearchOutlined,
   EyeOutlined,
   CheckOutlined,
-  CloseOutlined,
   FilterOutlined,
   UserOutlined,
   QuestionCircleOutlined,
@@ -70,6 +69,7 @@ interface VideoData {
   coachAvatar: string;
   lessonName: string;
   courseName: string;
+  createdAt?: string;
 }
 
 interface CourseRequestData {
@@ -88,6 +88,21 @@ interface CourseRequestData {
   requestData: RequestWithContent;
 }
 
+// Hàm định dạng ngày tháng an toàn
+const formatDateSafe = (dateString?: string | null) => {
+  if (!dateString) return '-';
+  try {
+    // Chuyển đổi về dạng YYYY-MM-DD để đảm bảo nhất quán
+    const [datePart] = dateString.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const date = new Date(year, month - 1, day);
+    return date.toLocaleDateString('vi-VN');
+  } catch (error) {
+    console.error('Lỗi khi định dạng ngày:', error);
+    return dateString || '-';
+  }
+};
+
 export default function CourseVerificationPage() {
   const router = useRouter();
   const pathname = usePathname();
@@ -98,10 +113,11 @@ export default function CourseVerificationPage() {
     LEARNER: '/home',
   });
 
-  // API hooks
+  // API hooks - fetch up to 1000 items, then paginate on client-side
   const { data: requestsData, refetch: refetchRequests } = useGetRequests({
     type: 'COURSE-APPROVAL',
     status: 'PENDING',
+    pageSize: 1000,
   });
 
   const approveRequestMutation = useApproveRequest();
@@ -141,8 +157,8 @@ export default function CourseVerificationPage() {
         return true;
       })
       .map((request: RequestWithContent) => {
-        const courseDetails = request.metadata.details;
-        const lessons = courseDetails.subject.lessons || [];
+        const courseDetails = request.metadata?.details;
+        const lessons = courseDetails?.subject?.lessons || [];
         const createdBy = request.createdBy;
 
         const totalVideos = lessons.filter((lesson: LessonWithDetails) => lesson.video).length;
@@ -150,9 +166,9 @@ export default function CourseVerificationPage() {
 
         return {
           id: request.id.toString(),
-          courseName: courseDetails.name || 'Unnamed Course',
-          courseDescription: courseDetails.description || '',
-          level: courseDetails.subject.level || 'BEGINNER',
+          courseName: courseDetails?.name || 'Unnamed Course',
+          courseDescription: courseDetails?.description || '',
+          level: courseDetails?.subject?.level || 'BEGINNER',
           status: request.status,
           coachName: createdBy?.fullName || 'Unknown',
           coachEmail: createdBy?.email || '',
@@ -187,12 +203,16 @@ export default function CourseVerificationPage() {
       }
       return;
     }
-    const foundCourse = courses.find((course) => course.id === requestId);
-    if (foundCourse) {
-      setSelectedCourse(foundCourse);
-      setIsCourseDetailModalVisible(true);
+
+    // Only proceed if we don't already have the course selected or if the selected course ID doesn't match
+    if (!selectedCourse || selectedCourse.id !== requestId) {
+      const foundCourse = courses.find((course: CourseRequestData) => course.id === requestId);
+      if (foundCourse) {
+        setSelectedCourse(foundCourse);
+        setIsCourseDetailModalVisible(true);
+      }
     }
-  }, [searchParams, courses, isCourseDetailModalVisible]);
+  }, [searchParams, courses, selectedCourse]); // Removed isCourseDetailModalVisible from dependencies
 
   // Helper functions
   const getStatusColor = (status: string) => {
@@ -295,27 +315,29 @@ export default function CourseVerificationPage() {
 
   const handleApproveCourse = async (course: CourseRequestData) => {
     try {
-      await approveRequestMutation.mutateAsync(Number(course.id));
-      message.success(`Đã phê duyệt khóa học "${course.courseName}"`);
+      const response = await approveRequestMutation.mutateAsync(Number(course.id));
+      const successMessage = response?.message || `Đã phê duyệt khóa học "${course.courseName}"`;
+      toast.success(successMessage);
       await refetchRequests();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      message.error('Không thể phê duyệt khóa học');
+      toast.error(err?.message || 'Không thể phê duyệt khóa học');
     }
   };
 
   const handleRejectCourse = async (course: CourseRequestData, reason: string) => {
     if (!reason.trim()) {
-      message.error('Vui lòng nhập lý do từ chối');
+      toast.error('Vui lòng nhập lý do từ chối');
       return;
     }
     try {
-      await rejectRequestMutation.mutateAsync({ id: Number(course.id), reason });
-      message.success(`Đã từ chối khóa học "${course.courseName}"`);
+      const response = await rejectRequestMutation.mutateAsync({ id: Number(course.id), reason });
+      const successMessage = response?.message || `Đã từ chối khóa học "${course.courseName}"`;
+      toast.success(successMessage);
       await refetchRequests();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      message.error('Không thể từ chối khóa học');
+      toast.error(err?.message || 'Không thể từ chối khóa học');
     }
   };
 
@@ -435,26 +457,6 @@ export default function CourseVerificationPage() {
               onClick={() => handleViewCourseDetails(record)}
             />
           </Tooltip>
-          {record.status === 'PENDING' && (
-            <>
-              <Tooltip title="Phê duyệt">
-                <Button
-                  type="primary"
-                  size="small"
-                  icon={<CheckOutlined />}
-                  onClick={() => openApproveModal(record)}
-                />
-              </Tooltip>
-              <Tooltip title="Từ chối">
-                <Button
-                  danger
-                  size="small"
-                  icon={<CloseOutlined />}
-                  onClick={() => openRejectModal(record)}
-                />
-              </Tooltip>
-            </>
-          )}
         </Space>
       ),
     },
@@ -514,7 +516,7 @@ export default function CourseVerificationPage() {
           loading={loadingCourses}
           rowKey="id"
           pagination={{
-            pageSize: 10,
+            pageSize: 4,
             showSizeChanger: true,
             showTotal: (total) => `Tổng ${total} khóa học`,
           }}
@@ -715,7 +717,8 @@ export default function CourseVerificationPage() {
             <div className="mt-4">
               <Title level={5}>Danh sách bài học</Title>
               {(() => {
-                const lessons = selectedCourse.requestData.metadata.details.subject.lessons;
+                const lessons =
+                  selectedCourse.requestData?.metadata?.details?.subject?.lessons || [];
 
                 if (!lessons || lessons.length === 0) {
                   return (
@@ -782,7 +785,7 @@ export default function CourseVerificationPage() {
                                       {lesson.video.description}
                                     </div>
                                     <div className="mt-2">
-                                      <Tag>Thời lượng: {lessonStats.videoDuration}</Tag>
+                                      <Tag>Thời lượng: {lessonStats.videoDurationFormatted}</Tag>
                                       <Tag>Trạng thái: {getStatusText(lesson.video.status)}</Tag>
                                     </div>
                                     {lesson.video.publicUrl && (
@@ -811,6 +814,9 @@ export default function CourseVerificationPage() {
                                             coachAvatar: selectedCourse.coachAvatar,
                                             lessonName: lesson.name,
                                             courseName: selectedCourse.courseName,
+                                            createdAt: selectedCourse?.createdAt
+                                              ? formatDateSafe(selectedCourse.createdAt)
+                                              : '-',
                                           })
                                         }
                                       >
@@ -828,7 +834,7 @@ export default function CourseVerificationPage() {
                                 <div className="space-y-3">
                                   <div className="font-medium">{lesson.quiz.title}</div>
                                   {lesson.quiz.description && (
-                                    <div className="text-sm text-gray-600">
+                                    <div className="text-sm text-gray-500">
                                       {lesson.quiz.description}
                                     </div>
                                   )}
@@ -889,13 +895,13 @@ export default function CourseVerificationPage() {
                             <Card size="small" title="Thông tin Bài Học">
                               <Descriptions column={2} size="small">
                                 <Descriptions.Item label="Thời lượng">
-                                  {lessonStats.totalDuration}
+                                  {lessonStats.totalDurationFormatted}
                                 </Descriptions.Item>
                                 <Descriptions.Item label="Số thứ tự">
                                   Bài {lesson.lessonNumber}
                                 </Descriptions.Item>
                                 <Descriptions.Item label="Ngày tạo">
-                                  {new Date(lesson.createdAt).toLocaleDateString('vi-VN')}
+                                  {lesson?.createdAt ? formatDateSafe(lesson.createdAt) : '-'}
                                 </Descriptions.Item>
                               </Descriptions>
                             </Card>

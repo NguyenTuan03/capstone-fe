@@ -1,89 +1,34 @@
 'use client';
-import IntlMessages from '@/@crema/helper/IntlMessages';
-import { Button, Form, Input, Card, Result, Steps, message } from 'antd';
-import {
-  MailOutlined,
-  SafetyCertificateOutlined,
-  CheckCircleOutlined,
-  LockOutlined,
-  ArrowLeftOutlined,
-} from '@ant-design/icons';
+import { Button, Form, Input, message } from 'antd';
+import { MailOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { AuthApiService } from '@/services/authApi';
-
-const { Step } = Steps;
+import jwtAxios from '@/@crema/services/jwt-auth';
 
 export default function ForgotPassword() {
   const [form] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [email, setEmail] = useState('');
-  const [verificationToken, setVerificationToken] = useState('');
-  const router = useRouter();
 
-  const handleSendEmail = async (values: { email: string }) => {
+  const handleRequestReset = async (values: { email: string }) => {
     setLoading(true);
     setEmail(values.email);
 
     try {
-      const response = await AuthApiService.forgotPassword({ email: values.email });
+      const response = await jwtAxios.post('/auth/request-reset-password', {
+        email: values.email,
+      });
 
-      if (response.success) {
-        message.success(response.message);
+      if (response.status === 200 || response.status === 201) {
+        message.success('Email đã được gửi, vui lòng kiểm tra hộp thư');
         setCurrentStep(1);
       } else {
-        message.error(response.message);
+        message.error(response.data?.message || 'Không thể gửi email đặt lại mật khẩu');
       }
-    } catch (error) {
-      message.error('Đã có lỗi xảy ra. Vui lòng thử lại.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyCode = async (values: { code: string }) => {
-    setLoading(true);
-
-    try {
-      const response = await AuthApiService.verifyResetCode({
-        email,
-        code: values.code,
-      });
-
-      if (response.success && response.data?.verificationToken) {
-        setVerificationToken(response.data.verificationToken);
-        message.success(response.message);
-        setCurrentStep(2);
-      } else {
-        message.error(response.message);
-      }
-    } catch (error) {
-      message.error('Đã có lỗi xảy ra. Vui lòng thử lại.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResetPassword = async (values: { password: string; confirmPassword: string }) => {
-    setLoading(true);
-
-    try {
-      const response = await AuthApiService.resetPassword({
-        verificationToken,
-        newPassword: values.password,
-        confirmPassword: values.confirmPassword,
-      });
-
-      if (response.success) {
-        message.success(response.message);
-        setCurrentStep(3);
-      } else {
-        message.error(response.message);
-      }
-    } catch (error) {
-      message.error('Đã có lỗi xảy ra. Vui lòng thử lại.');
+    } catch (error: any) {
+      console.error('Error requesting password reset:', error);
+      message.error(error?.response?.data?.message || 'Đã có lỗi xảy ra. Vui lòng thử lại.');
     } finally {
       setLoading(false);
     }
@@ -99,14 +44,14 @@ export default function ForgotPassword() {
                 <MailOutlined className="text-2xl text-blue-600" />
               </div>
               <h2 className="text-3xl font-bold text-gray-800 mb-2">
-                <IntlMessages id="forgotPassword.step1.title" />
+                <div>Quên mật khẩu</div>
               </h2>
               <p className="text-gray-600">
-                <IntlMessages id="forgotPassword.step1.subtitle" />
+                <div>Nhập email đăng nhập để nhận liên kết đặt lại mật khẩu</div>
               </p>
             </div>
 
-            <Form form={form} layout="vertical" onFinish={handleSendEmail} className="space-y-6">
+            <Form form={form} layout="vertical" onFinish={handleRequestReset} className="space-y-6">
               <Form.Item
                 name="email"
                 label={<span className="text-gray-700 font-medium">Email đăng nhập</span>}
@@ -140,149 +85,36 @@ export default function ForgotPassword() {
 
       case 1:
         return (
-          <div className="w-full max-w-md mx-auto">
+          <div className="w-full max-w-md mx-auto text-center">
             <div className="text-center mb-8">
               <div className="inline-flex items-center justify-center w-16 h-16 bg-green-100 rounded-full mb-4">
                 <MailOutlined className="text-2xl text-green-600" />
               </div>
               <h2 className="text-3xl font-bold text-gray-800 mb-2">Kiểm tra email</h2>
-              <p className="text-gray-600 mb-4">Chúng tôi đã gửi mã xác minh đến email:</p>
-              <p className="text-blue-600 font-medium">{email}</p>
+              <p className="text-gray-600 mb-4">
+                Chúng tôi đã gửi liên kết đặt lại mật khẩu đến email:
+              </p>
+              <p className="text-blue-600 font-medium text-lg">{email}</p>
+              <p className="text-gray-500 text-sm mt-4">
+                Vui lòng kiểm tra hộp thư và click vào liên kết để đặt lại mật khẩu.
+              </p>
+              <p className="text-gray-500 text-sm mt-2">
+                Nếu không thấy email, vui lòng kiểm tra thư mục spam.
+              </p>
             </div>
 
-            <Form layout="vertical" onFinish={handleVerifyCode} className="space-y-6">
-              <Form.Item
-                name="code"
-                label={<span className="text-gray-700 font-medium">Mã xác minh (6 chữ số)</span>}
-                rules={[
-                  { required: true, message: 'Vui lòng nhập mã xác minh!' },
-                  { len: 6, message: 'Mã xác minh phải có 6 chữ số!' },
-                ]}
+            <div className="mt-6">
+              <Button
+                type="link"
+                onClick={() => {
+                  setCurrentStep(0);
+                  form.resetFields();
+                }}
+                className="text-blue-600 hover:text-blue-700"
               >
-                <Input
-                  size="large"
-                  placeholder="123456"
-                  maxLength={6}
-                  className="rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500 text-center text-xl tracking-widest"
-                />
-              </Form.Item>
-
-              <Form.Item className="mb-0">
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  size="large"
-                  loading={loading}
-                  className="w-full h-12 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border-0 font-medium text-base shadow-lg hover:shadow-xl transition-all duration-200"
-                >
-                  Xác minh mã
-                </Button>
-              </Form.Item>
-
-              <div className="text-center">
-                <p className="text-gray-500 text-sm mb-2">Không nhận được mã?</p>
-                <Button type="link" className="text-blue-600 hover:text-blue-700 p-0">
-                  Gửi lại mã xác minh
-                </Button>
-              </div>
-            </Form>
-          </div>
-        );
-
-      case 2:
-        return (
-          <div className="w-full max-w-md mx-auto">
-            <div className="text-center mb-8">
-              <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 rounded-full mb-4">
-                <LockOutlined className="text-2xl text-blue-600" />
-              </div>
-              <h2 className="text-3xl font-bold text-gray-800 mb-2">Đặt lại mật khẩu</h2>
-              <p className="text-gray-600">Nhập mật khẩu mới cho tài khoản của bạn</p>
+                Gửi lại email
+              </Button>
             </div>
-
-            <Form layout="vertical" onFinish={handleResetPassword} className="space-y-6">
-              <Form.Item
-                name="password"
-                label={<span className="text-gray-700 font-medium">Mật khẩu mới</span>}
-                rules={[
-                  { required: true, message: 'Vui lòng nhập mật khẩu mới!' },
-                  { min: 8, message: 'Mật khẩu phải có ít nhất 8 ký tự!' },
-                ]}
-              >
-                <Input.Password
-                  size="large"
-                  prefix={<LockOutlined className="text-gray-400" />}
-                  placeholder="Nhập mật khẩu mới"
-                  className="rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500"
-                />
-              </Form.Item>
-
-              <Form.Item
-                name="confirmPassword"
-                label={<span className="text-gray-700 font-medium">Xác nhận mật khẩu</span>}
-                dependencies={['password']}
-                rules={[
-                  { required: true, message: 'Vui lòng xác nhận mật khẩu!' },
-                  ({ getFieldValue }) => ({
-                    validator(_, value) {
-                      if (!value || getFieldValue('password') === value) {
-                        return Promise.resolve();
-                      }
-                      return Promise.reject(new Error('Mật khẩu xác nhận không khớp!'));
-                    },
-                  }),
-                ]}
-              >
-                <Input.Password
-                  size="large"
-                  prefix={<LockOutlined className="text-gray-400" />}
-                  placeholder="Nhập lại mật khẩu mới"
-                  className="rounded-lg border-gray-300 hover:border-blue-400 focus:border-blue-500"
-                />
-              </Form.Item>
-
-              <Form.Item className="mb-0">
-                <Button
-                  type="primary"
-                  htmlType="submit"
-                  size="large"
-                  loading={loading}
-                  className="w-full h-12 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border-0 font-medium text-base shadow-lg hover:shadow-xl transition-all duration-200"
-                >
-                  Cập nhật mật khẩu
-                </Button>
-              </Form.Item>
-            </Form>
-          </div>
-        );
-
-      case 3:
-        return (
-          <div className="w-full max-w-md mx-auto text-center">
-            <Result
-              icon={<CheckCircleOutlined className="text-green-500" />}
-              title={
-                <span className="text-2xl font-bold text-gray-800">
-                  Đặt lại mật khẩu thành công!
-                </span>
-              }
-              subTitle={
-                <p className="text-gray-600 mb-8">
-                  Mật khẩu của bạn đã được cập nhật. Bạn có thể đăng nhập với mật khẩu mới.
-                </p>
-              }
-              extra={
-                <Link href="/signin">
-                  <Button
-                    type="primary"
-                    size="large"
-                    className="h-12 px-8 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 border-0 font-medium text-base shadow-lg hover:shadow-xl transition-all duration-200"
-                  >
-                    Về trang đăng nhập
-                  </Button>
-                </Link>
-              }
-            />
           </div>
         );
 
@@ -375,7 +207,7 @@ export default function ForgotPassword() {
           {/* Progress indicator */}
           <div className="flex justify-center mb-8">
             <div className="flex items-center space-x-2">
-              {[0, 1, 2, 3].map((step) => (
+              {[0, 1].map((step) => (
                 <div key={step} className="flex items-center">
                   <div
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${
@@ -384,7 +216,7 @@ export default function ForgotPassword() {
                   >
                     {step + 1}
                   </div>
-                  {step < 3 && (
+                  {step < 1 && (
                     <div
                       className={`w-8 h-1 mx-1 ${
                         step < currentStep ? 'bg-blue-600' : 'bg-gray-200'
@@ -400,14 +232,14 @@ export default function ForgotPassword() {
           {renderStepContent()}
 
           {/* Back to Login */}
-          {currentStep < 3 && (
+          {currentStep < 1 && (
             <div className="mt-8 pt-6 border-t border-gray-100 text-center">
               <Link
                 href="/signin"
                 className="inline-flex items-center text-gray-600 hover:text-blue-600 transition-colors duration-200 text-sm"
               >
                 <ArrowLeftOutlined className="mr-2" />
-                <IntlMessages id="forgotPassword.backToLogin" />
+                <div>Quay lại</div>
               </Link>
             </div>
           )}

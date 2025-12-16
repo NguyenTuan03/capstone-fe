@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import {
   Card,
   Table,
@@ -11,7 +12,6 @@ import {
   Avatar,
   Modal,
   Typography,
-  message,
   Descriptions,
   Tooltip,
   Badge,
@@ -49,6 +49,7 @@ import {
 import { CoachVerificationStatus } from '@/types/enums';
 import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 import { User } from '@/types/user';
+import { toast } from 'react-hot-toast';
 
 const { Title, Text, Paragraph } = Typography;
 const { Search } = Input;
@@ -138,6 +139,9 @@ const statusLabel: Record<CoachVerificationStatus | 'UNKNOWN', string> = {
  */
 export default function CoachesPage() {
   useRoleGuard(['ADMIN'], { unauthenticated: '/signin', COACH: '/summary', LEARNER: '/home' });
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [activeTab, setActiveTab] = useState<'pending' | 'approved'>('pending');
   const [selectedCoach, setSelectedCoach] = useState<CoachData | null>(null);
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
@@ -169,6 +173,24 @@ export default function CoachesPage() {
 
   const verifyCoachMutation = useVerifyCoach();
   const rejectCoachMutation = useRejectCoach();
+
+  // Sync URL query parameter with modal state
+  useEffect(() => {
+    const coachIdFromUrl = searchParams.get('coachId');
+    if (coachIdFromUrl) {
+      if (coachIdFromUrl !== viewDetailCoachId) {
+        setViewDetailCoachId(coachIdFromUrl);
+        setIsViewDetailModalVisible(true);
+      }
+    } else {
+      // If URL doesn't have coachId but modal is open, close it
+      if (isViewDetailModalVisible) {
+        setIsViewDetailModalVisible(false);
+        setViewDetailCoachId(null);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   // Feedbacks: only fetch when modal open
   // const { data: feedbackRes, isLoading: isLoadingFeedback } = useGet<any>(
@@ -273,16 +295,22 @@ export default function CoachesPage() {
     [filtered],
   );
 
-  /** ACTIONS */
-  const _openDetail = (coach: CoachData) => {
-    setSelectedCoach(coach);
-    setIsDetailModalVisible(true);
-  };
-
   // Mở modal xem chi tiết từ API
   const openViewDetail = (coachId: string) => {
-    setViewDetailCoachId(coachId);
-    setIsViewDetailModalVisible(true);
+    // Update URL with coachId query parameter
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('coachId', coachId);
+    router.push(`/coaches?${params.toString()}`, { scroll: false });
+  };
+
+  // Close modal and remove coachId from URL
+  const closeViewDetailModal = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete('coachId');
+    const newUrl = params.toString() ? `/coaches?${params.toString()}` : '/coaches';
+    router.push(newUrl, { scroll: false });
+    setIsViewDetailModalVisible(false);
+    setViewDetailCoachId(null);
   };
 
   const openApprove = (coach: CoachData) => {
@@ -297,34 +325,38 @@ export default function CoachesPage() {
   };
 
   const confirmApprove = async () => {
-    const displayCoach = coachDetail;
+    const displayCoach = coachDetail || viewDetailData;
     if (!displayCoach && !selectedCoach) return;
     try {
       const id = (displayCoach?.id || selectedCoach?.id)!;
-      const name = displayCoach?.user?.fullName || displayCoach?.name || selectedCoach?.name || '';
-      await verifyCoachMutation.mutateAsync({ id });
-      message.success(`Đã phê duyệt huấn luyện viên ${name}`);
+      const response = await verifyCoachMutation.mutateAsync({ id });
+      const successMessage = response?.message || 'Xác minh hồ sơ huấn luyện viên thành công';
+      toast.success(successMessage);
       setIsApproveModalVisible(false);
       setIsDetailModalVisible(false);
+      // Close view detail modal and remove coachId from URL
+      closeViewDetailModal();
       await refetch();
     } catch (error: any) {
-      message.error(error?.message || 'Phê duyệt thất bại');
+      toast.error(error?.message || 'Phê duyệt thất bại');
     }
   };
 
   const confirmReject = async () => {
-    const displayCoach = coachDetail;
+    const displayCoach = coachDetail || viewDetailData;
     if (!displayCoach && !selectedCoach) return;
     try {
       const id = (displayCoach?.id || selectedCoach?.id)!;
-      const name = displayCoach?.name || selectedCoach?.name || '';
-      await rejectCoachMutation.mutateAsync({ id, reason: rejectReason.trim() });
-      message.success(`Đã từ chối huấn luyện viên ${name}`);
+      const response = await rejectCoachMutation.mutateAsync({ id, reason: rejectReason.trim() });
+      const successMessage = response?.message || 'Từ chối hồ sơ huấn luyện viên thành công';
+      toast.success(successMessage);
       setIsRejectModalVisible(false);
       setIsDetailModalVisible(false);
+      // Close view detail modal and remove coachId from URL
+      closeViewDetailModal();
       await refetch();
     } catch (error: any) {
-      message.error(error?.message || 'Từ chối thất bại');
+      toast.error(error?.message || 'Từ chối thất bại');
     }
   };
 
@@ -388,12 +420,6 @@ export default function CoachesPage() {
         <Space size="small">
           <Tooltip title="Xem chi tiết">
             <Button icon={<EyeOutlined />} onClick={() => openViewDetail(record.id)} />
-          </Tooltip>
-          <Tooltip title="Phê duyệt">
-            <Button type="primary" icon={<CheckOutlined />} onClick={() => openApprove(record)} />
-          </Tooltip>
-          <Tooltip title="Từ chối">
-            <Button danger icon={<CloseOutlined />} onClick={() => openReject(record)} />
           </Tooltip>
         </Space>
       ),
@@ -626,6 +652,7 @@ export default function CoachesPage() {
               ]
         }
         width={880}
+        styles={{ body: { maxHeight: 'calc(100vh - 260px)', overflowY: 'auto' } }}
       >
         {(coachDetail || selectedCoach) &&
           (() => {
@@ -870,22 +897,45 @@ export default function CoachesPage() {
       <Modal
         title="Thông tin chi tiết Huấn luyện viên"
         open={isViewDetailModalVisible}
-        onCancel={() => {
-          setIsViewDetailModalVisible(false);
-          setViewDetailCoachId(null);
-        }}
-        footer={[
-          <Button
-            key="close"
-            onClick={() => {
-              setIsViewDetailModalVisible(false);
-              setViewDetailCoachId(null);
-            }}
-          >
-            Đóng
-          </Button>,
-        ]}
+        onCancel={closeViewDetailModal}
+        footer={
+          (viewDetailData?.verificationStatus === CoachVerificationStatus.UNVERIFIED ||
+            viewDetailData?.verificationStatus === CoachVerificationStatus.PENDING) &&
+          viewDetailData?.verificationStatus !== CoachVerificationStatus.VERIFIED
+            ? [
+                <Button
+                  key="reject"
+                  danger
+                  onClick={() => {
+                    if (viewDetailData) {
+                      setSelectedCoach(viewDetailData);
+                      setRejectReason('');
+                      setIsRejectModalVisible(true);
+                    }
+                  }}
+                >
+                  <CloseOutlined /> Từ chối
+                </Button>,
+                <Button
+                  key="approve"
+                  type="primary"
+                  onClick={() => {
+                    if (viewDetailData) {
+                      openApprove(viewDetailData as any);
+                    }
+                  }}
+                >
+                  <CheckOutlined /> Phê duyệt
+                </Button>,
+              ]
+            : [
+                <Button key="close" onClick={closeViewDetailModal}>
+                  Đóng
+                </Button>,
+              ]
+        }
         width={900}
+        styles={{ body: { maxHeight: 'calc(100vh - 260px)', overflowY: 'auto' } }}
       >
         {isLoadingViewDetail ? (
           <div className="py-8">
@@ -1139,6 +1189,7 @@ export default function CoachesPage() {
         okText="Phê duyệt"
         cancelText="Hủy"
         okButtonProps={{ loading: verifyCoachMutation.isPending }}
+        styles={{ body: { maxHeight: 'calc(100vh - 260px)', overflowY: 'auto' } }}
       >
         <div>
           <Text>
@@ -1167,6 +1218,7 @@ export default function CoachesPage() {
         okType="danger"
         cancelText="Hủy"
         okButtonProps={{ loading: rejectCoachMutation.isPending }}
+        styles={{ body: { maxHeight: 'calc(100vh - 260px)', overflowY: 'auto' } }}
       >
         <div>
           <Text>

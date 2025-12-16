@@ -191,3 +191,51 @@ html {
 .ant-table-tbody > tr:nth-child(even) {
   background-color: rgba(248, 250, 252, 0.5);
 }
+
+/* React Hot Toast Custom Styling - Beautiful and Light */
+.notification-toast {
+  animation:
+    slideInRight 0.3s ease-out,
+    fadeIn 0.3s ease-out;
+}
+
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Custom toast container styling */
+[data-sonner-toaster] {
+  z-index: 9999;
+}
+
+/* Toast hover effects */
+.notification-toast:hover {
+  transform: translateX(-4px);
+  transition: transform 0.2s ease-out;
+}
+
+/* Toast close button styling */
+.notification-toast button {
+  transition: all 0.2s ease-out;
+}
+
+.notification-toast button:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 4px;
+}

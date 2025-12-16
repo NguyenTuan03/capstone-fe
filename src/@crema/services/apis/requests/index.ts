@@ -207,14 +207,70 @@ export const transformLessonData = (lesson: Lesson): LessonWithDetails => {
   };
 };
 
-export const transformSubjectData = (subject: Subject): SubjectWithLessons => {
+export const transformSubjectData = (subject?: Subject | null): SubjectWithLessons => {
+  if (!subject) {
+    return {
+      id: 0,
+      name: '',
+      level: '',
+      status: '',
+      description: '',
+      publicUrl: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      deletedAt: null,
+      lessons: [],
+    };
+  }
   return {
     ...subject,
     lessons: subject.lessons?.map(transformLessonData) || [],
   };
 };
 
-export const transformCourseDetails = (details: CourseDetails): CourseDetailsWithContent => {
+export const transformCourseDetails = (
+  details: CourseDetails | null | undefined,
+): CourseDetailsWithContent => {
+  if (!details) {
+    // Return a default course details object
+    return {
+      id: 0,
+      name: '',
+      court: { id: 0 },
+      level: '',
+      status: '',
+      endDate: '',
+      subject: {
+        id: 0,
+        name: '',
+        level: '',
+        status: '',
+        lessons: [],
+        createdAt: '',
+        deletedAt: null,
+        publicUrl: null,
+        updatedAt: '',
+        description: '',
+      },
+      createdAt: '',
+      createdBy: { id: 0 },
+      deletedAt: null,
+      publicUrl: null,
+      schedules: [],
+      startDate: '',
+      updatedAt: '',
+      description: '',
+      progressPct: 0,
+      totalEarnings: '0',
+      totalSessions: 0,
+      learningFormat: '',
+      maxParticipants: 0,
+      minParticipants: 0,
+      cancellingReason: null,
+      currentParticipants: 0,
+      pricePerParticipant: '0',
+    };
+  }
   return {
     ...details,
     subject: transformSubjectData(details.subject),
@@ -226,7 +282,7 @@ export const transformRequestData = (request: Request): RequestWithContent => {
     ...request,
     metadata: {
       ...request.metadata,
-      details: transformCourseDetails(request.metadata.details),
+      details: transformCourseDetails(request.metadata?.details),
     },
   };
 };
@@ -379,13 +435,13 @@ export const useGetLessonDetails = (requestId: string | number, lessonId: number
 };
 
 // Utility functions for UI display
-export const formatDuration = (minutes: number): string => {
-  if (minutes < 60) {
-    return `${minutes} phút`;
+export const formatDuration = (seconds: number): string => {
+  if (seconds < 60) {
+    return `${seconds} giây`;
   }
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  return remainingMinutes > 0 ? `${hours} giờ ${remainingMinutes} phút` : `${hours} giờ`;
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return remainingSeconds > 0 ? `${minutes} phút ${remainingSeconds} giây` : `${minutes} phút`;
 };
 
 export const getVideoThumbnail = (video: Video): string => {
@@ -405,16 +461,18 @@ export const getQuizStats = (quiz: Quiz) => {
 };
 
 export const getLessonStats = (lesson: LessonWithDetails) => {
-  const videoDuration = lesson.video?.duration || 0;
+  const videoDuration = lesson.video?.duration || 0; // Giữ nguyên số giây
   const quizStats = lesson.quiz
     ? getQuizStats(lesson.quiz)
     : { totalQuestions: 0, totalOptions: 0, hasQuestions: false };
 
   return {
-    videoDuration: formatDuration(videoDuration),
+    videoDuration: videoDuration, // Trả về số giây
+    videoDurationFormatted: formatDuration(videoDuration), // Thêm trường mới cho định dạng
     hasVideo: !!lesson.video,
     hasQuiz: !!lesson.quiz,
     quizStats,
-    totalDuration: formatDuration(lesson.duration),
+    totalDuration: lesson.duration, // Trả về số giây
+    totalDurationFormatted: formatDuration(lesson.duration), // Thêm trường mới cho định dạng
   };
 };

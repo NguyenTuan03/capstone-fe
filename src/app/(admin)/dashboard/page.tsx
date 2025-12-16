@@ -111,6 +111,13 @@ export default function DashboardPage() {
       icon: Star,
       color: 'yellow' as const,
     },
+    {
+      title: 'Phê Duyệt',
+      value: data.systemReports.approved + data.systemReports.pending + data.systemReports.rejected,
+      icon: AlertCircle,
+      color: 'red' as const,
+      subtitle: `${data.systemReports.pending} chờ xử lý`,
+    },
   ];
 
   const courseChartData = data.courseStatusChart

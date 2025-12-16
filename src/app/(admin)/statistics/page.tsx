@@ -187,7 +187,39 @@ export default function FinancialStatisticsPage() {
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
         <Title level={2}>📊 Thống Kê Tài Chính</Title>
-
+        {/* Additional Summary Row */}
+        <Row gutter={[16, 16]} style={{ marginTop: 24, marginBottom: 24 }}>
+          <Col xs={24} md={8}>
+            <Card size="small" style={{ borderRadius: '8px' }}>
+              <Statistic
+                title="Tổng doanh thu năm"
+                value={systemTotal + learnerTotal}
+                formatter={(value) => formatCurrency(Number(value))}
+                valueStyle={{ color: '#1890ff' }}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} md={8}>
+            <Card size="small" style={{ borderRadius: '8px' }}>
+              <Statistic
+                title="Tổng chi phí HLV"
+                value={coachTotal}
+                formatter={(value) => formatCurrency(Number(value))}
+                valueStyle={{ color: '#fa8c16' }}
+              />
+            </Card>
+          </Col>
+          <Col xs={24} md={8}>
+            <Card size="small" style={{ borderRadius: '8px' }}>
+              <Statistic
+                title="Lợi nhuận ròng"
+                value={systemTotal}
+                formatter={(value) => formatCurrency(Number(value))}
+                valueStyle={{ color: '#52c41a' }}
+              />
+            </Card>
+          </Col>
+        </Row>
         {/* Filter Controls */}
         <Card size="small" style={{ marginBottom: 16 }}>
           <Space>
@@ -389,40 +421,6 @@ export default function FinancialStatisticsPage() {
                 </LineChart>
               </ResponsiveContainer>
             </div>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Additional Summary Row */}
-      <Row gutter={[16, 16]} style={{ marginTop: 24 }}>
-        <Col xs={24} md={8}>
-          <Card size="small" style={{ borderRadius: '8px' }}>
-            <Statistic
-              title="Tổng doanh thu năm"
-              value={systemTotal + learnerTotal}
-              formatter={(value) => formatCurrency(Number(value))}
-              valueStyle={{ color: '#1890ff' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} md={8}>
-          <Card size="small" style={{ borderRadius: '8px' }}>
-            <Statistic
-              title="Tổng chi phí Coach"
-              value={coachTotal}
-              formatter={(value) => formatCurrency(Number(value))}
-              valueStyle={{ color: '#fa8c16' }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} md={8}>
-          <Card size="small" style={{ borderRadius: '8px' }}>
-            <Statistic
-              title="Lợi nhuận ròng"
-              value={systemTotal}
-              formatter={(value) => formatCurrency(Number(value))}
-              valueStyle={{ color: '#52c41a' }}
-            />
           </Card>
         </Col>
       </Row>
