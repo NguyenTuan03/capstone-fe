@@ -80,6 +80,7 @@ interface CoachData {
 
 interface CredentialData {
   id: string;
+  publicUrl?: string;
   baseCredential: {
     id: number;
     name: string;

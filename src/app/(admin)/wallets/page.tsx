@@ -40,6 +40,10 @@ export interface Wallet {
     fullName: string;
     email: string;
   };
+  bank?: {
+    id: number;
+    name: string;
+  };
   withdrawalRequests?: WithdrawalRequest[];
 }
 
