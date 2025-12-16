@@ -11,13 +11,11 @@ import {
   ArrowUpOutlined,
   ArrowDownOutlined,
   BookOutlined,
-  TrophyOutlined,
-  ClockCircleOutlined,
   CheckCircleOutlined,
 } from '@ant-design/icons';
 
 import { DashboardStats } from '@/types/dashboard';
-import DashboardApiService from '@/services/dashboardApi';
+import { DashboardApiService } from '@/services/dashboardApi';
 
 const { Text } = Typography;
 

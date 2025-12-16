@@ -97,4 +97,37 @@ export class DashboardApiService {
     const diffInYears = Math.floor(diffInMonths / 12);
     return `${diffInYears} năm trước`;
   }
+
+  /**
+   * Get trend indicator comparing current value with previous value
+   * @param current Current value
+   * @param previous Previous value
+   * @returns Object with trend ('up' | 'down' | 'stable') and percentage change
+   */
+  static getTrendIndicator(
+    current: number,
+    previous: number,
+  ): { trend: 'up' | 'down' | 'stable'; percentage: number } {
+    if (previous === 0) {
+      // If previous is 0, any positive current value is considered "up"
+      if (current > 0) {
+        return { trend: 'up', percentage: 100 };
+      }
+      return { trend: 'stable', percentage: 0 };
+    }
+
+    const percentage = ((current - previous) / previous) * 100;
+    const absPercentage = Math.abs(percentage);
+
+    // Consider changes less than 0.1% as stable
+    if (absPercentage < 0.1) {
+      return { trend: 'stable', percentage: 0 };
+    }
+
+    if (percentage > 0) {
+      return { trend: 'up', percentage: absPercentage };
+    } else {
+      return { trend: 'down', percentage: absPercentage };
+    }
+  }
 }
