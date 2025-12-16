@@ -820,11 +820,11 @@ export default function CoachesPage() {
                               {cred.expiresAt && <span>Hết hạn: {formatDate(cred.expiresAt)}</span>}
                             </Space>
                           </div>
-                          {cred.baseCredential.publicUrl && (
+                          {cred.publicUrl && (
                             <Button
                               type="link"
                               icon={<LinkOutlined />}
-                              onClick={() => window.open(cred.baseCredential.publicUrl!, '_blank')}
+                              onClick={() => window.open(cred.publicUrl!, '_blank')}
                             >
                               Xem
                             </Button>
@@ -1078,13 +1078,11 @@ export default function CoachesPage() {
                                 )}
                               </Space>
                             </div>
-                            {cred.baseCredential.publicUrl && (
+                            {cred.publicUrl && (
                               <Button
                                 type="link"
                                 icon={<LinkOutlined />}
-                                onClick={() =>
-                                  window.open(cred.baseCredential.publicUrl!, '_blank')
-                                }
+                                onClick={() => window.open(cred.publicUrl!, '_blank')}
                               >
                                 Xem
                               </Button>

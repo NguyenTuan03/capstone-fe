@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   Table,
@@ -100,7 +100,7 @@ export default function CourseVerificationPage() {
 
   // API hooks
   const { data: requestsData, refetch: refetchRequests } = useGetRequests({
-    type: 'COURSE_APPROVAL',
+    type: 'COURSE-APPROVAL',
     status: 'PENDING',
   });
 
