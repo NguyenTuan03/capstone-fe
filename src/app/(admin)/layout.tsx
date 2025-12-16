@@ -15,6 +15,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   ControlOutlined,
+  EnvironmentOutlined,
 } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
 import jwtAxios from '@/@crema/services/jwt-auth';
@@ -405,6 +406,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       key: '/users',
       icon: <UserOutlined />,
       label: 'Người dùng',
+    },
+    {
+      key: '/courts',
+      icon: <EnvironmentOutlined />,
+      label: 'Sân tập ',
     },
     {
       key: '/coaches',
