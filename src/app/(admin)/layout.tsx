@@ -15,6 +15,7 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   ControlOutlined,
+  EnvironmentOutlined,
   WalletOutlined,
 } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
@@ -406,6 +407,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       key: '/users',
       icon: <UserOutlined />,
       label: 'Người dùng',
+    },
+    {
+      key: '/courts',
+      icon: <EnvironmentOutlined />,
+      label: 'Sân tập ',
     },
     {
       key: '/coaches',
