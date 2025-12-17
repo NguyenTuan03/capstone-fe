@@ -70,7 +70,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
               suffix={
                 <div style={{ fontSize: '12px', marginTop: '4px' }}>
                   <Space>
-                    {getTrendIcon(userTrend.trend, userTrend.percentage)}
+                    {getTrendIcon(userTrend.trend)}
                     <Text
                       style={{
                         color: getTrendColor(userTrend.trend),
@@ -174,7 +174,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
               suffix={
                 <div style={{ fontSize: '12px', marginTop: '4px' }}>
                   <Space>
-                    {getTrendIcon(revenueTrend.trend, revenueTrend.percentage)}
+                    {getTrendIcon(revenueTrend.trend)}
                     <Text
                       style={{
                         color: getTrendColor(revenueTrend.trend),

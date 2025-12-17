@@ -878,10 +878,7 @@ export default function CoachesPage() {
 
                 {/* Feedback quick open */}
                 <div className="flex justify-end">
-                  <Button
-                    icon={<MessageOutlined />}
-                    onClick={() => setIsFeedbackModalVisible(true)}
-                  >
+                  <Button icon={<MessageOutlined />} onClick={() => setIsRejectModalVisible(true)}>
                     Xem feedback
                   </Button>
                 </div>
