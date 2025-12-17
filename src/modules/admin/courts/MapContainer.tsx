@@ -2,11 +2,8 @@
 'use client';
 
 import { useEffect, useRef } from 'react';
-import { Typography, Space } from 'antd';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-
-const { Text, Title } = Typography;
 
 // Fix Leaflet default icon issue
 if (typeof window !== 'undefined') {
@@ -61,6 +58,8 @@ interface MapComponentProps {
   onMarkerClick: (courtId: string) => void;
 }
 
+const DEFAULT_CENTER: [number, number] = [16.0544, 108.2022];
+
 export default function MapComponent({
   courts,
   selectedCourtId,
@@ -70,13 +69,10 @@ export default function MapComponent({
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
   const markersLayerRef = useRef<L.LayerGroup | null>(null);
 
-  // Default center (Vietnam)
-  const defaultCenter: [number, number] = [16.0544, 108.2022];
-
   // Initialize Leaflet map once
   useEffect(() => {
     if (!mapRef.current && mapContainerRef.current) {
-      mapRef.current = L.map(mapContainerRef.current).setView(defaultCenter, 6);
+      mapRef.current = L.map(mapContainerRef.current).setView(DEFAULT_CENTER, 6);
 
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',

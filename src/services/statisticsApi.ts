@@ -1,5 +1,4 @@
 import {
-  StatisticsData,
   GetStatisticsParams,
   GetStatisticsResponse,
   StatisticsFilters,

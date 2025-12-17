@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Card,
   Table,
@@ -11,15 +11,12 @@ import {
   Tag,
   Modal,
   Form,
-  message,
   Typography,
   Tooltip,
-  App,
   Descriptions,
   Spin,
 } from 'antd';
 import {
-  PlusOutlined,
   EditOutlined,
   EyeOutlined,
   SearchOutlined,
@@ -34,7 +31,6 @@ import {
   useUpdateConfiguration,
   useGetConfigurationByKey,
   parseConfigValue,
-  stringifyConfigValue,
 } from '@/@crema/services/apis/configurations';
 import { Configuration, ConfigurationDataType } from '@/types/configuration';
 
@@ -42,7 +38,6 @@ const { Title, Text } = Typography;
 const { TextArea } = Input;
 
 export default function ConfigurationsPage() {
-  const { modal } = App.useApp();
   const [createForm] = Form.useForm();
   const [editForm] = Form.useForm();
 
@@ -115,11 +110,6 @@ export default function ConfigurationsPage() {
   }
 
   // Handlers
-  const handleCreate = () => {
-    createForm.resetFields();
-    setIsCreateModalVisible(true);
-  };
-
   const handleEdit = (config: Configuration) => {
     setSelectedConfig(config);
     editForm.setFieldsValue({

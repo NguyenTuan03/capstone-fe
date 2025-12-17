@@ -4,7 +4,7 @@ import React from 'react';
 import { Card, Progress, Row, Col, Typography, Space } from 'antd';
 import { DeviceData } from '@/types/statistics';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 
 interface UserDistributionChartProps {
   data: DeviceData[];

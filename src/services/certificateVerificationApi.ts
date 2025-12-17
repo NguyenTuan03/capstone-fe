@@ -15,6 +15,7 @@ export class CertificateVerificationApiService {
    * Get coach applications with pagination and filters
    */
   static async getApplications(_params: GetApplicationsParams): Promise<GetApplicationsResponse> {
+    void _params;
     throw new Error('Method not implemented. Please implement real API call.');
   }
 
@@ -22,6 +23,7 @@ export class CertificateVerificationApiService {
    * Get application by ID
    */
   static async getApplicationById(_applicationId: string): Promise<CoachApplication | null> {
+    void _applicationId;
     throw new Error('Method not implemented. Please implement real API call.');
   }
 
@@ -29,6 +31,7 @@ export class CertificateVerificationApiService {
    * Review application (approve, reject, request info)
    */
   static async reviewApplication(_request: ReviewApplicationRequest): Promise<ApiResponse> {
+    void _request;
     throw new Error('Method not implemented. Please implement real API call.');
   }
 
@@ -36,6 +39,7 @@ export class CertificateVerificationApiService {
    * Review individual certificate
    */
   static async reviewCertificate(_request: CertificateReviewRequest): Promise<ApiResponse> {
+    void _request;
     throw new Error('Method not implemented. Please implement real API call.');
   }
 
@@ -57,6 +61,7 @@ export class CertificateVerificationApiService {
    * Calculate application statistics
    */
   private static calculateStats(_applications: CoachApplication[]): ApplicationStats {
+    void _applications;
     throw new Error('Method not implemented. Please implement real API call.');
   }
 
@@ -68,6 +73,9 @@ export class CertificateVerificationApiService {
     _priority: CoachApplication['priority'],
     _adminId: string,
   ): Promise<ApiResponse> {
+    void _applicationId;
+    void _priority;
+    void _adminId;
     throw new Error('Method not implemented. Please implement real API call.');
   }
 
@@ -79,6 +87,9 @@ export class CertificateVerificationApiService {
     _note: string,
     _adminId: string,
   ): Promise<ApiResponse> {
+    void _applicationId;
+    void _note;
+    void _adminId;
     throw new Error('Method not implemented. Please implement real API call.');
   }
 
