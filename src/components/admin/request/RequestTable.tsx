@@ -44,13 +44,6 @@ const STATUS_META: Record<
   REJECTED: { color: 'red', text: 'Từ chối', badge: 'error' },
 };
 
-const TYPE_COLOR: Record<string, string> = {
-  CHANGE: 'blue',
-  CREATE: 'geekblue',
-  DELETE: 'volcano',
-  UPDATE: 'purple',
-};
-
 export default function RequestsTable({
   requests,
   isLoading,

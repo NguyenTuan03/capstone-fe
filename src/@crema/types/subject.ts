@@ -1,4 +1,3 @@
-import { SubjectStatus } from '@/components/coach/subject/createModal';
 import { PickleballLevel } from '@/types/enums';
 
 export interface Lesson {
@@ -17,7 +16,7 @@ export interface Subject {
   name: string;
   description?: string;
   level: PickleballLevel | string;
-  status: SubjectStatus;
+  status: 'active' | 'inactive';
   createdAt?: string;
   updatedAt?: string;
   deletedAt?: string | null;

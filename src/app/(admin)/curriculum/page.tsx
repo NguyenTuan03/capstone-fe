@@ -212,7 +212,7 @@ export default function CourseVerificationPage() {
         setIsCourseDetailModalVisible(true);
       }
     }
-  }, [searchParams, courses, selectedCourse]); // Removed isCourseDetailModalVisible from dependencies
+  }, [searchParams, courses, selectedCourse, isCourseDetailModalVisible]);
 
   // Helper functions
   const getStatusColor = (status: string) => {

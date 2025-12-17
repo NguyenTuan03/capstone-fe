@@ -149,7 +149,6 @@ export default function CoachesPage() {
   const [isApproveModalVisible, setIsApproveModalVisible] = useState(false);
   const [isRejectModalVisible, setIsRejectModalVisible] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
-  const [_isFeedbackModalVisible, setIsFeedbackModalVisible] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(10);
@@ -362,10 +361,7 @@ export default function CoachesPage() {
   };
 
   /** TABLE COLUMNS */
-  const InfoCell: React.FC<{ record: CoachData; showBadge?: boolean }> = ({
-    record,
-    showBadge,
-  }) => (
+  const InfoCell: React.FC<{ record: CoachData }> = ({ record }) => (
     <div className="flex items-center gap-3">
       <Avatar size={48} src={record.avatar || undefined} icon={<UserOutlined />} />
       <div className="min-w-0">
@@ -432,7 +428,7 @@ export default function CoachesPage() {
       title: 'Thông tin',
       key: 'info',
       align: 'center',
-      render: (_, record) => <InfoCell record={record} showBadge />,
+      render: (_, record) => <InfoCell record={record} />,
     },
     {
       title: 'Đánh giá',
@@ -882,10 +878,7 @@ export default function CoachesPage() {
 
                 {/* Feedback quick open */}
                 <div className="flex justify-end">
-                  <Button
-                    icon={<MessageOutlined />}
-                    onClick={() => setIsFeedbackModalVisible(true)}
-                  >
+                  <Button icon={<MessageOutlined />} onClick={() => setIsRejectModalVisible(true)}>
                     Xem feedback
                   </Button>
                 </div>
