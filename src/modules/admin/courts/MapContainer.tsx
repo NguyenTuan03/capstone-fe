@@ -54,6 +54,7 @@ interface Court {
 
 interface MapComponentProps {
   courts: Court[];
+  filteredCourtIds?: string[]; // IDs of courts to zoom to (when filtering)
   selectedCourtId: string | null;
   onMarkerClick: (courtId: string) => void;
 }
@@ -62,6 +63,7 @@ const DEFAULT_CENTER: [number, number] = [16.0544, 108.2022];
 
 export default function MapComponent({
   courts,
+  filteredCourtIds,
   selectedCourtId,
   onMarkerClick,
 }: MapComponentProps) {
@@ -132,11 +134,21 @@ export default function MapComponent({
       if (court) {
         map.setView([court.latitude, court.longitude], 15, { animate: true });
       }
+    } else if (filteredCourtIds && filteredCourtIds.length > 0) {
+      // Zoom to filtered courts when filter is active
+      const filteredCourts = courts.filter((c) => filteredCourtIds.includes(c.id));
+      if (filteredCourts.length > 0) {
+        const bounds = filteredCourts.map(
+          (court) => [court.latitude, court.longitude] as [number, number],
+        );
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
+      }
     } else if (courts.length > 0) {
+      // No filter - show all courts
       const bounds = courts.map((court) => [court.latitude, court.longitude] as [number, number]);
       map.fitBounds(bounds, { padding: [50, 50], maxZoom: 15 });
     }
-  }, [courts, selectedCourtId, onMarkerClick]);
+  }, [courts, filteredCourtIds, selectedCourtId, onMarkerClick]);
 
   return <div ref={mapContainerRef} style={{ height: '100%', width: '100%' }} />;
 }

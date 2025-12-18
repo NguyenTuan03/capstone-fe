@@ -179,11 +179,11 @@ export default function CreateDrawer({ open, onCancel, onSubmit }: CreateDrawerP
 
   const selectedCourt = courts.find((c) => c.id === selectedCourtId);
 
-  // Reset form when court is selected
+  // Reset form when court is selected (don't change filter)
   useEffect(() => {
     if (selectedCourtId && selectedCourt) {
-      setSelectedProvinceId(selectedCourt.provinceId);
-      setSelectedDistrictId(selectedCourt.districtId);
+      // Don't update province/district filter when selecting a court
+      // This allows other markers to remain visible on the map
       form.setFieldsValue({
         phoneNumber: '',
         pricePerHour: undefined,
@@ -214,13 +214,10 @@ export default function CreateDrawer({ open, onCancel, onSubmit }: CreateDrawerP
       toast.error('Vui lòng nhập số điện thoại và giá thuê');
       return;
     }
-    if (!selectedProvinceId || !selectedDistrictId) {
-      toast.error('Vui lòng chọn Tỉnh/Thành và Quận/Huyện');
-      return;
-    }
 
     // API tìm sân theo name + provinceId + districtId và update
     // Các field address, latitude, longitude, publicUrl giữ nguyên từ sân đã chọn
+    // Sử dụng provinceId và districtId từ sân đã chọn
     const payload: CreateCourtBody = {
       name: selectedCourt.name,
       phoneNumber: phoneNumber || undefined,
@@ -229,8 +226,8 @@ export default function CreateDrawer({ open, onCancel, onSubmit }: CreateDrawerP
       address: selectedCourt.address,
       latitude: selectedCourt.latitude,
       longitude: selectedCourt.longitude,
-      provinceId: selectedProvinceId,
-      districtId: selectedDistrictId,
+      provinceId: selectedCourt.provinceId,
+      districtId: selectedCourt.districtId,
       isActive: true, // Set active khi tạo/update
     };
 
@@ -360,7 +357,12 @@ export default function CreateDrawer({ open, onCancel, onSubmit }: CreateDrawerP
                   </div>
                 ) : (
                   <MapComponent
-                    courts={filteredCourts}
+                    courts={courts}
+                    filteredCourtIds={
+                      selectedProvinceId || selectedDistrictId
+                        ? filteredCourts.map((c) => c.id)
+                        : undefined
+                    }
                     selectedCourtId={selectedCourtId}
                     onMarkerClick={setSelectedCourtId}
                   />
