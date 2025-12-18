@@ -346,10 +346,14 @@ function getStatusText(status: string) {
   /* ... */ return status;
 }
 function getStatusColor(status: string) {
-  /* ... */ return 'blue';
+  if (status === 'APPROVED') return 'green';
+  if (status === 'REJECTED') return 'red';
+  return 'blue';
 }
 function getCourseStatusColor(s: string) {
-  /* ... */ return 'green';
+  if (s === 'COMPLETED') return 'green';
+  if (s === 'CANCELLED') return 'red';
+  return 'orange';
 }
 function getCourseStatusText(s: string) {
   /* ... */ return s;

@@ -1,8 +1,7 @@
 // @/services/apis/platform-analysis/index.ts
 import { buildUrl } from '@/@crema/helper/BuildUrl';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { usePut } from '@/@crema/hooks/useApiQuery';
 
 // -------------------- Interfaces --------------------
 

@@ -21,6 +21,7 @@ import {
   App,
   Upload,
 } from 'antd';
+import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 import {
   TrophyOutlined,
@@ -90,8 +91,6 @@ export default function AchievementsPage() {
     COACH: '/summary',
     LEARNER: '/home',
   });
-  const [loading, setLoading] = useState(false);
-  const [selectedAchievement, setSelectedAchievement] = useState<AchievementData | null>(null);
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -1480,9 +1479,11 @@ export default function AchievementsPage() {
             {editingAchievement?.iconUrl && (
               <div className="mt-2 text-xs text-gray-500">
                 Icon hiện tại:{' '}
-                <img
+                <Image
                   src={editingAchievement.iconUrl}
                   alt="icon"
+                  width={32}
+                  height={32}
                   className="inline-block w-8 h-8 ml-2"
                 />
               </div>

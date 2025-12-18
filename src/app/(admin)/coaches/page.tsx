@@ -36,6 +36,7 @@ import {
   PhoneOutlined,
   MailOutlined,
   MessageOutlined,
+  InfoCircleOutlined,
 } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import {
@@ -79,6 +80,7 @@ interface CoachData {
 
 interface CredentialData {
   id: string;
+  publicUrl?: string;
   baseCredential: {
     id: number;
     name: string;
@@ -147,7 +149,6 @@ export default function CoachesPage() {
   const [isApproveModalVisible, setIsApproveModalVisible] = useState(false);
   const [isRejectModalVisible, setIsRejectModalVisible] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
-  const [_isFeedbackModalVisible, setIsFeedbackModalVisible] = useState(false);
   const [searchText, setSearchText] = useState('');
   const [page, setPage] = useState(1);
   const [size, setSize] = useState(10);
@@ -360,18 +361,15 @@ export default function CoachesPage() {
   };
 
   /** TABLE COLUMNS */
-  const InfoCell: React.FC<{ record: CoachData; showBadge?: boolean }> = ({
-    record,
-    showBadge,
-  }) => (
+  const InfoCell: React.FC<{ record: CoachData }> = ({ record }) => (
     <div className="flex items-center gap-3">
       <Avatar size={48} src={record.avatar || undefined} icon={<UserOutlined />} />
       <div className="min-w-0">
         <div className="flex items-center gap-1">
           <span className="font-medium truncate max-w-[220px] block">{record.name}</span>
-          {showBadge && record.rating >= 4.5 && (
-            <Tooltip title="Huấn luyện viên xuất sắc">
-              <TrophyOutlined className="text-yellow-500" />
+          {record.bio && (
+            <Tooltip title={record.bio}>
+              <InfoCircleOutlined className="text-gray-400" />
             </Tooltip>
           )}
         </div>
@@ -430,7 +428,7 @@ export default function CoachesPage() {
       title: 'Thông tin',
       key: 'info',
       align: 'center',
-      render: (_, record) => <InfoCell record={record} showBadge />,
+      render: (_, record) => <InfoCell record={record} />,
     },
     {
       title: 'Đánh giá',
@@ -846,11 +844,11 @@ export default function CoachesPage() {
                               {cred.expiresAt && <span>Hết hạn: {formatDate(cred.expiresAt)}</span>}
                             </Space>
                           </div>
-                          {cred.baseCredential.publicUrl && (
+                          {cred.publicUrl && (
                             <Button
                               type="link"
                               icon={<LinkOutlined />}
-                              onClick={() => window.open(cred.baseCredential.publicUrl!, '_blank')}
+                              onClick={() => window.open(cred.publicUrl!, '_blank')}
                             >
                               Xem
                             </Button>
@@ -880,10 +878,7 @@ export default function CoachesPage() {
 
                 {/* Feedback quick open */}
                 <div className="flex justify-end">
-                  <Button
-                    icon={<MessageOutlined />}
-                    onClick={() => setIsFeedbackModalVisible(true)}
-                  >
+                  <Button icon={<MessageOutlined />} onClick={() => setIsRejectModalVisible(true)}>
                     Xem feedback
                   </Button>
                 </div>
@@ -1127,13 +1122,11 @@ export default function CoachesPage() {
                                 )}
                               </Space>
                             </div>
-                            {cred.baseCredential.publicUrl && (
+                            {cred.publicUrl && (
                               <Button
                                 type="link"
                                 icon={<LinkOutlined />}
-                                onClick={() =>
-                                  window.open(cred.baseCredential.publicUrl!, '_blank')
-                                }
+                                onClick={() => window.open(cred.publicUrl!, '_blank')}
                               >
                                 Xem
                               </Button>

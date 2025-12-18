@@ -70,6 +70,7 @@ export class AuthApiService {
    * Login endpoint
    */
   static async login(_credentials: LoginRequest): Promise<LoginResponse> {
+    void _credentials;
     throw new Error('Method not implemented. Please implement real API call.');
   }
 
@@ -77,6 +78,7 @@ export class AuthApiService {
    * Forgot password endpoint
    */
   static async forgotPassword(_request: ForgotPasswordRequest): Promise<ForgotPasswordResponse> {
+    void _request;
     throw new Error('Method not implemented. Please implement real API call.');
   }
 
@@ -84,6 +86,7 @@ export class AuthApiService {
    * Verify reset code endpoint
    */
   static async verifyResetCode(_request: VerifyResetCodeRequest): Promise<VerifyResetCodeResponse> {
+    void _request;
     throw new Error('Method not implemented. Please implement real API call.');
   }
 
@@ -91,6 +94,7 @@ export class AuthApiService {
    * Reset password endpoint
    */
   static async resetPassword(_request: ResetPasswordRequest): Promise<ResetPasswordResponse> {
+    void _request;
     throw new Error('Method not implemented. Please implement real API call.');
   }
 
@@ -105,6 +109,7 @@ export class AuthApiService {
    * Refresh token endpoint
    */
   static async refreshToken(_refreshToken: string): Promise<LoginResponse> {
+    void _refreshToken;
     throw new Error('Method not implemented. Please implement real API call.');
   }
 
@@ -112,6 +117,7 @@ export class AuthApiService {
    * Get current user info from token
    */
   static async getCurrentUser(_token: string): Promise<LoginResponse> {
+    void _token;
     throw new Error('Method not implemented. Please implement real API call.');
   }
 }

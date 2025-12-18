@@ -12,6 +12,7 @@ export class UserApiService {
    * Get users with pagination and filters
    */
   static async getUsers(_params: GetUsersParams): Promise<GetUsersResponse> {
+    void _params;
     throw new Error('Method not implemented. Please implement real API call.');
   }
 
@@ -19,6 +20,7 @@ export class UserApiService {
    * Get user by ID
    */
   static async getUserById(_userId: string): Promise<User | null> {
+    void _userId;
     throw new Error('Method not implemented. Please implement real API call.');
   }
 
@@ -33,6 +35,7 @@ export class UserApiService {
    * Block user with reason
    */
   static async blockUser(_request: BlockUserRequest): Promise<ApiResponse> {
+    void _request;
     throw new Error('Method not implemented. Please implement real API call.');
   }
 
@@ -40,6 +43,8 @@ export class UserApiService {
    * Unblock user
    */
   static async unblockUser(_userId: string, _adminId: string): Promise<ApiResponse> {
+    void _userId;
+    void _adminId;
     throw new Error('Method not implemented. Please implement real API call.');
   }
 
@@ -47,6 +52,7 @@ export class UserApiService {
    * Delete user (hard delete)
    */
   static async deleteUser(_userId: string): Promise<ApiResponse> {
+    void _userId;
     throw new Error('Method not implemented. Please implement real API call.');
   }
 

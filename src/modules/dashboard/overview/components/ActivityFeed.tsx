@@ -16,7 +16,7 @@ import {
 import { ActivityFeedItem, SystemAlert } from '@/types/dashboard';
 import { DashboardApiService } from '@/services/dashboardApi';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 const ActivityFeed: React.FC = () => {
   const [activities, setActivities] = useState<ActivityFeedItem[]>([]);

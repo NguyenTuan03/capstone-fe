@@ -25,7 +25,7 @@ interface StatsCardsProps {
 
 const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
   // Get trend indicator component
-  const getTrendIcon = (trend: 'up' | 'down' | 'stable', value: number) => {
+  const getTrendIcon = (trend: 'up' | 'down' | 'stable') => {
     if (trend === 'up') {
       return <ArrowUpOutlined style={{ color: '#52c41a' }} />;
     } else if (trend === 'down') {
@@ -70,7 +70,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
               suffix={
                 <div style={{ fontSize: '12px', marginTop: '4px' }}>
                   <Space>
-                    {getTrendIcon(userTrend.trend, userTrend.percentage)}
+                    {getTrendIcon(userTrend.trend)}
                     <Text
                       style={{
                         color: getTrendColor(userTrend.trend),
@@ -174,7 +174,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
               suffix={
                 <div style={{ fontSize: '12px', marginTop: '4px' }}>
                   <Space>
-                    {getTrendIcon(revenueTrend.trend, revenueTrend.percentage)}
+                    {getTrendIcon(revenueTrend.trend)}
                     <Text
                       style={{
                         color: getTrendColor(revenueTrend.trend),
@@ -240,7 +240,7 @@ const StatsCards: React.FC<StatsCardsProps> = ({ stats }) => {
         <Col xs={24} sm={12} lg={8}>
           <Card title="Top Huấn luyện viên" size="small">
             <Space direction="vertical" style={{ width: '100%' }} size="small">
-              {stats.coaches.topPerformers.slice(0, 3).map((coach, index) => (
+              {stats.coaches.topPerformers.slice(0, 3).map((coach) => (
                 <div
                   key={coach.id}
                   style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}

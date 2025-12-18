@@ -10,7 +10,7 @@ interface ChartsSectionProps {
   stats: DashboardStats;
 }
 
-const ChartsSection: React.FC<ChartsSectionProps> = ({ stats }) => {
+const ChartsSection: React.FC<ChartsSectionProps> = ({ stats: _stats }) => {
   return (
     <Row gutter={[24, 24]} style={{ marginBottom: 24 }}>
       <Col xs={24} lg={12}>

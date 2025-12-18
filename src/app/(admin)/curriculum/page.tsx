@@ -115,7 +115,7 @@ export default function CourseVerificationPage() {
 
   // API hooks - fetch up to 1000 items, then paginate on client-side
   const { data: requestsData, refetch: refetchRequests } = useGetRequests({
-    type: 'COURSE_APPROVAL',
+    type: 'COURSE-APPROVAL',
     status: 'PENDING',
     pageSize: 1000,
   });
@@ -212,7 +212,7 @@ export default function CourseVerificationPage() {
         setIsCourseDetailModalVisible(true);
       }
     }
-  }, [searchParams, courses, selectedCourse]); // Removed isCourseDetailModalVisible from dependencies
+  }, [searchParams, courses, selectedCourse, isCourseDetailModalVisible]);
 
   // Helper functions
   const getStatusColor = (status: string) => {

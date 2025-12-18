@@ -20,7 +20,6 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   BarChart,
   Bar,
@@ -92,7 +91,7 @@ const CurrencyTooltip = ({ active, payload, label }: any) => {
 
 export default function FinancialStatisticsPage() {
   const [timeRange, setTimeRange] = useState('year');
-  const [customDateRange, setCustomDateRange] = useState<any>(null);
+  const [, setCustomDateRange] = useState<any>(null);
 
   // ✅ Call 4 API thực tế
   const {

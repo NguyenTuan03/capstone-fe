@@ -207,7 +207,6 @@ export const transformLessonData = (lesson: Lesson): LessonWithDetails => {
   };
 };
 
-
 export const transformSubjectData = (subject?: Subject | null): SubjectWithLessons => {
   if (!subject) {
     return {
@@ -220,7 +219,7 @@ export const transformSubjectData = (subject?: Subject | null): SubjectWithLesso
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       deletedAt: null,
-      lessons: []
+      lessons: [],
     };
   }
   return {
@@ -293,22 +292,28 @@ export const useGetRequests = (params?: GetRequestsParams) => {
   return useQuery({
     queryKey: ['requests', 'list', params],
     queryFn: async () => {
-      const url = buildUrl('requests');
+      // Build filter string based on params
+      const filters: string[] = [];
+
+      if (params?.type) {
+        filters.push(`type_eq_${params.type}`);
+      }
+
+      if (params?.status) {
+        filters.push(`status_eq_${params.status}`);
+      }
+
+      const filterString = filters.length > 0 ? filters.join(',') : '';
+
+      const url = buildUrl(
+        `requests?page=${params?.page || 1}&size=${params?.pageSize || 10}${filterString ? `&filter=${filterString}` : ''}`,
+      );
       const token = getAuthToken();
 
-      const requestParams = {
-        page: params?.page || 1,
-        pageSize: params?.pageSize || 100,
-        ...(params?.type && { type: params.type }),
-        ...(params?.status && { status: params.status }),
-        // Optimized for course approval requests with nested data
-        include: 'metadata.details.subject.lessons.quiz,metadata.details.subject.lessons.video',
-        populate:
-          'metadata.details.subject.lessons.quiz.questions,metadata.details.subject.lessons.video',
-      };
+      console.log('Request URL:', url);
+      console.log('Request Params:', params);
 
       const response = await axios.get<GetRequestsResponse>(url, {
-        params: requestParams,
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -436,9 +441,7 @@ export const formatDuration = (seconds: number): string => {
   }
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
-  return remainingSeconds > 0 
-    ? `${minutes} phút ${remainingSeconds} giây` 
-    : `${minutes} phút`;
+  return remainingSeconds > 0 ? `${minutes} phút ${remainingSeconds} giây` : `${minutes} phút`;
 };
 
 export const getVideoThumbnail = (video: Video): string => {
@@ -470,6 +473,6 @@ export const getLessonStats = (lesson: LessonWithDetails) => {
     hasQuiz: !!lesson.quiz,
     quizStats,
     totalDuration: lesson.duration, // Trả về số giây
-    totalDurationFormatted: formatDuration(lesson.duration) // Thêm trường mới cho định dạng
+    totalDurationFormatted: formatDuration(lesson.duration), // Thêm trường mới cho định dạng
   };
 };
