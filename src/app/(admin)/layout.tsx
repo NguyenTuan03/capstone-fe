@@ -16,6 +16,7 @@ import {
   MenuUnfoldOutlined,
   ControlOutlined,
   EnvironmentOutlined,
+  FileTextOutlined,
 } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
 import jwtAxios from '@/@crema/services/jwt-auth';
@@ -428,6 +429,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       label: 'Thành tựu',
     },
     {
+      key: '/credential',
+      icon: <FileTextOutlined />,
+      label: 'Chứng chỉ',
+    },
+    {
       key: '/configurations',
       icon: <ControlOutlined />,
       label: 'Cấu hình',
@@ -478,9 +484,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const getSelectedKey = () => {
     if (pathname.includes('/dashboard')) return '/dashboard';
     if (pathname.includes('/users')) return '/users';
+    if (pathname.includes('/courts')) return '/courts';
     if (pathname.includes('/coaches')) return '/coaches';
     if (pathname.includes('/curriculum')) return '/curriculum';
     if (pathname.includes('/achievements')) return '/achievements';
+    if (pathname.includes('/credential')) return '/credential';
     if (pathname.includes('/configurations')) return '/configurations';
     if (pathname.includes('/statistics')) return '/statistics';
     return '/dashboard';
