@@ -115,7 +115,7 @@ export default function CourseVerificationPage() {
 
   // API hooks - fetch up to 1000 items, then paginate on client-side
   const { data: requestsData, refetch: refetchRequests } = useGetRequests({
-    type: 'COURSE-APPROVAL',
+    type: 'COURSE_APPROVAL',
     status: 'PENDING',
     pageSize: 1000,
   });
