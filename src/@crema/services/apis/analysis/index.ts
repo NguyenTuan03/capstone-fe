@@ -125,6 +125,8 @@ export const useGetMonthlyNewUsers = (params?: DateRangeParams) => {
         },
         params,
       });
+      console.log(response);
+
       return response.data.metadata.data;
     },
   });

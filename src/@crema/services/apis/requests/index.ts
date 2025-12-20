@@ -319,7 +319,6 @@ export const useGetRequests = (params?: GetRequestsParams) => {
 
       const url = buildUrl('courses/requests', queryParams);
       const token = getAuthToken();
-
       console.log('Request URL:', url);
       console.log('Request Params:', queryParams);
 

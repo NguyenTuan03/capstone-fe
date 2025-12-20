@@ -179,11 +179,11 @@ export default function CreateDrawer({ open, onCancel, onSubmit }: CreateDrawerP
 
   const selectedCourt = courts.find((c) => c.id === selectedCourtId);
 
-  // Reset form when court is selected
+  // Reset form when court is selected (don't change filter)
   useEffect(() => {
     if (selectedCourtId && selectedCourt) {
-      setSelectedProvinceId(selectedCourt.provinceId);
-      setSelectedDistrictId(selectedCourt.districtId);
+      // Don't update province/district filter when selecting a court
+      // This allows other markers to remain visible on the map
       form.setFieldsValue({
         phoneNumber: '',
         pricePerHour: undefined,
@@ -214,13 +214,10 @@ export default function CreateDrawer({ open, onCancel, onSubmit }: CreateDrawerP
       toast.error('Vui lòng nhập số điện thoại và giá thuê');
       return;
     }
-    if (!selectedProvinceId || !selectedDistrictId) {
-      toast.error('Vui lòng chọn Tỉnh/Thành và Quận/Huyện');
-      return;
-    }
 
     // API tìm sân theo name + provinceId + districtId và update
     // Các field address, latitude, longitude, publicUrl giữ nguyên từ sân đã chọn
+    // Sử dụng provinceId và districtId từ sân đã chọn
     const payload: CreateCourtBody = {
       name: selectedCourt.name,
       phoneNumber: phoneNumber || undefined,
@@ -229,8 +226,8 @@ export default function CreateDrawer({ open, onCancel, onSubmit }: CreateDrawerP
       address: selectedCourt.address,
       latitude: selectedCourt.latitude,
       longitude: selectedCourt.longitude,
-      provinceId: selectedProvinceId,
-      districtId: selectedDistrictId,
+      provinceId: selectedCourt.provinceId,
+      districtId: selectedCourt.districtId,
       isActive: true, // Set active khi tạo/update
     };
 
@@ -250,10 +247,25 @@ export default function CreateDrawer({ open, onCancel, onSubmit }: CreateDrawerP
       width={1200}
       placement="right"
       destroyOnClose
+      styles={{
+        body: {
+          padding: 0,
+          height: '100%',
+          overflow: 'hidden',
+        },
+      }}
     >
-      <div className="w-full h-full flex flex-col bg-gradient-to-br from-green-50 to-blue-50">
+      <div className="w-full h-full flex flex-col bg-gradient-to-br from-green-50 to-blue-50 overflow-hidden">
         {/* Header & Filter Section */}
-        <Card className="m-4 shadow-xl rounded-2xl border-0">
+        <Card
+          className="m-4 mb-2 shadow-xl rounded-2xl border-0 flex-shrink-0"
+          styles={{
+            body: {
+              padding: 24,
+              overflow: 'visible',
+            },
+          }}
+        >
           <Space direction="vertical" className="w-full" size="large">
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center shadow-lg">
@@ -291,6 +303,8 @@ export default function CreateDrawer({ open, onCancel, onSubmit }: CreateDrawerP
                     label: province.name,
                     value: province.id,
                   }))}
+                  popupMatchSelectWidth={false}
+                  dropdownStyle={{ maxHeight: 400, overflow: 'auto' }}
                 />
               </Col>
 
@@ -315,6 +329,8 @@ export default function CreateDrawer({ open, onCancel, onSubmit }: CreateDrawerP
                     label: district.name,
                     value: district.id,
                   }))}
+                  popupMatchSelectWidth={false}
+                  dropdownStyle={{ maxHeight: 400, overflow: 'auto' }}
                 />
               </Col>
 
@@ -345,10 +361,10 @@ export default function CreateDrawer({ open, onCancel, onSubmit }: CreateDrawerP
         </Card>
 
         {/* Map Section */}
-        <div className="flex-1 m-4 mt-0">
+        <div className="flex-1 m-4 mt-0 min-h-0 overflow-hidden">
           <Row gutter={16} style={{ height: '100%' }}>
             {/* Map */}
-            <Col xs={24} lg={selectedCourt ? 16 : 24} style={{ height: '100%' }}>
+            <Col xs={24} lg={selectedCourt ? 16 : 24} style={{ height: '100%', minHeight: 0 }}>
               <Card
                 className="shadow-2xl rounded-2xl border-0"
                 bodyStyle={{ padding: 0, height: '100%', borderRadius: '1rem', overflow: 'hidden' }}
@@ -360,7 +376,12 @@ export default function CreateDrawer({ open, onCancel, onSubmit }: CreateDrawerP
                   </div>
                 ) : (
                   <MapComponent
-                    courts={filteredCourts}
+                    courts={courts}
+                    filteredCourtIds={
+                      selectedProvinceId || selectedDistrictId
+                        ? filteredCourts.map((c) => c.id)
+                        : undefined
+                    }
                     selectedCourtId={selectedCourtId}
                     onMarkerClick={setSelectedCourtId}
                   />
@@ -370,7 +391,7 @@ export default function CreateDrawer({ open, onCancel, onSubmit }: CreateDrawerP
 
             {/* Court Details */}
             {selectedCourt && (
-              <Col xs={24} lg={8} style={{ height: '100%' }}>
+              <Col xs={24} lg={8} style={{ height: '100%', minHeight: 0 }}>
                 <Card
                   className="shadow-2xl rounded-2xl border-0"
                   title={

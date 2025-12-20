@@ -5,7 +5,7 @@ import React from 'react';
 
 const AppLoader = () => {
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-white/60 z-50">
+    <div className="fixed inset-0 flex items-center justify-center bg-white/60 z-50 h-screen">
       <Spin size="large" />
     </div>
   );
