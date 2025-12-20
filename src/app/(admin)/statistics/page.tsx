@@ -160,7 +160,7 @@ export default function FinancialStatisticsPage() {
   // ✅ Hiển thị loading
   if (isLoading) {
     return (
-      <div style={{ padding: '24px', textAlign: 'center' }}>
+      <div style={{ padding: '24px', textAlign: 'center', height: '100vh' }}>
         <Spin size="large" />
         <div style={{ marginTop: 16 }}>Đang tải dữ liệu thống kê tài chính...</div>
       </div>

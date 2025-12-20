@@ -9,26 +9,21 @@ import {
   Tag,
   Input,
   Select,
-  Avatar,
   Modal,
   Typography,
   Row,
   Col,
   Descriptions,
   Tooltip,
-  Image,
-  List,
-  Collapse,
+  Avatar,
 } from 'antd';
 import { toast } from 'react-hot-toast';
 import {
-  PlayCircleOutlined,
   SearchOutlined,
   EyeOutlined,
   CheckOutlined,
   FilterOutlined,
   UserOutlined,
-  QuestionCircleOutlined,
   VideoCameraOutlined,
   ClockCircleOutlined,
 } from '@ant-design/icons';
@@ -40,68 +35,25 @@ import {
   useApproveRequest,
   useRejectRequest,
   formatDuration,
-  getLessonStats,
-  type RequestWithContent,
-  type LessonWithDetails,
 } from '@/@crema/services/apis/requests';
+import DetailModal from '@/modules/admin/curriculum/DetailModal';
+import ApproveModal from '@/modules/admin/curriculum/ApproveModal';
+import RejectModal from '@/modules/admin/curriculum/RejectModal';
+import type {
+  CourseRequestData,
+  VideoData,
+  RequestWithContent,
+  LessonWithDetails,
+} from '@/types/curriculum';
+import {
+  getStatusColor,
+  getStatusText,
+  getLevelText,
+  getLevelColor,
+} from '@/modules/admin/curriculum/utils';
 
 const { Title, Text } = Typography;
-const { TextArea } = Input;
-const { Search } = Input;
 const { Option } = Select;
-const { Panel } = Collapse;
-
-// Types
-interface VideoData {
-  id: string;
-  title: string;
-  description: string;
-  tags: string[];
-  duration: number;
-  drillName?: string;
-  drillDescription?: string;
-  drillPracticeSets?: string;
-  publicUrl: string;
-  thumbnailUrl?: string;
-  status: string;
-  coachName: string;
-  coachEmail: string;
-  coachAvatar: string;
-  lessonName: string;
-  courseName: string;
-  createdAt?: string;
-}
-
-interface CourseRequestData {
-  id: string;
-  courseName: string;
-  courseDescription: string;
-  level: string;
-  status: string;
-  coachName: string;
-  coachEmail: string;
-  coachAvatar: string;
-  totalLessons: number;
-  totalVideos: number;
-  totalQuizzes: number;
-  createdAt: string;
-  requestData: RequestWithContent;
-}
-
-// Hàm định dạng ngày tháng an toàn
-const formatDateSafe = (dateString?: string | null) => {
-  if (!dateString) return '-';
-  try {
-    // Chuyển đổi về dạng YYYY-MM-DD để đảm bảo nhất quán
-    const [datePart] = dateString.split('T');
-    const [year, month, day] = datePart.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
-    return date.toLocaleDateString('vi-VN');
-  } catch (error) {
-    console.error('Lỗi khi định dạng ngày:', error);
-    return dateString || '-';
-  }
-};
 
 export default function CourseVerificationPage() {
   const router = useRouter();
@@ -117,7 +69,7 @@ export default function CourseVerificationPage() {
   const { data: requestsData, refetch: refetchRequests } = useGetRequests({
     type: 'COURSE-APPROVAL',
     status: 'PENDING',
-    pageSize: 1000,
+    pageSize: 100,
   });
 
   const approveRequestMutation = useApproveRequest();
@@ -204,90 +156,16 @@ export default function CourseVerificationPage() {
       return;
     }
 
-    // Only proceed if we don't already have the course selected or if the selected course ID doesn't match
     if (!selectedCourse || selectedCourse.id !== requestId) {
       const foundCourse = courses.find((course: CourseRequestData) => course.id === requestId);
       if (foundCourse) {
         setSelectedCourse(foundCourse);
-        setIsCourseDetailModalVisible(true);
+        setTimeout(() => {
+          setIsCourseDetailModalVisible(true);
+        }, 0);
       }
     }
-  }, [searchParams, courses, selectedCourse, isCourseDetailModalVisible]);
-
-  // Helper functions
-  const getStatusColor = (status: string) => {
-    const colors: { [key: string]: string } = {
-      UPLOADING: 'blue',
-      PROCESSING: 'cyan',
-      PENDING: 'orange',
-      PENDING_APPROVAL: 'orange',
-      APPROVED: 'green',
-      REJECTED: 'red',
-      READY: 'green',
-    };
-    return colors[status] || 'default';
-  };
-
-  const getStatusText = (status: string) => {
-    const texts: { [key: string]: string } = {
-      UPLOADING: 'Đang tải lên',
-      PROCESSING: 'Đang xử lý',
-      PENDING: 'Chờ phê duyệt',
-      PENDING_APPROVAL: 'Chờ phê duyệt',
-      APPROVED: 'Đã phê duyệt',
-      REJECTED: 'Đã từ chối',
-      READY: 'Sẵn sàng',
-    };
-    return texts[status] || status;
-  };
-
-  const getLevelText = (level: string) => {
-    const texts: { [key: string]: string } = {
-      BEGINNER: 'Cơ bản',
-      INTERMEDIATE: 'Trung cấp',
-      ADVANCED: 'Nâng cao',
-      PROFESSIONAL: 'Chuyên nghiệp',
-    };
-    return texts[level] || level;
-  };
-
-  const parseVideoTags = (tags?: string | string[] | null): string[] => {
-    if (!tags) return [];
-    if (Array.isArray(tags)) {
-      return tags
-        .filter((tag) => typeof tag === 'string')
-        .map((tag) => tag.trim())
-        .filter(Boolean);
-    }
-
-    const cleaned = tags.replace(/^\{|\}$/g, '');
-    try {
-      const parsed = JSON.parse(cleaned);
-      if (Array.isArray(parsed)) {
-        return parsed
-          .filter((tag) => typeof tag === 'string')
-          .map((tag) => tag.trim())
-          .filter(Boolean);
-      }
-    } catch {
-      // Fallback to comma-split below when JSON.parse fails
-    }
-
-    return cleaned
-      .split(',')
-      .map((tag) => tag.trim().replace(/^"|"$/g, ''))
-      .filter(Boolean);
-  };
-
-  const getLevelColor = (level: string) => {
-    const colors: { [key: string]: string } = {
-      BEGINNER: 'green',
-      INTERMEDIATE: 'blue',
-      ADVANCED: 'orange',
-      PROFESSIONAL: 'red',
-    };
-    return colors[level] || 'default';
-  };
+  }, [searchParams, courses]);
 
   // Course handlers
   const updateQueryParam = (courseId?: string) => {
@@ -302,9 +180,11 @@ export default function CourseVerificationPage() {
   };
 
   const handleViewCourseDetails = (course: CourseRequestData) => {
-    setIsCourseDetailModalVisible(true);
     setSelectedCourse(course);
     updateQueryParam(course.id);
+    setTimeout(() => {
+      setIsCourseDetailModalVisible(true);
+    }, 0);
   };
 
   const handleCloseCourseDetails = () => {
@@ -487,12 +367,20 @@ export default function CourseVerificationPage() {
 
         <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
           <Col xs={24} sm={12} md={10}>
-            <Search
+            <Input
               placeholder="Tìm kiếm theo tên khóa học, huấn luyện viên..."
               allowClear
-              onSearch={setCourseSearchText}
-              onChange={(e) => !e.target.value && setCourseSearchText('')}
+              value={courseSearchText}
+              onChange={(e) => {
+                const value = e.target.value;
+                setCourseSearchText(value);
+                if (!value) setCourseSearchText('');
+              }}
               prefix={<SearchOutlined />}
+              onPressEnter={(e) => {
+                const target = e.target as HTMLInputElement;
+                setCourseSearchText(target.value);
+              }}
             />
           </Col>
           <Col xs={12} sm={6} md={5}>
@@ -631,380 +519,41 @@ export default function CourseVerificationPage() {
       </Modal>
 
       {/* Course Detail Modal */}
-      <Modal
-        title="Chi tiết Khóa học"
+      <DetailModal
         open={isCourseDetailModalVisible}
-        onCancel={handleCloseCourseDetails}
-        footer={[
-          <Button key="close" onClick={handleCloseCourseDetails}>
-            Đóng
-          </Button>,
-          ...(selectedCourse?.status === 'PENDING'
-            ? [
-                <Button key="reject" danger onClick={() => openRejectModal(selectedCourse)}>
-                  Từ chối
-                </Button>,
-                <Button
-                  key="approve"
-                  type="primary"
-                  onClick={() => openApproveModal(selectedCourse)}
-                >
-                  Phê duyệt
-                </Button>,
-              ]
-            : []),
-        ]}
-        width={1000}
-        centered
-        styles={{
-          body: {
-            maxHeight: 'calc(100vh - 240px)',
-            overflowY: 'auto',
-            paddingRight: 16,
-          },
-        }}
-      >
-        {selectedCourse && (
-          <div className="space-y-6">
-            {/* Course Basic Info */}
-            <Descriptions bordered column={2} size="small">
-              <Descriptions.Item label="Tên khóa học" span={2}>
-                <strong>{selectedCourse.courseName}</strong>
-              </Descriptions.Item>
-              <Descriptions.Item label="Mô tả" span={2}>
-                {selectedCourse.courseDescription}
-              </Descriptions.Item>
-              <Descriptions.Item label="Cấp độ">
-                <Tag color={getLevelColor(selectedCourse.level)}>
-                  {getLevelText(selectedCourse.level)}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Trạng thái">
-                <Tag
-                  color={
-                    selectedCourse.status === 'PENDING'
-                      ? 'orange'
-                      : selectedCourse.status === 'APPROVED'
-                        ? 'green'
-                        : 'red'
-                  }
-                >
-                  {selectedCourse.status === 'PENDING'
-                    ? 'Chờ duyệt'
-                    : selectedCourse.status === 'APPROVED'
-                      ? 'Đã duyệt'
-                      : 'Đã từ chối'}
-                </Tag>
-              </Descriptions.Item>
-              <Descriptions.Item label="Số bài học">
-                {selectedCourse.totalLessons} bài
-              </Descriptions.Item>
-              <Descriptions.Item label="Nội dung">
-                {selectedCourse.totalVideos} videos, {selectedCourse.totalQuizzes} quizzes
-              </Descriptions.Item>
-              <Descriptions.Item label="Huấn luyện viên" span={2}>
-                <div className="flex items-center gap-2">
-                  <Avatar src={selectedCourse.coachAvatar} icon={<UserOutlined />} />
-                  <div>
-                    <div className="font-medium">{selectedCourse.coachName}</div>
-                    <div className="text-sm text-gray-500">{selectedCourse.coachEmail}</div>
-                  </div>
-                </div>
-              </Descriptions.Item>
-            </Descriptions>
-
-            {/* Lessons List with Details */}
-            <div className="mt-4">
-              <Title level={5}>Danh sách bài học</Title>
-              {(() => {
-                const lessons =
-                  selectedCourse.requestData?.metadata?.details?.subject?.lessons || [];
-
-                if (!lessons || lessons.length === 0) {
-                  return (
-                    <div className="p-4 bg-gray-50 rounded text-center text-gray-500">
-                      Không có bài học nào
-                    </div>
-                  );
-                }
-
-                return (
-                  <Collapse>
-                    {lessons.map((lesson: LessonWithDetails, idx: number) => {
-                      const lessonStats = getLessonStats(lesson);
-
-                      return (
-                        <Panel
-                          key={lesson.id}
-                          header={
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <span className="font-medium">
-                                  Bài {idx + 1}: {lesson.name}
-                                </span>
-                                {lesson.description && (
-                                  <div className="text-sm text-gray-500 mt-1">
-                                    {lesson.description}
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex gap-2">
-                                {lesson.video && (
-                                  <Tag color="blue" icon={<VideoCameraOutlined />}>
-                                    Video
-                                  </Tag>
-                                )}
-                                {lesson.quiz && (
-                                  <Tag color="orange" icon={<QuestionCircleOutlined />}>
-                                    Quiz ({lesson.quiz.totalQuestions} câu)
-                                  </Tag>
-                                )}
-                              </div>
-                            </div>
-                          }
-                        >
-                          {/* Lesson Content */}
-                          <div className="space-y-4">
-                            {/* Video Section */}
-                            {lesson.video && (
-                              <Card size="small" title="Video Bài Học">
-                                <div className="flex gap-4">
-                                  {lesson.video.thumbnailUrl && (
-                                    <Image
-                                      src={lesson.video.thumbnailUrl}
-                                      alt={lesson.video.title}
-                                      width={120}
-                                      height={80}
-                                      style={{ objectFit: 'cover', borderRadius: '4px' }}
-                                      preview={false}
-                                    />
-                                  )}
-                                  <div className="flex-1">
-                                    <div className="font-medium">{lesson.video.title}</div>
-                                    <div className="text-sm text-gray-600 mt-1">
-                                      {lesson.video.description}
-                                    </div>
-                                    <div className="mt-2">
-                                      <Tag>Thời lượng: {lessonStats.videoDurationFormatted}</Tag>
-                                      <Tag>Trạng thái: {getStatusText(lesson.video.status)}</Tag>
-                                    </div>
-                                    {lesson.video.publicUrl && (
-                                      <Button
-                                        type="primary"
-                                        size="small"
-                                        icon={<PlayCircleOutlined />}
-                                        className="mt-2"
-                                        onClick={() =>
-                                          handlePlayVideo({
-                                            id: `${lesson.id}-${lesson.video!.id}`,
-                                            title: lesson.video!.title,
-                                            description: lesson.video!.description,
-                                            tags: parseVideoTags(lesson.video!.tags),
-                                            duration: lesson.video!.duration,
-                                            drillName: lesson.video!.drillName || undefined,
-                                            drillDescription:
-                                              lesson.video!.drillDescription || undefined,
-                                            drillPracticeSets:
-                                              lesson.video!.drillPracticeSets || undefined,
-                                            publicUrl: lesson.video!.publicUrl,
-                                            thumbnailUrl: lesson.video!.thumbnailUrl ?? undefined,
-                                            status: lesson.video!.status,
-                                            coachName: selectedCourse.coachName,
-                                            coachEmail: selectedCourse.coachEmail,
-                                            coachAvatar: selectedCourse.coachAvatar,
-                                            lessonName: lesson.name,
-                                            courseName: selectedCourse.courseName,
-                                            createdAt: selectedCourse?.createdAt
-                                              ? formatDateSafe(selectedCourse.createdAt)
-                                              : '-',
-                                          })
-                                        }
-                                      >
-                                        Phát Video
-                                      </Button>
-                                    )}
-                                  </div>
-                                </div>
-                              </Card>
-                            )}
-
-                            {/* Quiz Section */}
-                            {lesson.quiz && (
-                              <Card size="small" title="Quiz">
-                                <div className="space-y-3">
-                                  <div className="font-medium">{lesson.quiz.title}</div>
-                                  {lesson.quiz.description && (
-                                    <div className="text-sm text-gray-500">
-                                      {lesson.quiz.description}
-                                    </div>
-                                  )}
-                                  <div className="text-sm">
-                                    <Tag icon={<QuestionCircleOutlined />}>
-                                      {lesson.quiz.totalQuestions} câu hỏi
-                                    </Tag>
-                                  </div>
-
-                                  {/* Questions List */}
-                                  {lesson.quiz.questions && lesson.quiz.questions.length > 0 && (
-                                    <div className="mt-3">
-                                      <div className="font-medium mb-2">Danh sách câu hỏi:</div>
-                                      <List
-                                        size="small"
-                                        dataSource={lesson.quiz.questions}
-                                        renderItem={(question, qIdx) => (
-                                          <List.Item>
-                                            <div className="w-full">
-                                              <div className="font-medium">
-                                                Câu {qIdx + 1}: {question.title}
-                                              </div>
-                                              {question.explanation && (
-                                                <div className="text-sm text-gray-600 mt-1">
-                                                  Giải thích: {question.explanation}
-                                                </div>
-                                              )}
-                                              <div className="mt-2 space-y-1">
-                                                {question.options.map((option, oIdx) => (
-                                                  <div
-                                                    key={option.id}
-                                                    className={`text-sm p-2 rounded ${
-                                                      option.isCorrect
-                                                        ? 'bg-green-50 border border-green-200'
-                                                        : 'bg-gray-50'
-                                                    }`}
-                                                  >
-                                                    {oIdx + 1}. {option.content}
-                                                    {option.isCorrect && (
-                                                      <Tag color="green" className="ml-2">
-                                                        Đáp án đúng
-                                                      </Tag>
-                                                    )}
-                                                  </div>
-                                                ))}
-                                              </div>
-                                            </div>
-                                          </List.Item>
-                                        )}
-                                      />
-                                    </div>
-                                  )}
-                                </div>
-                              </Card>
-                            )}
-
-                            {/* Lesson Info */}
-                            <Card size="small" title="Thông tin Bài Học">
-                              <Descriptions column={2} size="small">
-                                <Descriptions.Item label="Thời lượng">
-                                  {lessonStats.totalDurationFormatted}
-                                </Descriptions.Item>
-                                <Descriptions.Item label="Số thứ tự">
-                                  Bài {lesson.lessonNumber}
-                                </Descriptions.Item>
-                                <Descriptions.Item label="Ngày tạo">
-                                  {lesson?.createdAt ? formatDateSafe(lesson.createdAt) : '-'}
-                                </Descriptions.Item>
-                              </Descriptions>
-                            </Card>
-                          </div>
-                        </Panel>
-                      );
-                    })}
-                  </Collapse>
-                );
-              })()}
-            </div>
-          </div>
-        )}
-      </Modal>
+        course={selectedCourse}
+        onClose={handleCloseCourseDetails}
+        onApprove={openApproveModal}
+        onReject={openRejectModal}
+        onPlayVideo={handlePlayVideo}
+      />
 
       {/* Approve Course Modal */}
-      <Modal
-        title="Xác nhận phê duyệt"
+      <ApproveModal
         open={isApproveModalVisible}
-        zIndex={2000}
+        course={pendingActionCourse}
+        loading={approveRequestMutation.isPending}
+        onConfirm={handleConfirmApprove}
         onCancel={() => {
           setIsApproveModalVisible(false);
           setPendingActionCourse(null);
         }}
-        footer={[
-          <Button
-            key="cancel"
-            onClick={() => {
-              setIsApproveModalVisible(false);
-              setPendingActionCourse(null);
-            }}
-          >
-            Hủy
-          </Button>,
-          <Button
-            key="approve"
-            type="primary"
-            loading={approveRequestMutation.isPending}
-            onClick={handleConfirmApprove}
-          >
-            Xác nhận phê duyệt
-          </Button>,
-        ]}
-      >
-        <p>
-          Bạn có chắc chắn muốn phê duyệt khóa học{' '}
-          <strong>&ldquo;{pendingActionCourse?.courseName}&rdquo;</strong>?
-        </p>
-      </Modal>
+      />
 
       {/* Reject Course Modal */}
-      <Modal
-        title="Từ chối khóa học"
+      <RejectModal
         open={isRejectModalVisible}
-        zIndex={2000}
+        course={pendingActionCourse}
+        rejectReason={rejectReason}
+        loading={rejectRequestMutation.isPending}
+        onReasonChange={setRejectReason}
+        onConfirm={handleConfirmReject}
         onCancel={() => {
           setIsRejectModalVisible(false);
           setRejectReason('');
           setPendingActionCourse(null);
         }}
-        footer={[
-          <Button
-            key="cancel"
-            onClick={() => {
-              setIsRejectModalVisible(false);
-              setRejectReason('');
-              setPendingActionCourse(null);
-            }}
-          >
-            Hủy
-          </Button>,
-          <Button
-            key="confirm"
-            type="primary"
-            danger
-            loading={rejectRequestMutation.isPending}
-            onClick={handleConfirmReject}
-          >
-            Xác nhận từ chối
-          </Button>,
-        ]}
-      >
-        <div className="space-y-4 mb-[24px]">
-          <p>
-            Bạn có chắc chắn muốn từ chối khóa học{' '}
-            <strong>&ldquo;{pendingActionCourse?.courseName}&rdquo;</strong>?
-          </p>
-          <div>
-            <label className="block text-sm font-medium mb-2">
-              Lý do từ chối <span className="text-red-500">*</span>
-            </label>
-            <TextArea
-              className="mb-2"
-              value={rejectReason}
-              onChange={(e) => setRejectReason(e.target.value)}
-              placeholder="Nhập lý do từ chối khóa học..."
-              rows={4}
-              maxLength={500}
-              showCount
-            />
-          </div>
-        </div>
-      </Modal>
+      />
     </div>
   );
 }
