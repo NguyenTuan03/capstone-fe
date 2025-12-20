@@ -16,13 +16,7 @@ import {
   Descriptions,
   Spin,
 } from 'antd';
-import {
-  EditOutlined,
-  EyeOutlined,
-  SearchOutlined,
-  SettingOutlined,
-  ReloadOutlined,
-} from '@ant-design/icons';
+import { EditOutlined, EyeOutlined, SearchOutlined, SettingOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useRoleGuard } from '@/@crema/hooks/useRoleGuard';
 import {

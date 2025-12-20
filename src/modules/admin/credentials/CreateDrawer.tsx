@@ -4,10 +4,7 @@ import { useState } from 'react';
 import { Drawer, Form, Input, Select, Button, Upload, message, Space, Typography } from 'antd';
 import { UploadOutlined } from '@ant-design/icons';
 import type { UploadFile } from 'antd/es/upload/interface';
-import {
-  baseCredentialService,
-  CreateBaseCredentialDto,
-} from '@/@crema/services/apis/base-credentials';
+import { CreateBaseCredentialDto } from '@/@crema/services/apis/base-credentials';
 import { CourseCredentialType } from '@/types/enums';
 
 const { TextArea } = Input;
