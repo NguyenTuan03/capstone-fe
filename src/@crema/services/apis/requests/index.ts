@@ -310,9 +310,6 @@ export const useGetRequests = (params?: GetRequestsParams) => {
       );
       const token = getAuthToken();
 
-      console.log('Request URL:', url);
-      console.log('Request Params:', params);
-
       const response = await axios.get<GetRequestsResponse>(url, {
         headers: {
           'Content-Type': 'application/json',
