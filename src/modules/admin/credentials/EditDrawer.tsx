@@ -13,13 +13,9 @@ import {
   Typography,
   Image,
 } from 'antd';
-import { UploadOutlined, DeleteOutlined } from '@ant-design/icons';
+import { UploadOutlined } from '@ant-design/icons';
 import type { UploadFile } from 'antd/es/upload/interface';
-import {
-  baseCredentialService,
-  BaseCredential,
-  UpdateBaseCredentialDto,
-} from '@/@crema/services/apis/base-credentials';
+import { BaseCredential, UpdateBaseCredentialDto } from '@/@crema/services/apis/base-credentials';
 import { CourseCredentialType } from '@/types/enums';
 
 const { TextArea } = Input;

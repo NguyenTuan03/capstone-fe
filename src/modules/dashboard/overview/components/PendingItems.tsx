@@ -5,7 +5,6 @@ import { Card, List, Avatar, Typography, Tag, Button, Space, Tabs, Badge, messag
 
 import {
   UserOutlined,
-  ClockCircleOutlined,
   WarningOutlined,
   CheckCircleOutlined,
   ExclamationCircleOutlined,
@@ -32,7 +31,7 @@ const PendingItems: React.FC = () => {
         setApprovals(response.data.approvals);
         setReports(response.data.reports);
       }
-    } catch (error) {
+    } catch {
       message.error('Không thể tải pending items');
     } finally {
       setLoading(false);
