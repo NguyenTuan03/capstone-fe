@@ -467,19 +467,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const userMenuItems: MenuProps['items'] = [
     {
-      key: 'profile',
-      icon: <UserOutlined />,
-      label: 'Hồ sơ',
-    },
-    {
-      key: 'settings',
-      icon: <SettingOutlined />,
-      label: 'Cài đặt',
-    },
-    {
-      type: 'divider',
-    },
-    {
       key: 'logout',
       icon: <LogoutOutlined />,
       label: 'Đăng xuất',

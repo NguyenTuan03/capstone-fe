@@ -116,8 +116,8 @@ export default function UsersPage() {
       result = result.filter((user) => user.isActive === shouldActive);
     }
 
-    // 4. Filter theo vai trò
-    if (roleFilter !== 'all') {
+    // 4. Filter theo vai trò (không bao giờ filter theo ADMIN vì đã loại bỏ ở bước 1)
+    if (roleFilter !== 'all' && roleFilter !== 'ADMIN') {
       result = result.filter((user) => user.role.name === roleFilter);
     }
 
@@ -372,30 +372,6 @@ export default function UsersPage() {
         isActive ? <Tag color="green">Hoạt động</Tag> : <Tag color="red">Đã xóa</Tag>,
     },
     {
-      title: 'Vai trò',
-      dataIndex: ['role', 'name'],
-      key: 'role',
-      sorter: (a, b) => {
-        const aRoleName = a.role?.name || '';
-        const bRoleName = b.role?.name || '';
-        return aRoleName.localeCompare(bRoleName);
-      },
-      sortDirections: ['ascend', 'descend'],
-      render: (roleName: string) => getRoleName(roleName),
-    },
-    {
-      title: 'Ngày tạo',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      sorter: (a, b) => {
-        const aTime = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const bTime = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return aTime - bTime;
-      },
-      sortDirections: ['descend', 'ascend'],
-      render: (date: string) => (date ? new Date(date).toLocaleDateString('vi-VN') : '-'),
-    },
-    {
       title: 'Thao tác',
       key: 'actions',
       render: (_, record) => (
@@ -465,9 +441,8 @@ export default function UsersPage() {
               placeholder="Vai trò"
             >
               <Option value="all">Tất cả vai trò</Option>
-              <Option value="ADMIN">ADMIN</Option>
-              <Option value="COACH">COACH</Option>
-              <Option value="LEARNER">LEARNER</Option>
+              <Option value="COACH">{getRoleName('COACH')}</Option>
+              <Option value="LEARNER">{getRoleName('LEARNER')}</Option>
             </Select>
           </Col>
         </Row>
@@ -495,9 +470,8 @@ export default function UsersPage() {
                   <Form.Item label="Vai trò" name="role">
                     <Select placeholder="Chọn vai trò">
                       <Option value="all">Tất cả</Option>
-                      <Option value="ADMIN">ADMIN</Option>
-                      <Option value="COACH">COACH</Option>
-                      <Option value="LEARNER">LEARNER</Option>
+                      <Option value="COACH">Huấn luyện viên</Option>
+                      <Option value="LEARNER">Học viên</Option>
                     </Select>
                   </Form.Item>
                 </Col>
@@ -555,7 +529,9 @@ export default function UsersPage() {
             <Descriptions.Item label="Số điện thoại">
               {selectedUser.phoneNumber || 'Chưa cập nhật'}
             </Descriptions.Item>
-            <Descriptions.Item label="Vai trò">{selectedUser.role.name}</Descriptions.Item>
+            <Descriptions.Item label="Vai trò">
+              {getRoleName(selectedUser.role.name)}
+            </Descriptions.Item>
             <Descriptions.Item label="Trạng thái">
               {selectedUser.isActive ? 'Hoạt động' : 'Đã xóa'}
             </Descriptions.Item>
@@ -653,9 +629,9 @@ export default function UsersPage() {
             rules={[{ required: true, message: 'Vui lòng chọn vai trò' }]}
           >
             <Select placeholder="Chọn vai trò">
-              <Option value={1}>ADMIN</Option>
-              <Option value={2}>COACH</Option>
-              <Option value={3}>LEARNER</Option>
+              <Option value={1}>Quản trị viên</Option>
+              <Option value={2}>Huấn luyện viên</Option>
+              <Option value={3}>Học viên</Option>
             </Select>
           </Form.Item>
 

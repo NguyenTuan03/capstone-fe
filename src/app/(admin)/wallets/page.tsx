@@ -42,6 +42,10 @@ export interface Wallet {
     id: number;
     fullName: string;
     email: string;
+    role?: {
+      id: number;
+      name: string;
+    };
   };
   bank?: {
     id: number;
@@ -73,7 +77,11 @@ export default function WalletsPage() {
   const fetchWallets = () => {
     setLoading(true);
     getWalletsWithUserInfo()
-      .then((data) => setWallets(data))
+      .then((data) => {
+        // Loại bỏ ví của admin khỏi danh sách
+        const filteredData = data.filter((wallet) => wallet.user?.role?.name !== 'ADMIN');
+        setWallets(filteredData);
+      })
       .finally(() => setLoading(false));
   };
 
