@@ -40,6 +40,7 @@ export enum CourseCredentialType {
   CERTIFICATE = 'CERTIFICATE',
   LICENSE = 'LICENSE',
   TRAINING = 'TRAINING',
+  PRIZE = 'PRIZE',
   ACHIEVEMENT = 'ACHIEVEMENT',
   OTHER = 'OTHER',
 }

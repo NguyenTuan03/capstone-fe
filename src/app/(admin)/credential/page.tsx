@@ -33,6 +33,7 @@ const getTypeLabel = (type: CourseCredentialType): string => {
     LICENSE: 'Giấy phép',
     TRAINING: 'Đào tạo',
     ACHIEVEMENT: 'Thành tích',
+    PRIZE: 'Giải thưởng',
     OTHER: 'Khác',
   };
   return labels[type] || type;
@@ -43,6 +44,7 @@ const getTypeColor = (type: CourseCredentialType): string => {
     CERTIFICATE: 'blue',
     LICENSE: 'green',
     TRAINING: 'orange',
+    PRIZE: 'gold',
     ACHIEVEMENT: 'purple',
     OTHER: 'default',
   };

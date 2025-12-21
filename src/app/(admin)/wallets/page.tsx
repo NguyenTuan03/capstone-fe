@@ -527,7 +527,7 @@ export default function WalletsPage() {
         onOk={handleApprove}
         okText="Duyệt"
         cancelText="Hủy"
-        destroyOnClose
+        destroyOnHidden
       >
         {approveDialog.record && (
           <div>Bạn có chắc muốn duyệt yêu cầu rút tiền #{approveDialog.record.id}?</div>
@@ -542,7 +542,7 @@ export default function WalletsPage() {
         onOk={handleReject}
         okText="Từ chối"
         cancelText="Hủy"
-        destroyOnClose
+        destroyOnHidden
       >
         {rejectDialog.record && (
           <div>Bạn có chắc muốn từ chối yêu cầu rút tiền #{rejectDialog.record.id}?</div>
