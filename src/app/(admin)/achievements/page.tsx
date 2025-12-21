@@ -49,6 +49,7 @@ import {
   useUpdateEventCountAchievement,
   useUpdateStreakAchievement,
   useUpdatePropertyCheckAchievement,
+  useGetEventNames,
 } from '@/@crema/services/apis/achievements';
 import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
@@ -56,6 +57,73 @@ const { Title, Text } = Typography;
 const { Search } = Input;
 const { TextArea } = Input;
 const { Option } = Select;
+
+// Component to handle image with error fallback
+const AchievementIcon = ({ iconUrl, name }: { iconUrl?: string; name?: string }) => {
+  const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  if (!iconUrl || imageError) {
+    return (
+      <div className="w-[50px] h-[50px] bg-gray-200 rounded-lg flex items-center justify-center shrink-0">
+        <TrophyOutlined className="text-gray-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative w-[50px] h-[50px] shrink-0">
+      <Image
+        src={iconUrl}
+        width={50}
+        height={50}
+        style={{
+          objectFit: 'cover',
+          borderRadius: '8px',
+        }}
+        alt={name || 'icon'}
+        unoptimized
+        onError={() => setImageError(true)}
+        onLoad={() => setImageLoaded(true)}
+        className={imageLoaded ? '' : 'opacity-0'}
+      />
+      {!imageLoaded && !imageError && (
+        <div className="absolute inset-0 bg-gray-200 rounded-lg flex items-center justify-center">
+          <TrophyOutlined className="text-gray-400" />
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Small icon component for edit drawer
+const SmallAchievementIcon = ({ iconUrl, name }: { iconUrl?: string; name?: string }) => {
+  const [imageError, setImageError] = useState(false);
+
+  if (!iconUrl || imageError) {
+    return (
+      <div className="w-8 h-8 bg-gray-200 rounded flex items-center justify-center shrink-0">
+        <TrophyOutlined className="text-gray-400 text-xs" />
+      </div>
+    );
+  }
+
+  return (
+    <Image
+      src={iconUrl}
+      width={32}
+      height={32}
+      style={{
+        objectFit: 'cover',
+        borderRadius: '4px',
+      }}
+      alt={name || 'icon'}
+      unoptimized
+      onError={() => setImageError(true)}
+      className="w-8 h-8 shrink-0"
+    />
+  );
+};
 
 // Types
 interface AchievementData {
@@ -194,6 +262,22 @@ export default function AchievementsPage() {
     return options.find((opt) => opt.value === property)?.label || property;
   };
 
+  const getComparisonOperatorLabel = (operator?: string) => {
+    const operatorMap: Record<string, string> = {
+      '==': 'Bằng',
+      '!=': 'Khác',
+      '>': 'Lớn hơn',
+      '>=': 'Lớn hơn hoặc bằng',
+      '<': 'Nhỏ hơn',
+      '<=': 'Nhỏ hơn hoặc bằng',
+    };
+    return operator ? operatorMap[operator] || operator : '';
+  };
+
+  // API queries
+  const { data: eventNamesData, isLoading: isLoadingEventNames } = useGetEventNames();
+  const eventNameOptions = eventNamesData?.eventNames || [];
+
   // API mutations
   const createEventCountMutation = useCreateEventCountAchievement();
   const createStreakMutation = useCreateStreakAchievement();
@@ -211,9 +295,36 @@ export default function AchievementsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(5);
+  const [isChangingPage, setIsChangingPage] = useState(false);
 
-  // API call - Get list
-  const { data: achievementsRes, isLoading, refetch } = useGet<any>('achievements');
+  // API params
+  const apiParams = useMemo(() => {
+    const params: any = {
+      page: currentPage,
+      pageSize: pageSize,
+    };
+
+    // Add filters to API params if API supports them
+    if (searchText) {
+      params.search = searchText;
+    }
+    if (typeFilter !== 'all') {
+      params.type = typeFilter;
+    }
+    if (statusFilter !== 'all') {
+      params.isActive = statusFilter === 'active';
+    }
+
+    return params;
+  }, [currentPage, pageSize, searchText, typeFilter, statusFilter]);
+
+  // API call - Get list with pagination
+  const {
+    data: achievementsRes,
+    isLoading,
+    isFetching,
+    refetch,
+  } = useGet<any>('achievements', apiParams);
 
   // API call - Get detail by ID
   const { data: achievementDetail, isLoading: isLoadingDetail } = useGet<any>(
@@ -227,10 +338,6 @@ export default function AchievementsPage() {
     if (!achievementsRes?.items) return [];
 
     let items = achievementsRes.items.map((item: any): AchievementData => {
-      // Detect type from specific fields
-      // PROPERTY_CHECK: có targetValue
-      // STREAK: có streakUnit hoặc targetStreakLength
-      // EVENT_COUNT: có targetCount
       let type = 'EVENT_COUNT'; // default
       if (item.targetValue !== undefined && item.targetValue !== null) {
         type = 'PROPERTY_CHECK';
@@ -263,8 +370,10 @@ export default function AchievementsPage() {
       return data;
     });
 
-    // Client-side search filter (API không hỗ trợ search)
-    if (searchText) {
+    // Client-side filters (fallback if API doesn't support them)
+    // Note: If API supports filters, they should be passed in apiParams
+    // and these client-side filters should be removed
+    if (searchText && !apiParams.search) {
       const search = searchText.toLowerCase();
       items = items.filter(
         (a: AchievementData) =>
@@ -272,29 +381,41 @@ export default function AchievementsPage() {
       );
     }
 
-    // Client-side type filter (API không hỗ trợ)
-    if (typeFilter !== 'all') {
+    if (typeFilter !== 'all' && !apiParams.type) {
       items = items.filter((a: AchievementData) => a.type === typeFilter);
     }
 
-    // Client-side status filter
-    if (statusFilter !== 'all') {
+    if (statusFilter !== 'all' && !apiParams.isActive) {
       const isActive = statusFilter === 'active';
       items = items.filter((a: AchievementData) => a.isActive === isActive);
     }
 
     return items;
-  }, [achievementsRes?.items, searchText, typeFilter, statusFilter]);
+  }, [achievementsRes?.items, searchText, typeFilter, statusFilter, apiParams]);
 
-  const paginatedAchievements = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
-    return achievements.slice(startIndex, startIndex + pageSize);
-  }, [achievements, currentPage, pageSize]);
+  // Get total from API response
+  // If filters are applied client-side, use filtered length
+  // If filters are sent to API, use API total
+  const hasClientSideFilters =
+    (searchText && !apiParams.search) ||
+    (typeFilter !== 'all' && !apiParams.type) ||
+    (statusFilter !== 'all' && !apiParams.isActive);
+
+  const totalAchievements = hasClientSideFilters
+    ? achievements.length
+    : (achievementsRes?.total ?? achievements.length);
 
   // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchText, typeFilter, statusFilter]);
+
+  // Reset isChangingPage when data is loaded
+  useEffect(() => {
+    if (!isLoading && !isFetching && achievementsRes) {
+      setIsChangingPage(false);
+    }
+  }, [isLoading, isFetching, achievementsRes]);
 
   const handleViewDetails = (achievement: AchievementData) => {
     setSelectedAchievementId(achievement.id); // Set ID để fetch detail
@@ -335,12 +456,6 @@ export default function AchievementsPage() {
       toast.error('Vui lòng nhập mô tả');
       return;
     }
-    // Icon file is optional - không bắt buộc
-    // if (!createIconFile) {
-    //   toast.error('Vui lòng chọn file icon');
-    //   return;
-    // }
-
     // Set loading state
     setIsCreating(true);
 
@@ -676,24 +791,6 @@ export default function AchievementsPage() {
     return colors[type] || 'default';
   };
 
-  const getTypeIcon = (type: string) => {
-    const icons: { [key: string]: React.ReactNode } = {
-      EVENT_COUNT: <ThunderboltOutlined className="text-2xl text-white" />,
-      PROPERTY_CHECK: <SafetyOutlined className="text-2xl text-white" />,
-      STREAK: <FireOutlined className="text-2xl text-white" />,
-    };
-    return icons[type] || <TrophyOutlined className="text-2xl text-white" />;
-  };
-
-  const getTypeGradient = (type: string) => {
-    const gradients: { [key: string]: string } = {
-      EVENT_COUNT: 'from-blue-400 to-blue-600',
-      PROPERTY_CHECK: 'from-green-400 to-green-600',
-      STREAK: 'from-orange-400 to-red-500',
-    };
-    return gradients[type] || 'from-yellow-400 to-orange-500';
-  };
-
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('vi-VN');
   };
@@ -705,11 +802,7 @@ export default function AchievementsPage() {
       width: 300,
       render: (_, record) => (
         <div className="flex items-start gap-3">
-          <div
-            className={`w-12 h-12 bg-gradient-to-br ${getTypeGradient(record.type)} rounded-lg flex items-center justify-center shadow-md`}
-          >
-            {getTypeIcon(record.type)}
-          </div>
+          <AchievementIcon iconUrl={record.iconUrl} name={record.name} />
           <div className="flex-1">
             <div className="font-medium">{record.name}</div>
             <div className="text-sm text-gray-500 mt-1 line-clamp-2">{record.description}</div>
@@ -906,18 +999,20 @@ export default function AchievementsPage() {
         {/* Table */}
         <Table
           columns={columns}
-          dataSource={paginatedAchievements}
-          loading={isLoading}
+          dataSource={achievements}
+          loading={isLoading || isFetching || isChangingPage}
           rowKey="id"
           pagination={{
             current: currentPage,
             pageSize,
-            total: achievements.length,
+            total: totalAchievements,
             onChange: (page, size) => {
+              setIsChangingPage(true);
               setCurrentPage(page);
               setPageSize(size || 5);
             },
-            showSizeChanger: false,
+            showSizeChanger: true,
+            pageSizeOptions: ['5', '10', '20', '50'],
             showTotal: (total) => `Tổng ${total} thành tựu`,
           }}
         />
@@ -1015,13 +1110,37 @@ export default function AchievementsPage() {
                           )}
                         </Tag>
                       </Descriptions.Item>
-                      <Descriptions.Item label="Toán tử so sánh">
-                        <Tag>{achievementDetail.comparisonOperator}</Tag>
-                      </Descriptions.Item>
-                      <Descriptions.Item label="Giá trị cần đạt" span={2}>
-                        <Text strong className="text-blue-600">
-                          {achievementDetail.targetValue}
-                        </Text>
+                      <Descriptions.Item label="Điều kiện" span={2}>
+                        <Space direction="vertical" size={8} style={{ width: '100%' }}>
+                          <div>
+                            <Tag color="blue" style={{ fontSize: '14px', padding: '4px 12px' }}>
+                              {getComparisonOperatorLabel(achievementDetail.comparisonOperator)}
+                            </Tag>
+                            <Text
+                              strong
+                              className="text-blue-600"
+                              style={{ marginLeft: 8, fontSize: '16px' }}
+                            >
+                              {achievementDetail.targetValue}
+                            </Text>
+                          </div>
+                          <div
+                            style={{
+                              padding: '8px 12px',
+                              background: '#f0f2f5',
+                              borderRadius: '4px',
+                              border: '1px solid #d9d9d9',
+                            }}
+                          >
+                            <Text type="secondary" className="text-xs" style={{ display: 'block' }}>
+                              <strong>Lưu ý:</strong>{' '}
+                              {achievementDetail.comparisonOperator === '==' ||
+                              achievementDetail.comparisonOperator === '!='
+                                ? 'Điều kiện này dùng để kiểm tra giá trị tuyệt đối hoặc trạng thái (ví dụ: điểm chính xác, trạng thái đã duyệt)'
+                                : 'Điều kiện này dùng để kiểm tra điểm số, số lượng hoặc phần trăm (ví dụ: điểm >= 80, số buổi học >= 10)'}
+                            </Text>
+                          </div>
+                        </Space>
                       </Descriptions.Item>
                     </>
                   )}
@@ -1073,6 +1192,7 @@ export default function AchievementsPage() {
 
       {/* Create Achievement Drawer */}
       <Drawer
+        width={'60%'}
         title={
           <div className="flex items-center gap-2">
             <TrophyOutlined className="text-yellow-500" />
@@ -1081,7 +1201,6 @@ export default function AchievementsPage() {
         }
         open={isCreateModalVisible}
         onClose={handleCancelCreate}
-        width={700}
         styles={{ body: { padding: 24 } }}
         maskClosable={!isCreating}
         closable={!isCreating}
@@ -1208,11 +1327,17 @@ export default function AchievementsPage() {
                 <Text strong>
                   Tên sự kiện: <span className="text-red-500">*</span>
                 </Text>
-                <Input
-                  style={{ marginTop: 8 }}
-                  placeholder="Nhập tên sự kiện"
-                  value={createForm.eventName}
-                  onChange={(e) => setCreateForm({ ...createForm, eventName: e.target.value })}
+                <Select
+                  style={{ width: '100%', marginTop: 8 }}
+                  placeholder="Chọn tên sự kiện"
+                  value={createForm.eventName || undefined}
+                  onChange={(value) => setCreateForm({ ...createForm, eventName: value })}
+                  loading={isLoadingEventNames}
+                  options={eventNameOptions}
+                  showSearch
+                  filterOption={(input, option) =>
+                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
                 />
               </div>
               <div>
@@ -1233,13 +1358,19 @@ export default function AchievementsPage() {
             <>
               <div>
                 <Text strong>
-                  Tên sự kiện (Event Name): <span className="text-red-500">*</span>
+                  Tên sự kiện: <span className="text-red-500">*</span>
                 </Text>
-                <Input
-                  style={{ marginTop: 8 }}
-                  placeholder="VD: QUIZ_COMPLETED"
-                  value={createForm.eventName}
-                  onChange={(e) => setCreateForm({ ...createForm, eventName: e.target.value })}
+                <Select
+                  style={{ width: '100%', marginTop: 8 }}
+                  placeholder="Chọn tên sự kiện"
+                  value={createForm.eventName || undefined}
+                  onChange={(value) => setCreateForm({ ...createForm, eventName: value })}
+                  loading={isLoadingEventNames}
+                  options={eventNameOptions}
+                  showSearch
+                  filterOption={(input, option) =>
+                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
                 />
               </div>
               <div>
@@ -1289,7 +1420,7 @@ export default function AchievementsPage() {
               <Row gutter={16}>
                 <Col span={8}>
                   <Text strong>
-                    Toán tử so sánh: <span className="text-red-500">*</span>
+                    Loại điều kiện: <span className="text-red-500">*</span>
                   </Text>
                   <Select
                     style={{ width: '100%', marginTop: 8 }}
@@ -1298,17 +1429,42 @@ export default function AchievementsPage() {
                       setCreateForm({ ...createForm, comparisonOperator: value })
                     }
                   >
-                    <Option value="==">== (Equal)</Option>
-                    <Option value="!=">!= (Not Equal)</Option>
-                    <Option value=">">&gt; (Greater Than)</Option>
-                    <Option value=">=">&gt;= (Greater or Equal)</Option>
-                    <Option value="<">&lt; (Less Than)</Option>
-                    <Option value="<=">&lt;= (Less or Equal)</Option>
+                    <Option value=">=">Lớn hơn hoặc bằng (≥)</Option>
+                    <Option value=">">Lớn hơn (&gt;)</Option>
+                    <Option value="<=">Nhỏ hơn hoặc bằng (≤)</Option>
+                    <Option value="<">Nhỏ hơn (&lt;)</Option>
+                    <Option value="==">Bằng (==)</Option>
+                    <Option value="!=">Khác (!=)</Option>
                   </Select>
-                  <Text type="secondary" className="text-xs mt-1 block">
-                    Với điểm / số lượng / % nên dùng &gt;, &gt;=, &lt;, &lt;=. Với điểm tuyệt đối
-                    hoặc trạng thái nên dùng == hoặc !=.
-                  </Text>
+                  <div
+                    style={{
+                      marginTop: 8,
+                      padding: '8px 12px',
+                      background: '#f0f2f5',
+                      borderRadius: '4px',
+                      border: '1px solid #d9d9d9',
+                    }}
+                  >
+                    <Text type="secondary" className="text-xs" style={{ display: 'block' }}>
+                      <strong>Lưu ý:</strong>
+                    </Text>
+                    <Text
+                      type="secondary"
+                      className="text-xs"
+                      style={{ display: 'block', marginTop: 4 }}
+                    >
+                      • <strong>Lớn hơn/Nhỏ hơn:</strong> Dùng cho điểm số, số lượng, phần trăm (VD:
+                      điểm ≥ 80, số buổi học ≥ 10)
+                    </Text>
+                    <Text
+                      type="secondary"
+                      className="text-xs"
+                      style={{ display: 'block', marginTop: 2 }}
+                    >
+                      • <strong>Bằng/Khác:</strong> Dùng cho giá trị tuyệt đối hoặc trạng thái (VD:
+                      điểm == 100, trạng thái != &quot;Chưa duyệt&quot;)
+                    </Text>
+                  </div>
                 </Col>
                 <Col span={16}>
                   <Text strong>
@@ -1331,11 +1487,17 @@ export default function AchievementsPage() {
                 <Text strong>
                   Tên sự kiện: <span className="text-red-500">*</span>
                 </Text>
-                <Input
-                  style={{ marginTop: 8 }}
-                  placeholder="VD: DAILY_LOGIN, SESSION_ATTENDED"
-                  value={createForm.eventName}
-                  onChange={(e) => setCreateForm({ ...createForm, eventName: e.target.value })}
+                <Select
+                  style={{ width: '100%', marginTop: 8 }}
+                  placeholder="Chọn tên sự kiện"
+                  value={createForm.eventName || undefined}
+                  onChange={(value) => setCreateForm({ ...createForm, eventName: value })}
+                  loading={isLoadingEventNames}
+                  options={eventNameOptions}
+                  showSearch
+                  filterOption={(input, option) =>
+                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
                 />
               </div>
               <Row gutter={16}>
@@ -1362,10 +1524,10 @@ export default function AchievementsPage() {
                     value={createForm.streakUnit}
                     onChange={(value) => setCreateForm({ ...createForm, streakUnit: value })}
                   >
-                    <Option value="days">days (Ngày)</Option>
-                    <Option value="weeks">weeks (Tuần)</Option>
-                    <Option value="months">months (Tháng)</Option>
-                    <Option value="sessions">sessions (Buổi học)</Option>
+                    <Option value="days">Ngày</Option>
+                    <Option value="weeks">Tuần</Option>
+                    <Option value="months">Tháng</Option>
+                    <Option value="sessions">Buổi học</Option>
                   </Select>
                 </Col>
               </Row>
@@ -1395,7 +1557,7 @@ export default function AchievementsPage() {
         }
         open={isEditModalVisible}
         onClose={handleCancelEdit}
-        width={700}
+        width={'60%'}
         styles={{ body: { padding: 24 } }}
         maskClosable={!isUpdating}
         closable={!isUpdating}
@@ -1502,15 +1664,12 @@ export default function AchievementsPage() {
             <div className="mt-2 text-xs text-gray-500">
               💡 Chấp nhận: JPG, PNG, GIF, SVG. Tối đa 5MB. Để trống nếu không muốn thay đổi icon.
             </div>
-            {editingAchievement?.iconUrl && (
-              <div className="mt-2 text-xs text-gray-500">
-                Icon hiện tại:{' '}
-                <Image
-                  src={editingAchievement.iconUrl}
-                  alt="icon"
-                  width={32}
-                  height={32}
-                  className="inline-block w-8 h-8 ml-2"
+            {editingAchievement && (
+              <div className="mt-2 text-xs text-gray-500 flex items-center gap-2">
+                <span>Icon hiện tại:</span>
+                <SmallAchievementIcon
+                  iconUrl={editingAchievement.iconUrl}
+                  name={editingAchievement.name}
                 />
               </div>
             )}
@@ -1523,11 +1682,17 @@ export default function AchievementsPage() {
                 <Text strong>
                   Tên sự kiện: <span className="text-red-500">*</span>
                 </Text>
-                <Input
-                  style={{ marginTop: 8 }}
-                  placeholder="Nhập tên sự kiện"
-                  value={editForm.eventName}
-                  onChange={(e) => setEditForm({ ...editForm, eventName: e.target.value })}
+                <Select
+                  style={{ width: '100%', marginTop: 8 }}
+                  placeholder="Chọn tên sự kiện"
+                  value={editForm.eventName || undefined}
+                  onChange={(value) => setEditForm({ ...editForm, eventName: value })}
+                  loading={isLoadingEventNames}
+                  options={eventNameOptions}
+                  showSearch
+                  filterOption={(input, option) =>
+                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
                 />
               </div>
               <div>
@@ -1550,11 +1715,17 @@ export default function AchievementsPage() {
                 <Text strong>
                   Tên sự kiện: <span className="text-red-500">*</span>
                 </Text>
-                <Input
-                  style={{ marginTop: 8 }}
-                  placeholder="VD: QUIZ_COMPLETED"
-                  value={editForm.eventName}
-                  onChange={(e) => setEditForm({ ...editForm, eventName: e.target.value })}
+                <Select
+                  style={{ width: '100%', marginTop: 8 }}
+                  placeholder="Chọn tên sự kiện"
+                  value={editForm.eventName || undefined}
+                  onChange={(value) => setEditForm({ ...editForm, eventName: value })}
+                  loading={isLoadingEventNames}
+                  options={eventNameOptions}
+                  showSearch
+                  filterOption={(input, option) =>
+                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
                 />
               </div>
               <div>
@@ -1598,20 +1769,49 @@ export default function AchievementsPage() {
               <Row gutter={16}>
                 <Col span={8}>
                   <Text strong>
-                    Toán tử so sánh: <span className="text-red-500">*</span>
+                    Loại điều kiện: <span className="text-red-500">*</span>
                   </Text>
                   <Select
                     style={{ width: '100%', marginTop: 8 }}
                     value={editForm.comparisonOperator}
                     onChange={(value) => setEditForm({ ...editForm, comparisonOperator: value })}
                   >
-                    <Option value="==">== (Equal)</Option>
-                    <Option value="!=">!= (Not Equal)</Option>
-                    <Option value=">">&gt; (Greater Than)</Option>
-                    <Option value=">=">&gt;= (Greater or Equal)</Option>
-                    <Option value="<">&lt; (Less Than)</Option>
-                    <Option value="<=">&lt;= (Less or Equal)</Option>
+                    <Option value=">=">Lớn hơn hoặc bằng (≥)</Option>
+                    <Option value=">">Lớn hơn (&gt;)</Option>
+                    <Option value="<=">Nhỏ hơn hoặc bằng (≤)</Option>
+                    <Option value="<">Nhỏ hơn (&lt;)</Option>
+                    <Option value="==">Bằng (==)</Option>
+                    <Option value="!=">Khác (!=)</Option>
                   </Select>
+                  <div
+                    style={{
+                      marginTop: 8,
+                      padding: '8px 12px',
+                      background: '#f0f2f5',
+                      borderRadius: '4px',
+                      border: '1px solid #d9d9d9',
+                    }}
+                  >
+                    <Text type="secondary" className="text-xs" style={{ display: 'block' }}>
+                      <strong>Lưu ý:</strong>
+                    </Text>
+                    <Text
+                      type="secondary"
+                      className="text-xs"
+                      style={{ display: 'block', marginTop: 4 }}
+                    >
+                      • <strong>Lớn hơn/Nhỏ hơn:</strong> Dùng cho điểm số, số lượng, phần trăm (VD:
+                      điểm ≥ 80, số buổi học ≥ 10)
+                    </Text>
+                    <Text
+                      type="secondary"
+                      className="text-xs"
+                      style={{ display: 'block', marginTop: 2 }}
+                    >
+                      • <strong>Bằng/Khác:</strong> Dùng cho giá trị tuyệt đối hoặc trạng thái (VD:
+                      điểm == 100, trạng thái != &quot;Chưa duyệt&quot;)
+                    </Text>
+                  </div>
                 </Col>
                 <Col span={16}>
                   <Text strong>
@@ -1634,11 +1834,17 @@ export default function AchievementsPage() {
                 <Text strong>
                   Tên sự kiện: <span className="text-red-500">*</span>
                 </Text>
-                <Input
-                  style={{ marginTop: 8 }}
-                  placeholder="VD: DAILY_LOGIN, SESSION_ATTENDED"
-                  value={editForm.eventName}
-                  onChange={(e) => setEditForm({ ...editForm, eventName: e.target.value })}
+                <Select
+                  style={{ width: '100%', marginTop: 8 }}
+                  placeholder="Chọn tên sự kiện"
+                  value={editForm.eventName || undefined}
+                  onChange={(value) => setEditForm({ ...editForm, eventName: value })}
+                  loading={isLoadingEventNames}
+                  options={eventNameOptions}
+                  showSearch
+                  filterOption={(input, option) =>
+                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
+                  }
                 />
               </div>
               <Row gutter={16}>
@@ -1665,10 +1871,10 @@ export default function AchievementsPage() {
                     value={editForm.streakUnit}
                     onChange={(value) => setEditForm({ ...editForm, streakUnit: value })}
                   >
-                    <Option value="days">days (Ngày)</Option>
-                    <Option value="weeks">weeks (Tuần)</Option>
-                    <Option value="months">months (Tháng)</Option>
-                    <Option value="sessions">sessions (Buổi học)</Option>
+                    <Option value="days">Ngày</Option>
+                    <Option value="weeks">Tuần</Option>
+                    <Option value="months">Tháng</Option>
+                    <Option value="sessions">Buổi học</Option>
                   </Select>
                 </Col>
               </Row>
