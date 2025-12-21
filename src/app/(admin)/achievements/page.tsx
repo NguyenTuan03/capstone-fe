@@ -523,7 +523,7 @@ export default function AchievementsPage() {
         }
 
         // Call STREAK API
-        response = await createStreakMutation.mutateAsync({
+        await createStreakMutation.mutateAsync({
           name: createForm.name,
           description: createForm.description,
           icon: createIconFile || undefined,
@@ -535,13 +535,11 @@ export default function AchievementsPage() {
       }
 
       // Success - show toast, close modal, reset form, and refetch
-      const successMessage = response?.message || 'Tạo thành tựu thành công';
+      const successMessage = 'Tạo thành tựu thành công';
       toast.success(successMessage);
       await refetch();
-    } catch (error: any) {
-      // Error handling
-      console.error('Create achievement error:', error);
-      toast.error(error?.message || 'Không thể tạo thành tựu');
+    } catch {
+      toast.error('Không thể tạo thành tựu');
     } finally {
       // Always close modal and reset state (whether success or error)
       setIsCreating(false);
@@ -564,23 +562,19 @@ export default function AchievementsPage() {
         centered: true,
         onOk: async () => {
           try {
-            let response;
             // Call the appropriate API based on new status
             if (newStatus) {
               console.log('🟢 Activating achievement ID:', achievement.id);
-              response = await activateAchievementMutation.mutateAsync(achievement.id);
+              await activateAchievementMutation.mutateAsync(achievement.id);
             } else {
               console.log('🔴 Deactivating achievement ID:', achievement.id);
-              response = await deactivateAchievementMutation.mutateAsync(achievement.id);
+              await deactivateAchievementMutation.mutateAsync(achievement.id);
             }
-            const successMessage =
-              response?.message ||
-              `${statusText.charAt(0).toUpperCase() + statusText.slice(1)} thành tựu thành công`;
+            const successMessage = `${statusText.charAt(0).toUpperCase() + statusText.slice(1)} thành tựu thành công`;
             toast.success(successMessage);
             await refetch();
-          } catch (error: any) {
-            console.error('Toggle status error:', error);
-            toast.error(error?.message || `Không thể ${statusText} thành tựu`);
+          } catch {
+            toast.error(`Không thể ${statusText} thành tựu`);
           }
         },
       });
@@ -603,16 +597,12 @@ export default function AchievementsPage() {
         onOk: async () => {
           try {
             console.log('🚀 Sending DELETE request for ID:', achievement.id);
-            const result = await deleteAchievementMutation.mutateAsync(achievement.id);
-            console.log('✅ Delete successful:', result);
-            const successMessage = result?.message || 'Xóa thành tựu thành công';
+            await deleteAchievementMutation.mutateAsync(achievement.id);
+            const successMessage = 'Xóa thành tựu thành công';
             toast.success(successMessage);
             await refetch();
-          } catch (error: any) {
-            console.error('❌ Delete achievement error:', error);
-            console.error('Error response:', error?.response?.data);
-            console.error('Error status:', error?.response?.status);
-            toast.error(error?.message || 'Không thể xóa thành tựu');
+          } catch {
+            toast.error('Không thể xóa thành tựu');
           }
         },
       });
@@ -676,7 +666,6 @@ export default function AchievementsPage() {
 
     try {
       const id = editingAchievement.id;
-      let response;
 
       // Call API based on type
       if (editForm.type === 'EVENT_COUNT') {
@@ -692,7 +681,7 @@ export default function AchievementsPage() {
           return;
         }
 
-        response = await updateEventCountMutation.mutateAsync({
+        await updateEventCountMutation.mutateAsync({
           id,
           data: {
             name: editForm.name,
@@ -716,7 +705,7 @@ export default function AchievementsPage() {
           return;
         }
 
-        response = await updatePropertyCheckMutation.mutateAsync({
+        await updatePropertyCheckMutation.mutateAsync({
           id,
           data: {
             name: editForm.name,
@@ -743,7 +732,7 @@ export default function AchievementsPage() {
           return;
         }
 
-        response = await updateStreakMutation.mutateAsync({
+        await updateStreakMutation.mutateAsync({
           id,
           data: {
             name: editForm.name,
@@ -758,13 +747,11 @@ export default function AchievementsPage() {
       }
 
       // Success - show toast, close modal, reset form, and refetch
-      const successMessage = response?.message || 'Cập nhật thành tựu thành công';
+      const successMessage = 'Cập nhật thành tựu thành công';
       toast.success(successMessage);
       await refetch();
-    } catch (error: any) {
-      // Error handling
-      console.error('Update achievement error:', error);
-      toast.error(error?.message || 'Không thể cập nhật thành tựu');
+    } catch {
+      toast.error('Không thể cập nhật thành tựu');
     } finally {
       // Always close modal and reset state (whether success or error)
       setIsUpdating(false);

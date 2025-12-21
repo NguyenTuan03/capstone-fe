@@ -18,8 +18,9 @@ import {
   Form,
   DatePicker,
 } from 'antd';
-import { EyeOutlined, DeleteOutlined, UnlockOutlined } from '@ant-design/icons';
+import { EyeOutlined, UnlockOutlined, LockOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
+import { toast } from 'react-hot-toast';
 import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 import { userService, CreateUserBody } from '@/@crema/services/apis/users';
 
@@ -243,19 +244,26 @@ export default function UsersPage() {
     setSearchText(normalizedKeyword);
   };
 
-  // ✅ Xóa mềm user
+  // ✅ Chặn user (soft delete)
   const handleDeleteUser = async () => {
     if (!selectedUserForAction) return;
 
+    const toastId = toast.loading('Đang chặn người dùng...');
+
     try {
-      const msg = await userService.softDelete(selectedUserForAction.id);
-      message.success(msg);
+      await userService.softDelete(selectedUserForAction.id);
+      toast.success(`Đã chặn người dùng "${selectedUserForAction.fullName}" thành công`, {
+        id: toastId,
+      });
       setIsDeleteModalVisible(false);
       setSelectedUserForAction(null);
       loadUsers();
     } catch (err: any) {
       console.error('Delete error:', err);
-      message.error(err.response?.data?.message || 'Không thể xóa người dùng');
+      const errorMsg = err.response?.data?.message || 'Không thể chặn người dùng';
+      toast.error(errorMsg, {
+        id: toastId,
+      });
     }
   };
 
@@ -263,15 +271,22 @@ export default function UsersPage() {
   const handleRestoreUser = async () => {
     if (!selectedUserForAction) return;
 
+    const toastId = toast.loading('Đang khôi phục người dùng...');
+
     try {
-      const msg = await userService.restore(selectedUserForAction.id);
-      message.success(msg);
+      await userService.restore(selectedUserForAction.id);
+      toast.success(`Đã khôi phục người dùng "${selectedUserForAction.fullName}" thành công`, {
+        id: toastId,
+      });
       setIsRestoreModalVisible(false);
       setSelectedUserForAction(null);
       loadUsers();
     } catch (err: any) {
       console.error('Restore error:', err);
-      message.error(err.response?.data?.message || 'Không thể khôi phục người dùng');
+      const errorMsg = err.response?.data?.message || 'Không thể khôi phục người dùng';
+      toast.error(errorMsg, {
+        id: toastId,
+      });
     }
   };
 
@@ -369,7 +384,7 @@ export default function UsersPage() {
       sorter: (a, b) => Number(a.isActive) - Number(b.isActive),
       sortDirections: ['descend', 'ascend'],
       render: (isActive: boolean) =>
-        isActive ? <Tag color="green">Hoạt động</Tag> : <Tag color="red">Đã xóa</Tag>,
+        isActive ? <Tag color="green">Hoạt động</Tag> : <Tag color="red">Đã chặn</Tag>,
     },
     {
       title: 'Thao tác',
@@ -385,10 +400,10 @@ export default function UsersPage() {
           {record.isActive ? (
             <Button
               type="text"
-              icon={<DeleteOutlined />}
+              icon={<LockOutlined />}
               danger
               onClick={() => showDeleteConfirm(record)}
-              title="Xóa người dùng"
+              title="Chặn người dùng"
             />
           ) : (
             <Button
@@ -543,20 +558,20 @@ export default function UsersPage() {
       </Modal>
 
       <Modal
-        title="Xác nhận xóa người dùng"
+        title="Xác nhận chặn người dùng"
         open={isDeleteModalVisible}
         onOk={handleDeleteUser}
         onCancel={() => {
           setIsDeleteModalVisible(false);
           setSelectedUserForAction(null);
         }}
-        okText="Xóa"
+        okText="Chặn"
         cancelText="Hủy"
         okType="danger"
       >
         {selectedUserForAction && (
           <p>
-            Bạn có chắc chắn muốn xóa người dùng{' '}
+            Bạn có chắc chắn muốn chặn người dùng{' '}
             <strong>&quot;{selectedUserForAction.fullName}&quot;</strong> không?
           </p>
         )}

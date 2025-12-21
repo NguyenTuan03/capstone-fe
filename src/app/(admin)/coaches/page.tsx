@@ -329,16 +329,16 @@ export default function CoachesPage() {
     if (!displayCoach && !selectedCoach) return;
     try {
       const id = (displayCoach?.id || selectedCoach?.id)!;
-      const response = await verifyCoachMutation.mutateAsync({ id });
-      const successMessage = response?.message || 'Xác minh hồ sơ huấn luyện viên thành công';
+      await verifyCoachMutation.mutateAsync({ id });
+      const successMessage = 'Xác minh hồ sơ huấn luyện viên thành công';
       toast.success(successMessage);
       setIsApproveModalVisible(false);
       setIsDetailModalVisible(false);
       // Close view detail modal and remove coachId from URL
       closeViewDetailModal();
       await refetch();
-    } catch (error: any) {
-      toast.error(error?.message || 'Phê duyệt thất bại');
+    } catch {
+      toast.error('Phê duyệt thất bại');
     }
   };
 
@@ -347,16 +347,16 @@ export default function CoachesPage() {
     if (!displayCoach && !selectedCoach) return;
     try {
       const id = (displayCoach?.id || selectedCoach?.id)!;
-      const response = await rejectCoachMutation.mutateAsync({ id, reason: rejectReason.trim() });
-      const successMessage = response?.message || 'Từ chối hồ sơ huấn luyện viên thành công';
+      await rejectCoachMutation.mutateAsync({ id, reason: rejectReason.trim() });
+      const successMessage = 'Từ chối hồ sơ huấn luyện viên thành công';
       toast.success(successMessage);
       setIsRejectModalVisible(false);
       setIsDetailModalVisible(false);
       // Close view detail modal and remove coachId from URL
       closeViewDetailModal();
       await refetch();
-    } catch (error: any) {
-      toast.error(error?.message || 'Từ chối thất bại');
+    } catch {
+      toast.error('Từ chối thất bại');
     }
   };
 
