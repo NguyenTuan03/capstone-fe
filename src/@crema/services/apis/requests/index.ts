@@ -309,18 +309,10 @@ export const useGetRequests = (params?: GetRequestsParams) => {
         size: params?.pageSize || 10,
       };
 
-      // Thêm filter nếu có
-      if (filters.length > 0) {
-        filters.forEach(filter => {
-          const [key, operator, value] = filter.split('_');
-          queryParams[`filter[${key}][${operator}]`] = value;
-        });
-      }
-
-      const url = buildUrl('courses/requests', queryParams);
+      const url = buildUrl(
+        `requests?sort=createdAt_desc&page=${params?.page || 1}&size=${params?.pageSize || 10}${filterString ? `&filter=${filterString}` : ''}`,
+      );
       const token = getAuthToken();
-      console.log('Request URL:', url);
-      console.log('Request Params:', queryParams);
 
       const response = await axios.get<GetRequestsResponse>(url, {
         headers: {

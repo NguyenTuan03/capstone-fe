@@ -13,8 +13,12 @@ import {
   Modal,
   Descriptions,
 } from 'antd';
-import { EyeOutlined } from '@ant-design/icons';
-import { getWalletsWithUserInfo } from '@/services/walletApi';
+import { EyeOutlined, PlusCircleTwoTone, MinusCircleTwoTone } from '@ant-design/icons';
+import {
+  getWalletsWithUserInfo,
+  approveWithdrawalRequest,
+  rejectWithdrawalRequest,
+} from '@/services/walletApi';
 
 const { Title } = Typography;
 
@@ -44,18 +48,37 @@ export interface Wallet {
     name: string;
   };
   withdrawalRequests?: WithdrawalRequest[];
+  transactions?: {
+    id: number;
+    amount: number;
+    description?: string;
+    type: 'DEBIT' | 'CREDIT';
+    createdAt: string;
+  }[];
 }
 
 export default function WalletsPage() {
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedWallet, setSelectedWallet] = useState<Wallet | null>(null);
+  const [approveDialog, setApproveDialog] = useState<{ visible: boolean; record: any | null }>({
+    visible: false,
+    record: null,
+  });
+  const [rejectDialog, setRejectDialog] = useState<{ visible: boolean; record: any | null }>({
+    visible: false,
+    record: null,
+  });
 
-  useEffect(() => {
+  const fetchWallets = () => {
     setLoading(true);
     getWalletsWithUserInfo()
       .then((data) => setWallets(data))
       .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchWallets();
   }, []);
 
   const columns = [
@@ -117,26 +140,34 @@ export default function WalletsPage() {
   ];
 
   const showApproveConfirm = (record: any) => {
-    Modal.confirm({
-      title: 'Xác nhận duyệt yêu cầu rút tiền?',
-      content: `Bạn có chắc muốn duyệt yêu cầu rút tiền #${record.id}?`,
-      okText: 'Duyệt',
-      cancelText: 'Hủy',
-      onOk: () => {
-        // TODO: Call approve API here
-      },
-    });
+    setApproveDialog({ visible: true, record });
   };
   const showRejectConfirm = (record: any) => {
-    Modal.confirm({
-      title: 'Xác nhận từ chối yêu cầu rút tiền?',
-      content: `Bạn có chắc muốn từ chối yêu cầu rút tiền #${record.id}?`,
-      okText: 'Từ chối',
-      cancelText: 'Hủy',
-      onOk: () => {
-        // TODO: Call reject API here
-      },
-    });
+    setRejectDialog({ visible: true, record });
+  };
+
+  const handleApprove = async () => {
+    if (!approveDialog.record) return;
+    try {
+      await approveWithdrawalRequest(approveDialog.record.id);
+      setApproveDialog({ visible: false, record: null });
+      setSelectedWallet(null); // Close detail modal after action
+      fetchWallets(); // Refresh data
+    } catch (e) {
+      Modal.error({ title: 'Lỗi', content: 'Không thể duyệt yêu cầu.' });
+    }
+  };
+
+  const handleReject = async () => {
+    if (!rejectDialog.record) return;
+    try {
+      await rejectWithdrawalRequest(rejectDialog.record.id);
+      setRejectDialog({ visible: false, record: null });
+      setSelectedWallet(null); // Close detail modal after action
+      fetchWallets(); // Refresh data
+    } catch (e) {
+      Modal.error({ title: 'Lỗi', content: 'Không thể từ chối yêu cầu.' });
+    }
   };
 
   return (
@@ -287,9 +318,114 @@ export default function WalletsPage() {
                 locale={{ emptyText: 'Không có yêu cầu rút tiền nào' }}
               />
             </div>
+
+            <div style={{ marginTop: 24 }}>
+              <Typography.Title level={5}>Lịch sử giao dịch ví</Typography.Title>
+              <Table
+                dataSource={selectedWallet.transactions || []}
+                rowKey={(r) => r.id}
+                size="small"
+                pagination={false}
+                bordered
+                columns={[
+                  {
+                    title: 'ID',
+                    dataIndex: 'id',
+                    key: 'id',
+                    width: 60,
+                  },
+                  {
+                    title: 'Số tiền',
+                    dataIndex: 'amount',
+                    key: 'amount',
+                    render: (val: number) =>
+                      Math.round(val).toLocaleString('vi-VN', { maximumFractionDigits: 0 }) + ' ₫',
+                  },
+                  {
+                    title: 'Loại',
+                    dataIndex: 'type',
+                    key: 'type',
+                    render: (val: string) => {
+                      if (val === 'CREDIT') {
+                        return (
+                          <span
+                            style={{
+                              color: '#52c41a',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 4,
+                            }}
+                          >
+                            <PlusCircleTwoTone twoToneColor="#52c41a" /> Cộng tiền
+                          </span>
+                        );
+                      }
+                      if (val === 'DEBIT') {
+                        return (
+                          <span
+                            style={{
+                              color: '#fa541c',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 4,
+                            }}
+                          >
+                            <MinusCircleTwoTone twoToneColor="#fa541c" /> Trừ tiền
+                          </span>
+                        );
+                      }
+                      return val;
+                    },
+                  },
+                  {
+                    title: 'Mô tả',
+                    dataIndex: 'description',
+                    key: 'description',
+                  },
+                  {
+                    title: 'Ngày tạo',
+                    dataIndex: 'createdAt',
+                    key: 'createdAt',
+                    render: (val: string) => new Date(val).toLocaleDateString('vi-VN'),
+                  },
+                ]}
+                locale={{ emptyText: 'Không có giao dịch nào' }}
+              />
+            </div>
           </>
         )}
       </Modal>
+
+      {/* Approve Confirm Dialog */}
+      <Modal
+        open={approveDialog.visible}
+        title="Xác nhận duyệt yêu cầu rút tiền?"
+        onCancel={() => setApproveDialog({ visible: false, record: null })}
+        onOk={handleApprove}
+        okText="Duyệt"
+        cancelText="Hủy"
+        destroyOnClose
+      >
+        {approveDialog.record && (
+          <div>Bạn có chắc muốn duyệt yêu cầu rút tiền #{approveDialog.record.id}?</div>
+        )}
+      </Modal>
+
+      {/* Reject Confirm Dialog */}
+      <Modal
+        open={rejectDialog.visible}
+        title="Xác nhận từ chối yêu cầu rút tiền?"
+        onCancel={() => setRejectDialog({ visible: false, record: null })}
+        onOk={handleReject}
+        okText="Từ chối"
+        cancelText="Hủy"
+        destroyOnClose
+      >
+        {rejectDialog.record && (
+          <div>Bạn có chắc muốn từ chối yêu cầu rút tiền #{rejectDialog.record.id}?</div>
+        )}
+      </Modal>
+
       <style jsx global>{`
         .wallet-row-pending {
           background: #fffbe6 !important;

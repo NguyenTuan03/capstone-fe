@@ -54,6 +54,68 @@ import {
 
 const { Title, Text } = Typography;
 const { Option } = Select;
+const { Panel } = Collapse;
+
+// Types
+interface VideoData {
+  id: string;
+  title: string;
+  description: string;
+  tags: string[];
+  duration: number;
+  drillName?: string;
+  drillDescription?: string;
+  drillPracticeSets?: string;
+  publicUrl: string;
+  thumbnailUrl?: string;
+  status: string;
+  coachName: string;
+  coachEmail: string;
+  coachAvatar: string;
+  lessonName: string;
+  courseName: string;
+  createdAt?: string;
+}
+
+interface CourseRequestData {
+  id: string;
+  courseName: string;
+  courseDescription: string;
+  level: string;
+  status: string;
+  coachName: string;
+  coachEmail: string;
+  coachAvatar: string;
+  totalLessons: number;
+  totalVideos: number;
+  totalQuizzes: number;
+  createdAt: string;
+  updatedAt: string;
+  requestData: RequestWithContent;
+}
+
+// Hàm định dạng ngày tháng an toàn
+const formatDateSafe = (dateString?: string | null) => {
+  if (!dateString) return '-';
+  try {
+    // Parse ISO string to Date object
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return dateString || '-';
+    // Show both date and time in vi-VN format
+    return date.toLocaleString('vi-VN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false,
+    });
+  } catch (error) {
+    console.error('Lỗi khi định dạng ngày:', error);
+    return dateString || '-';
+  }
+};
 
 export default function CourseVerificationPage() {
   const router = useRouter();
@@ -67,8 +129,7 @@ export default function CourseVerificationPage() {
 
   // API hooks - fetch up to 1000 items, then paginate on client-side
   const { data: requestsData, refetch: refetchRequests } = useGetRequests({
-    type: 'COURSE_APPROVAL',
-    status: 'PENDING',
+    type: 'COURSE-APPROVAL',
     pageSize: 100,
   });
 
@@ -81,7 +142,6 @@ export default function CourseVerificationPage() {
   const [courses, setCourses] = useState<CourseRequestData[]>([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [selectedCourse, setSelectedCourse] = useState<CourseRequestData | null>(null);
-  const [isCourseDetailModalVisible, setIsCourseDetailModalVisible] = useState(false);
   const [pendingActionCourse, setPendingActionCourse] = useState<CourseRequestData | null>(null);
   const [isApproveModalVisible, setIsApproveModalVisible] = useState(false);
   const [isRejectModalVisible, setIsRejectModalVisible] = useState(false);
@@ -129,6 +189,7 @@ export default function CourseVerificationPage() {
           totalVideos,
           totalQuizzes,
           createdAt: request.createdAt,
+          updatedAt: request.updatedAt,
           requestData: request,
         };
       });
@@ -149,10 +210,7 @@ export default function CourseVerificationPage() {
   useEffect(() => {
     const requestId = searchParams.get('request');
     if (!requestId) {
-      if (isCourseDetailModalVisible) {
-        setIsCourseDetailModalVisible(false);
-        setSelectedCourse(null);
-      }
+      setSelectedCourse(null);
       return;
     }
 
@@ -160,13 +218,84 @@ export default function CourseVerificationPage() {
       const foundCourse = courses.find((course: CourseRequestData) => course.id === requestId);
       if (foundCourse) {
         setSelectedCourse(foundCourse);
-        setTimeout(() => {
-          setIsCourseDetailModalVisible(true);
-        }, 0);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams, courses]);
+  }, [searchParams, courses, selectedCourse]);
+
+  // Helper functions
+  const getStatusColor = (status: string) => {
+    const colors: { [key: string]: string } = {
+      UPLOADING: 'blue',
+      PROCESSING: 'cyan',
+      PENDING: 'orange',
+      PENDING_APPROVAL: 'orange',
+      APPROVED: 'green',
+      REJECTED: 'red',
+      READY: 'green',
+    };
+    return colors[status] || 'default';
+  };
+
+  const getStatusText = (status: string) => {
+    const texts: { [key: string]: string } = {
+      UPLOADING: 'Đang tải lên',
+      PROCESSING: 'Đang xử lý',
+      PENDING: 'Chờ phê duyệt',
+      PENDING_APPROVAL: 'Chờ phê duyệt',
+      APPROVED: 'Đã phê duyệt',
+      REJECTED: 'Đã từ chối',
+      READY: 'Sẵn sàng',
+    };
+    return texts[status] || status;
+  };
+
+  const getLevelText = (level: string) => {
+    const texts: { [key: string]: string } = {
+      BEGINNER: 'Cơ bản',
+      INTERMEDIATE: 'Trung cấp',
+      ADVANCED: 'Nâng cao',
+      PROFESSIONAL: 'Chuyên nghiệp',
+    };
+    return texts[level] || level;
+  };
+
+  const parseVideoTags = (tags?: string | string[] | null): string[] => {
+    if (!tags) return [];
+    if (Array.isArray(tags)) {
+      return tags
+        .filter((tag) => typeof tag === 'string')
+        .map((tag) => tag.trim())
+        .filter(Boolean);
+    }
+
+    const cleaned = tags.replace(/^\{|\}$/g, '');
+    try {
+      const parsed = JSON.parse(cleaned);
+      if (Array.isArray(parsed)) {
+        return parsed
+          .filter((tag) => typeof tag === 'string')
+          .map((tag) => tag.trim())
+          .filter(Boolean);
+      }
+    } catch {
+      // Fallback to comma-split below when JSON.parse fails
+    }
+
+    return cleaned
+      .split(',')
+      .map((tag) => tag.trim().replace(/^"|"$/g, ''))
+      .filter(Boolean);
+  };
+
+  const getLevelColor = (level: string) => {
+    const colors: { [key: string]: string } = {
+      BEGINNER: 'green',
+      INTERMEDIATE: 'blue',
+      ADVANCED: 'orange',
+      PROFESSIONAL: 'red',
+    };
+    return colors[level] || 'default';
+  };
 
   // Course handlers
   const updateQueryParam = (courseId?: string) => {
@@ -189,8 +318,6 @@ export default function CourseVerificationPage() {
   };
 
   const handleCloseCourseDetails = () => {
-    setIsCourseDetailModalVisible(false);
-    setSelectedCourse(null);
     updateQueryParam();
   };
 
@@ -227,7 +354,7 @@ export default function CourseVerificationPage() {
 
     await handleApproveCourse(pendingActionCourse);
     setIsApproveModalVisible(false);
-    if (isCourseDetailModalVisible && selectedCourse?.id === pendingActionCourse.id) {
+    if (selectedCourse?.id === pendingActionCourse.id) {
       handleCloseCourseDetails();
     }
     setPendingActionCourse(null);
@@ -239,7 +366,7 @@ export default function CourseVerificationPage() {
     await handleRejectCourse(pendingActionCourse, rejectReason);
     setIsRejectModalVisible(false);
     setRejectReason('');
-    if (isCourseDetailModalVisible && selectedCourse?.id === pendingActionCourse.id) {
+    if (selectedCourse?.id === pendingActionCourse.id) {
       handleCloseCourseDetails();
     }
     setPendingActionCourse(null);
@@ -294,15 +421,18 @@ export default function CourseVerificationPage() {
       ),
     },
     {
-      title: 'Nội dung',
-      key: 'content',
-      width: 150,
-      render: (_, record) => (
-        <div className="text-sm">
-          <div>{record.totalVideos} videos</div>
-          <div>{record.totalQuizzes} quizzes</div>
-        </div>
-      ),
+      title: 'Ngày tạo',
+      dataIndex: 'createdAt',
+      key: 'createdAt',
+      width: 120,
+      render: (createdAt: string) => formatDateSafe(createdAt),
+    },
+    {
+      title: 'Cập nhật',
+      dataIndex: 'updatedAt',
+      key: 'updatedAt',
+      width: 120,
+      render: (updatedAt: string) => formatDateSafe(updatedAt),
     },
     {
       title: 'Trạng thái',

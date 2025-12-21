@@ -104,13 +104,13 @@ export default function DashboardPage() {
       color: 'orange' as const,
       subtitle: `${data.courses.ongoing} đang diễn ra, ${data.courses.completed} hoàn thành`,
     },
-    {
-      title: 'Đánh Giá TB',
-      value: data.averageFeedback.total.toFixed(1),
-      change: data.averageFeedback.percentageChange,
-      icon: Star,
-      color: 'yellow' as const,
-    },
+    // {
+    //   title: 'Đánh Giá TB',
+    //   value: data.averageFeedback.total.toFixed(1),
+    //   change: data.averageFeedback.percentageChange,
+    //   icon: Star,
+    //   color: 'yellow' as const,
+    // },
     {
       title: 'Phê Duyệt',
       value: data.systemReports.approved + data.systemReports.pending + data.systemReports.rejected,
@@ -194,7 +194,7 @@ export default function DashboardPage() {
                     cx="50%"
                     cy="50%"
                     labelLine={false}
-                    label={({ name, percent }) => `${name}: ${(percent ?? 0 * 100).toFixed(0)}%`}
+                    label={({ name, percent }) => `${name}`}
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
