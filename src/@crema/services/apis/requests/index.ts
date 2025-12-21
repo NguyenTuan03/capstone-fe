@@ -362,7 +362,7 @@ export const useGetRequestById = (id: string | number) => {
 export const useApproveRequest = () => {
   return useMutation({
     mutationFn: async (id: number) => {
-      const url = buildUrl(`requests/${id}/approve`);
+      const url = buildUrl(`courses/requests/${id}/approve`);
       const token = getAuthToken();
 
       const response = await axios.patch(
@@ -389,7 +389,7 @@ export interface RejectRequestParams {
 export const useRejectRequest = () => {
   return useMutation({
     mutationFn: async ({ id, reason }: RejectRequestParams) => {
-      const url = buildUrl(`requests/${id}/reject`);
+      const url = buildUrl(`courses/requests/${id}/reject`);
       const token = getAuthToken();
 
       const response = await axios.patch(
