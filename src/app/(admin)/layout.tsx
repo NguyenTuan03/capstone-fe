@@ -8,9 +8,7 @@ import {
   TeamOutlined,
   BookOutlined,
   TrophyOutlined,
-  BarChartOutlined,
   BellOutlined,
-  SettingOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -410,11 +408,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       label: 'Người dùng',
     },
     {
-      key: '/courts',
-      icon: <EnvironmentOutlined />,
-      label: 'Sân tập ',
-    },
-    {
       key: '/coaches',
       icon: <TeamOutlined />,
       label: 'Huấn luyện viên',
@@ -435,19 +428,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       label: 'Thành tựu',
     },
     {
+      key: '/courts',
+      icon: <EnvironmentOutlined />,
+      label: 'Sân tập ',
+    },
+    {
       key: '/credential',
       icon: <FileTextOutlined />,
       label: 'Chứng chỉ',
-    },
-    {
-      key: '/configurations',
-      icon: <ControlOutlined />,
-      label: 'Cấu hình',
-    },
-    {
-      key: '/statistics',
-      icon: <BarChartOutlined />,
-      label: 'Thống kê',
     },
   ];
 
@@ -483,7 +471,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (pathname.includes('/achievements')) return '/achievements';
     if (pathname.includes('/credential')) return '/credential';
     if (pathname.includes('/configurations')) return '/configurations';
-    if (pathname.includes('/statistics')) return '/statistics';
     if (pathname.includes('/wallets')) return '/wallets';
     return '/dashboard';
   };

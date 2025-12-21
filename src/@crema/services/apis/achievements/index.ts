@@ -1,10 +1,19 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import jwtAxios from '@/@crema/services/jwt-auth';
 import { message } from 'antd';
 
 // ============================================
 // API TYPES
 // ============================================
+
+export interface EventNameOption {
+  value: string;
+  label: string;
+}
+
+export interface EventNamesResponse {
+  eventNames: EventNameOption[];
+}
 
 export interface CreateEventCountAchievementDto {
   name: string;
@@ -71,6 +80,21 @@ export interface UpdatePropertyCheckAchievementDto {
 // ============================================
 // API HOOKS
 // ============================================
+
+/**
+ * Hook to get list of event names
+ * GET /api/v1/achievements/event-names
+ */
+export const useGetEventNames = () => {
+  return useQuery({
+    queryKey: ['achievements', 'event-names'],
+    queryFn: async () => {
+      const response = await jwtAxios.get<EventNamesResponse>('achievements/event-names');
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
+};
 
 /**
  * Hook to create EVENT_COUNT achievement
