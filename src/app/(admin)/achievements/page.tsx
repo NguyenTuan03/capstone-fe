@@ -10,6 +10,7 @@ import {
   Input,
   Select,
   Modal,
+  Drawer,
   Typography,
   Row,
   Col,
@@ -21,6 +22,7 @@ import {
   App,
   Upload,
 } from 'antd';
+import Image from 'next/image';
 import { toast } from 'react-hot-toast';
 import {
   TrophyOutlined,
@@ -90,8 +92,6 @@ export default function AchievementsPage() {
     COACH: '/summary',
     LEARNER: '/home',
   });
-  const [loading, setLoading] = useState(false);
-  const [selectedAchievement, setSelectedAchievement] = useState<AchievementData | null>(null);
   const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
   const [isCreateModalVisible, setIsCreateModalVisible] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -1071,8 +1071,8 @@ export default function AchievementsPage() {
         )}
       </Modal>
 
-      {/* Create Achievement Modal */}
-      <Modal
+      {/* Create Achievement Drawer */}
+      <Drawer
         title={
           <div className="flex items-center gap-2">
             <TrophyOutlined className="text-yellow-500" />
@@ -1080,15 +1080,28 @@ export default function AchievementsPage() {
           </div>
         }
         open={isCreateModalVisible}
-        onOk={handleConfirmCreate}
-        onCancel={handleCancelCreate}
-        confirmLoading={isCreating}
-        okText={isCreating ? 'Đang tạo...' : 'Tạo thành tựu'}
-        cancelText="Hủy"
+        onClose={handleCancelCreate}
         width={700}
-        styles={{ body: { maxHeight: 'calc(100vh - 260px)', overflowY: 'auto' } }}
+        styles={{ body: { padding: 24 } }}
         maskClosable={!isCreating}
         closable={!isCreating}
+        footer={
+          <div style={{ textAlign: 'right' }}>
+            <Space>
+              <Button onClick={handleCancelCreate} disabled={isCreating}>
+                Hủy
+              </Button>
+              <Button
+                type="primary"
+                onClick={handleConfirmCreate}
+                loading={isCreating}
+                disabled={isCreating}
+              >
+                {isCreating ? 'Đang tạo...' : 'Tạo thành tựu'}
+              </Button>
+            </Space>
+          </div>
+        }
       >
         <div className="space-y-4">
           {/* Type Selection */}
@@ -1370,10 +1383,10 @@ export default function AchievementsPage() {
             />
           </div>
         </div>
-      </Modal>
+      </Drawer>
 
-      {/* Edit Achievement Modal */}
-      <Modal
+      {/* Edit Achievement Drawer */}
+      <Drawer
         title={
           <div className="flex items-center gap-2">
             <EditOutlined className="text-blue-500" />
@@ -1381,16 +1394,28 @@ export default function AchievementsPage() {
           </div>
         }
         open={isEditModalVisible}
-        onOk={handleConfirmEdit}
-        onCancel={handleCancelEdit}
-        confirmLoading={isUpdating}
-        okText={isUpdating ? 'Đang cập nhật...' : 'Cập nhật'}
-        cancelText="Hủy"
+        onClose={handleCancelEdit}
         width={700}
-        styles={{ body: { maxHeight: 'calc(100vh - 260px)', overflowY: 'auto' } }}
+        styles={{ body: { padding: 24 } }}
         maskClosable={!isUpdating}
         closable={!isUpdating}
-        centered
+        footer={
+          <div style={{ textAlign: 'right' }}>
+            <Space>
+              <Button onClick={handleCancelEdit} disabled={isUpdating}>
+                Hủy
+              </Button>
+              <Button
+                type="primary"
+                onClick={handleConfirmEdit}
+                loading={isUpdating}
+                disabled={isUpdating}
+              >
+                {isUpdating ? 'Đang cập nhật...' : 'Cập nhật'}
+              </Button>
+            </Space>
+          </div>
+        }
       >
         <div className="space-y-4">
           {/* Type (Read only) */}
@@ -1480,9 +1505,11 @@ export default function AchievementsPage() {
             {editingAchievement?.iconUrl && (
               <div className="mt-2 text-xs text-gray-500">
                 Icon hiện tại:{' '}
-                <img
+                <Image
                   src={editingAchievement.iconUrl}
                   alt="icon"
+                  width={32}
+                  height={32}
                   className="inline-block w-8 h-8 ml-2"
                 />
               </div>
@@ -1659,7 +1686,7 @@ export default function AchievementsPage() {
             />
           </div>
         </div>
-      </Modal>
+      </Drawer>
     </div>
   );
 }

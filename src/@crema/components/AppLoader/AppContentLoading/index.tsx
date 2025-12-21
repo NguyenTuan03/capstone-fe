@@ -9,7 +9,7 @@ type Props = {
 };
 const AppContentLoading = ({ spinning, children, ...rest }: Props) => {
   return (
-    <Spin spinning={spinning} {...rest} className="w-full h-[100vh]">
+    <Spin spinning={spinning} {...rest} className="w-full h-screen">
       {children}
     </Spin>
   );

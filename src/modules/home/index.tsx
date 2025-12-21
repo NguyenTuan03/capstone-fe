@@ -3,11 +3,9 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import AppLoader from '@/@crema/components/AppLoader';
 import { useAuthUser } from '@/@crema/hooks/useAuth';
-import { useJWTAuth } from '@/@crema/services/jwt-auth/JWTAuthProvider';
 
 export default function HomeClient() {
-  const { isAuthenticated, isLoading } = useAuthUser();
-  const { user } = useJWTAuth();
+  const { isLoading } = useAuthUser();
   const router = useRouter();
 
   useEffect(() => {

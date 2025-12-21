@@ -61,13 +61,13 @@ export const useUpdateConfiguration = () => {
   return usePut<ApiResponse<Configuration>, UpdateConfigurationDto & { id: number | string }>(
     'configurations/:id',
     {
-      onSuccess: (data) => {
-        message.success(data?.message || 'Cập nhật cấu hình thành công!');
+      onSuccess: () => {
+        // Luôn hiển thị message tiếng Việt
+        message.success('Cập nhật cấu hình thành công!');
       },
-      onError: (error: any) => {
-        const errorMessage =
-          error?.response?.data?.message || error?.message || 'Cập nhật cấu hình thất bại!';
-        message.error(errorMessage);
+      onError: () => {
+        // Luôn hiển thị message tiếng Việt
+        message.error('Cập nhật cấu hình thất bại!');
       },
     },
   );

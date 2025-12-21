@@ -303,15 +303,16 @@ export const useGetRequests = (params?: GetRequestsParams) => {
         filters.push(`status_eq_${params.status}`);
       }
 
-      const filterString = filters.length > 0 ? filters.join(',') : '';
+      // Tạo đối tượng query params
+      const queryParams: Record<string, any> = {
+        page: params?.page || 1,
+        size: params?.pageSize || 10,
+      };
 
       const url = buildUrl(
         `requests?sort=createdAt_desc&page=${params?.page || 1}&size=${params?.pageSize || 10}${filterString ? `&filter=${filterString}` : ''}`,
       );
       const token = getAuthToken();
-
-      console.log('Request URL:', url);
-      console.log('Request Params:', params);
 
       const response = await axios.get<GetRequestsResponse>(url, {
         headers: {
@@ -334,12 +335,12 @@ export const useGetRequests = (params?: GetRequestsParams) => {
 };
 
 export const useGetRequestById = (id: string | number) => {
-  return useQuery({
+  return useQuery<RequestWithContent, Error>({
     queryKey: ['requests', 'detail', id],
     queryFn: async () => {
       if (!id) throw new Error('Request ID is required');
 
-      const url = buildUrl(`requests/${id}`);
+      const url = buildUrl(`courses/requests/${id}`);
       const token = getAuthToken();
 
       const response = await axios.get<Request>(url, {
@@ -354,6 +355,10 @@ export const useGetRequestById = (id: string | number) => {
         },
       });
 
+      if (!response.data) {
+        throw new Error('No data returned from server');
+      }
+
       return transformRequestData(response.data);
     },
     enabled: Boolean(id),
@@ -363,7 +368,7 @@ export const useGetRequestById = (id: string | number) => {
 export const useApproveRequest = () => {
   return useMutation({
     mutationFn: async (id: number) => {
-      const url = buildUrl(`courses/requests/${id}/approve`);
+      const url = buildUrl(`requests/${id}/approve`);
       const token = getAuthToken();
 
       const response = await axios.patch(
@@ -390,7 +395,7 @@ export interface RejectRequestParams {
 export const useRejectRequest = () => {
   return useMutation({
     mutationFn: async ({ id, reason }: RejectRequestParams) => {
-      const url = buildUrl(`courses/requests/${id}/reject`);
+      const url = buildUrl(`requests/${id}/reject`);
       const token = getAuthToken();
 
       const response = await axios.patch(
@@ -413,12 +418,14 @@ export const useRejectRequest = () => {
 export const useGetCourseLessons = (requestId: string | number) => {
   const { data: request, ...rest } = useGetRequestById(requestId);
 
-  const lessons = request?.metadata.details.subject.lessons || [];
+  // Thêm kiểm tra an toàn để tránh lỗi khi dữ liệu chưa được tải xong
+  const lessons = request?.metadata?.details?.subject?.lessons || [];
 
   return {
     ...rest,
     data: lessons,
     request,
+    isLoading: rest.isLoading || !request,
   };
 };
 

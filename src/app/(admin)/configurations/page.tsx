@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Card,
   Table,
@@ -11,21 +11,12 @@ import {
   Tag,
   Modal,
   Form,
-  message,
   Typography,
   Tooltip,
-  App,
   Descriptions,
   Spin,
 } from 'antd';
-import {
-  PlusOutlined,
-  EditOutlined,
-  EyeOutlined,
-  SearchOutlined,
-  SettingOutlined,
-  ReloadOutlined,
-} from '@ant-design/icons';
+import { EditOutlined, EyeOutlined, SearchOutlined, SettingOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { useRoleGuard } from '@/@crema/hooks/useRoleGuard';
 import {
@@ -34,7 +25,6 @@ import {
   useUpdateConfiguration,
   useGetConfigurationByKey,
   parseConfigValue,
-  stringifyConfigValue,
 } from '@/@crema/services/apis/configurations';
 import { Configuration, ConfigurationDataType } from '@/types/configuration';
 
@@ -42,7 +32,6 @@ const { Title, Text } = Typography;
 const { TextArea } = Input;
 
 export default function ConfigurationsPage() {
-  const { modal } = App.useApp();
   const [createForm] = Form.useForm();
   const [editForm] = Form.useForm();
 
@@ -115,11 +104,6 @@ export default function ConfigurationsPage() {
   }
 
   // Handlers
-  const handleCreate = () => {
-    createForm.resetFields();
-    setIsCreateModalVisible(true);
-  };
-
   const handleEdit = (config: Configuration) => {
     setSelectedConfig(config);
     editForm.setFieldsValue({
@@ -197,7 +181,7 @@ export default function ConfigurationsPage() {
   // Table columns
   const columns: ColumnsType<Configuration> = [
     {
-      title: 'Value',
+      title: 'Giá trị',
       dataIndex: 'value',
       key: 'value',
       width: 150,
@@ -217,7 +201,7 @@ export default function ConfigurationsPage() {
       },
     },
     {
-      title: 'Data Type',
+      title: 'Loại dữ liệu',
       dataIndex: 'dataType',
       key: 'dataType',
       width: 120,
@@ -227,7 +211,7 @@ export default function ConfigurationsPage() {
       ),
     },
     {
-      title: 'Description',
+      title: 'Mô tả',
       dataIndex: 'description',
       key: 'description',
       width: 200,
@@ -283,14 +267,11 @@ export default function ConfigurationsPage() {
         <div>
           <Title level={2} className="!mb-2">
             <SettingOutlined className="mr-2" />
-            Quản lý Configurations
+            Quản lý Cấu hình
           </Title>
           <Text type="secondary">Quản lý cấu hình hệ thống</Text>
         </div>
         <Space>
-          <Button icon={<ReloadOutlined />} onClick={() => refetch()}>
-            Làm mới
-          </Button>
           {/* <Button type="primary" icon={<PlusOutlined />} onClick={handleCreate}>
             Tạo cấu hình
           </Button> */}
@@ -302,7 +283,7 @@ export default function ConfigurationsPage() {
         {/* Filters */}
         <div className="mb-4 flex gap-4">
           <Input
-            placeholder="Tìm kiếm theo key hoặc value..."
+            placeholder="Tìm kiếm theo Key hoặc Value..."
             prefix={<SearchOutlined />}
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
@@ -343,7 +324,7 @@ export default function ConfigurationsPage() {
       <Modal
         title="Tạo cấu hình mới"
         open={isCreateModalVisible}
-        destroyOnClose
+        destroyOnHidden
         getContainer={false}
         onCancel={() => {
           setIsCreateModalVisible(false);
@@ -406,7 +387,7 @@ export default function ConfigurationsPage() {
       <Modal
         title="Chỉnh sửa cấu hình"
         open={isEditModalVisible}
-        destroyOnClose
+        destroyOnHidden
         getContainer={false}
         onCancel={() => {
           setIsEditModalVisible(false);
@@ -469,7 +450,7 @@ export default function ConfigurationsPage() {
       <Modal
         title="Chi tiết cấu hình"
         open={isDetailModalVisible}
-        destroyOnClose
+        destroyOnHidden
         getContainer={false}
         onCancel={() => {
           setIsDetailModalVisible(false);

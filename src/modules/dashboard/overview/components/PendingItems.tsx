@@ -5,15 +5,14 @@ import { Card, List, Avatar, Typography, Tag, Button, Space, Tabs, Badge, messag
 
 import {
   UserOutlined,
-  ClockCircleOutlined,
   WarningOutlined,
   CheckCircleOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
 
 import { useRouter } from 'next/navigation';
-import DashboardApiService from '@/services/dashboardApi';
 import { PendingApproval, RecentReport } from '@/types/dashboard';
+import { DashboardApiService } from '@/services/dashboardApi';
 
 const { Text } = Typography;
 const { TabPane } = Tabs;
@@ -32,7 +31,7 @@ const PendingItems: React.FC = () => {
         setApprovals(response.data.approvals);
         setReports(response.data.reports);
       }
-    } catch (error) {
+    } catch {
       message.error('Không thể tải pending items');
     } finally {
       setLoading(false);

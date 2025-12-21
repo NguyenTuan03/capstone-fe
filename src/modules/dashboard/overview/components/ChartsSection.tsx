@@ -11,6 +11,7 @@ interface ChartsSectionProps {
 }
 
 const ChartsSection: React.FC<ChartsSectionProps> = ({ stats }) => {
+  void stats; // placeholder until charts are implemented
   return (
     <Row gutter={[24, 24]} style={{ marginBottom: 24 }}>
       <Col xs={24} lg={12}>

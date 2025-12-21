@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, Row, Col, Button, Badge, Typography, Space, message } from 'antd';
+import { Card, Row, Col, Button, Badge, Typography, message } from 'antd';
 
 import {
   UserAddOutlined,
@@ -13,8 +13,8 @@ import {
 } from '@ant-design/icons';
 
 import { useRouter } from 'next/navigation';
-import DashboardApiService from '@/services/dashboardApi';
 import { QuickAction } from '@/types/dashboard';
+import { DashboardApiService } from '@/services/dashboardApi';
 
 const { Text } = Typography;
 
@@ -30,7 +30,7 @@ const QuickActions: React.FC = () => {
       if (response.success) {
         setActions(response.data);
       }
-    } catch (error) {
+    } catch {
       message.error('Không thể tải quick actions');
     } finally {
       setLoading(false);

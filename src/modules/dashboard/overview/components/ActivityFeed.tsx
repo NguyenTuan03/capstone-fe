@@ -13,10 +13,10 @@ import {
   ReloadOutlined,
 } from '@ant-design/icons';
 
-import DashboardApiService from '@/services/dashboardApi';
 import { ActivityFeedItem, SystemAlert } from '@/types/dashboard';
+import { DashboardApiService } from '@/services/dashboardApi';
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 const ActivityFeed: React.FC = () => {
   const [activities, setActivities] = useState<ActivityFeedItem[]>([]);
@@ -31,7 +31,7 @@ const ActivityFeed: React.FC = () => {
         setActivities(response.data.activities);
         setAlerts(response.data.alerts);
       }
-    } catch (error) {
+    } catch {
       message.error('Không thể tải activity feed');
     } finally {
       setLoading(false);
@@ -67,7 +67,7 @@ const ActivityFeed: React.FC = () => {
         setAlerts((prev) => prev.filter((alert) => alert.id !== alertId));
         message.success('Đã ẩn thông báo');
       }
-    } catch (error) {
+    } catch {
       message.error('Không thể ẩn thông báo');
     }
   };

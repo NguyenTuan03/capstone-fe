@@ -15,6 +15,8 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   ControlOutlined,
+  EnvironmentOutlined,
+  FileTextOutlined,
   WalletOutlined,
 } from '@ant-design/icons';
 import { useRouter, usePathname } from 'next/navigation';
@@ -408,6 +410,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       label: 'Người dùng',
     },
     {
+      key: '/courts',
+      icon: <EnvironmentOutlined />,
+      label: 'Sân tập ',
+    },
+    {
       key: '/coaches',
       icon: <TeamOutlined />,
       label: 'Huấn luyện viên',
@@ -426,6 +433,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       key: '/achievements',
       icon: <TrophyOutlined />,
       label: 'Thành tựu',
+    },
+    {
+      key: '/credential',
+      icon: <FileTextOutlined />,
+      label: 'Chứng chỉ',
     },
     {
       key: '/configurations',
@@ -478,9 +490,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const getSelectedKey = () => {
     if (pathname.includes('/dashboard')) return '/dashboard';
     if (pathname.includes('/users')) return '/users';
+    if (pathname.includes('/courts')) return '/courts';
     if (pathname.includes('/coaches')) return '/coaches';
     if (pathname.includes('/curriculum')) return '/curriculum';
     if (pathname.includes('/achievements')) return '/achievements';
+    if (pathname.includes('/credential')) return '/credential';
     if (pathname.includes('/configurations')) return '/configurations';
     if (pathname.includes('/statistics')) return '/statistics';
     if (pathname.includes('/wallets')) return '/wallets';
