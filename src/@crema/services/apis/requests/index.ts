@@ -303,14 +303,8 @@ export const useGetRequests = (params?: GetRequestsParams) => {
         filters.push(`status_eq_${params.status}`);
       }
 
-      // Tạo đối tượng query params
-      const queryParams: Record<string, any> = {
-        page: params?.page || 1,
-        size: params?.pageSize || 10,
-      };
-
       const url = buildUrl(
-        `requests?sort=createdAt_desc&page=${params?.page || 1}&size=${params?.pageSize || 10}${filterString ? `&filter=${filterString}` : ''}`,
+        `requests?sort=createdAt_desc&page=${params?.page || 1}&size=${params?.pageSize || 10}&filter=${filters.join(',')}`,
       );
       const token = getAuthToken();
 
