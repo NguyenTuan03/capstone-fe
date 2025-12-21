@@ -13,7 +13,7 @@ import {
   Modal,
   Descriptions,
 } from 'antd';
-import { EyeOutlined } from '@ant-design/icons';
+import { EyeOutlined, PlusCircleTwoTone, MinusCircleTwoTone } from '@ant-design/icons';
 import {
   getWalletsWithUserInfo,
   approveWithdrawalRequest,
@@ -48,6 +48,13 @@ export interface Wallet {
     name: string;
   };
   withdrawalRequests?: WithdrawalRequest[];
+  transactions?: {
+    id: number;
+    amount: number;
+    description?: string;
+    type: 'DEBIT' | 'CREDIT';
+    createdAt: string;
+  }[];
 }
 
 export default function WalletsPage() {
@@ -309,6 +316,80 @@ export default function WalletsPage() {
                   },
                 ]}
                 locale={{ emptyText: 'Không có yêu cầu rút tiền nào' }}
+              />
+            </div>
+
+            <div style={{ marginTop: 24 }}>
+              <Typography.Title level={5}>Lịch sử giao dịch ví</Typography.Title>
+              <Table
+                dataSource={selectedWallet.transactions || []}
+                rowKey={(r) => r.id}
+                size="small"
+                pagination={false}
+                bordered
+                columns={[
+                  {
+                    title: 'ID',
+                    dataIndex: 'id',
+                    key: 'id',
+                    width: 60,
+                  },
+                  {
+                    title: 'Số tiền',
+                    dataIndex: 'amount',
+                    key: 'amount',
+                    render: (val: number) =>
+                      Math.round(val).toLocaleString('vi-VN', { maximumFractionDigits: 0 }) + ' ₫',
+                  },
+                  {
+                    title: 'Loại',
+                    dataIndex: 'type',
+                    key: 'type',
+                    render: (val: string) => {
+                      if (val === 'CREDIT') {
+                        return (
+                          <span
+                            style={{
+                              color: '#52c41a',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 4,
+                            }}
+                          >
+                            <PlusCircleTwoTone twoToneColor="#52c41a" /> Cộng tiền
+                          </span>
+                        );
+                      }
+                      if (val === 'DEBIT') {
+                        return (
+                          <span
+                            style={{
+                              color: '#fa541c',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 4,
+                            }}
+                          >
+                            <MinusCircleTwoTone twoToneColor="#fa541c" /> Trừ tiền
+                          </span>
+                        );
+                      }
+                      return val;
+                    },
+                  },
+                  {
+                    title: 'Mô tả',
+                    dataIndex: 'description',
+                    key: 'description',
+                  },
+                  {
+                    title: 'Ngày tạo',
+                    dataIndex: 'createdAt',
+                    key: 'createdAt',
+                    render: (val: string) => new Date(val).toLocaleDateString('vi-VN'),
+                  },
+                ]}
+                locale={{ emptyText: 'Không có giao dịch nào' }}
               />
             </div>
           </>
