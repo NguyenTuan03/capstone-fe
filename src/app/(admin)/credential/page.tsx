@@ -85,9 +85,8 @@ export default function CredentialPage() {
       const response = await baseCredentialService.getBaseCredentials(params);
       setCredentials(response.items || []);
       setTotal(response.total || 0);
-    } catch (error: any) {
-      console.error('Error fetching credentials:', error);
-      toast.error(error?.response?.data?.message || 'Không thể tải danh sách chứng chỉ');
+    } catch {
+      toast.error('Không thể tải danh sách chứng chỉ');
     } finally {
       setLoading(false);
     }
@@ -122,10 +121,8 @@ export default function CredentialPage() {
       toast.success('Tạo chứng chỉ thành công!');
       setIsCreateModalVisible(false);
       fetchCredentials();
-    } catch (error: any) {
-      console.error('Error creating credential:', error);
-      toast.error(error?.response?.data?.message || 'Không thể tạo chứng chỉ');
-      throw error; // Re-throw để modal có thể xử lý
+    } catch {
+      toast.error('Không thể tạo chứng chỉ');
     }
   };
 
@@ -142,10 +139,8 @@ export default function CredentialPage() {
       setIsEditModalVisible(false);
       setSelectedCredentialForAction(null);
       fetchCredentials();
-    } catch (error: any) {
-      console.error('Error updating credential:', error);
-      toast.error(error?.response?.data?.message || 'Không thể cập nhật chứng chỉ');
-      throw error; // Re-throw để modal có thể xử lý
+    } catch {
+      toast.error('Không thể cập nhật chứng chỉ');
     }
   };
 
@@ -164,9 +159,8 @@ export default function CredentialPage() {
       setIsDeleteModalVisible(false);
       setSelectedCredentialForAction(null);
       fetchCredentials();
-    } catch (error: any) {
-      console.error('Error deleting credential:', error);
-      toast.error(error?.response?.data?.message || 'Không thể xóa chứng chỉ');
+    } catch {
+      toast.error('Không thể xóa chứng chỉ');
     }
   };
 
@@ -178,18 +172,6 @@ export default function CredentialPage() {
       key: 'id',
       width: 80,
       sorter: (a, b) => a.id - b.id,
-    },
-    {
-      title: 'Hình ảnh',
-      dataIndex: 'publicUrl',
-      key: 'image',
-      width: 100,
-      render: (url: string) =>
-        url ? (
-          <Image src={url} alt="Credential" width={50} height={50} style={{ objectFit: 'cover' }} />
-        ) : (
-          '-'
-        ),
     },
     {
       title: 'Tên chứng chỉ',
@@ -216,16 +198,6 @@ export default function CredentialPage() {
         value: type,
       })),
       onFilter: (value, record) => record.type === value,
-    },
-    {
-      title: 'Ngày tạo',
-      dataIndex: 'createdAt',
-      key: 'createdAt',
-      render: (date: string) => (date ? new Date(date).toLocaleString('vi-VN') : '-'),
-      sorter: (a, b) => {
-        if (!a.createdAt || !b.createdAt) return 0;
-        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-      },
     },
     {
       title: 'Thao tác',

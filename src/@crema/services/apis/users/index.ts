@@ -133,20 +133,12 @@ export const userService = {
     throw new Error('Failed to soft delete user');
   },
 
-  /** ✅ Restore user - SỬA LẠI METHOD (thường là PUT/PATCH) */
+  /** ✅ Restore user - DELETE /users/:id/restore */
   async restore(id: number): Promise<string> {
-    // Thử với PATCH trước, nếu không được thì thử PUT
-    try {
-      const response = await jwtAxios.patch(`${API_URL}/${id}/restore`);
-      if (response.status === 200) return 'User restored successfully';
-    } catch (patchError) {
-      // Nếu PATCH không được, thử PUT
-      try {
-        const response = await jwtAxios.put(`${API_URL}/${id}/restore`);
-        if (response.status === 200) return 'User restored successfully';
-      } catch (putError) {
-        console.error('Both PATCH and PUT failed for restore:', { patchError, putError });
-      }
+    const response = await jwtAxios.delete(`${API_URL}/${id}/restore`);
+    if (response.status === 200) {
+      // Lấy message từ response nếu có, nếu không thì dùng message mặc định
+      return response.data?.message || 'Khôi phục người dùng thành công';
     }
     throw new Error('Failed to restore user');
   },
