@@ -32,6 +32,7 @@ const getTypeLabel = (type: CourseCredentialType): string => {
   const labels: Record<CourseCredentialType, string> = {
     CERTIFICATE: 'Chứng chỉ',
     LICENSE: 'Giấy phép',
+    PRIZE: 'Giải thưởng',
     TRAINING: 'Đào tạo',
     ACHIEVEMENT: 'Thành tích',
     OTHER: 'Khác',

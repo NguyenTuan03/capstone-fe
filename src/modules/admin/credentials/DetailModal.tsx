@@ -13,6 +13,7 @@ interface DetailModalProps {
 const getTypeLabel = (type: CourseCredentialType): string => {
   const labels: Record<CourseCredentialType, string> = {
     CERTIFICATE: 'Chứng chỉ',
+    PRIZE: 'Giải thưởng',
     LICENSE: 'Giấy phép',
     TRAINING: 'Đào tạo',
     ACHIEVEMENT: 'Thành tích',
