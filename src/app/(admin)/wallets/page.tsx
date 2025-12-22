@@ -14,11 +14,9 @@ import {
   Descriptions,
 } from 'antd';
 import { EyeOutlined, PlusCircleTwoTone, MinusCircleTwoTone } from '@ant-design/icons';
-import {
-  getWalletsWithUserInfo,
-  approveWithdrawalRequest,
-  rejectWithdrawalRequest,
-} from '@/services/walletApi';
+
+import jwtAxios from '@/@crema/services/jwt-auth';
+import { approveWithdrawalRequest, rejectWithdrawalRequest } from '@/services/walletApi';
 
 const { Title } = Typography;
 
@@ -42,7 +40,7 @@ export interface Wallet {
     id: number;
     fullName: string;
     email: string;
-    role?: {
+    role: {
       id: number;
       name: string;
     };
@@ -60,7 +58,6 @@ export interface Wallet {
     createdAt: string;
   }[];
 }
-
 export default function WalletsPage() {
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [loading, setLoading] = useState(false);
@@ -73,34 +70,62 @@ export default function WalletsPage() {
     visible: false,
     record: null,
   });
+  const [roleFilter, setRoleFilter] = useState<string>('ALL');
+  const [roles, setRoles] = useState<{ id: number; name: string }[]>([]);
 
-  const fetchWallets = () => {
+  // Fetch all roles from backend
+  const fetchRoles = async () => {
+    try {
+      const res = await jwtAxios.get('/roles');
+      setRoles(res.data || []);
+    } catch {
+      setRoles([
+        { id: 2, name: 'COACH' },
+        { id: 3, name: 'LEARNER' },
+      ]);
+    }
+  };
+
+  // Fetch wallets with role filter
+  const fetchWallets = (roleName?: string) => {
     setLoading(true);
-    getWalletsWithUserInfo()
-      .then((data) => {
-        // Loại bỏ ví của admin khỏi danh sách
-        const filteredData = data.filter((wallet) => wallet.user?.role?.name !== 'ADMIN');
-        setWallets(filteredData);
-      })
+    let url = '/wallets/all-with-user-info';
+    if (roleName && roleName !== 'ALL') {
+      url += `?role=${roleName}`;
+    }
+    jwtAxios
+      .get(url)
+      .then((res) => setWallets(res.data))
       .finally(() => setLoading(false));
   };
 
   useEffect(() => {
+    fetchRoles();
     fetchWallets();
   }, []);
+
+  useEffect(() => {
+    if (roleFilter === 'ALL') fetchWallets();
+    else fetchWallets(roleFilter);
+  }, [roleFilter]);
 
   const columns = [
     {
       title: 'Chủ ví',
       dataIndex: 'user',
       key: 'user',
-      render: (user: Wallet['user']) => (
-        <span>
-          <b>{user.fullName}</b>
-          <br />
-          <span style={{ color: '#888' }}>{user.email}</span>
-        </span>
-      ),
+      render: (user: Wallet['user']) => {
+        let roleDisplay = user.role.name;
+        if (roleDisplay === 'LEARNER') roleDisplay = 'Học viên';
+        else if (roleDisplay === 'COACH') roleDisplay = 'HLV';
+        return (
+          <span>
+            <b>{user.fullName}</b>
+            <br />
+            <span style={{ color: '#888' }}>{roleDisplay}</span>
+          </span>
+        );
+      },
     },
     {
       title: 'Số tài khoản',
@@ -132,7 +157,27 @@ export default function WalletsPage() {
       title: 'Ngày tạo',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      render: (val: string) => new Date(val).toLocaleDateString('vi-VN'),
+      render: (val: string) => {
+        const d = new Date(val);
+        return (
+          d.toLocaleDateString('vi-VN') +
+          ' ' +
+          d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+        );
+      },
+    },
+    {
+      title: 'Ngày cập nhật',
+      dataIndex: 'updatedAt',
+      key: 'updatedAt',
+      render: (val: string) => {
+        const d = new Date(val);
+        return (
+          d.toLocaleDateString('vi-VN') +
+          ' ' +
+          d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+        );
+      },
     },
     {
       title: 'Thao tác',
@@ -161,7 +206,7 @@ export default function WalletsPage() {
       setApproveDialog({ visible: false, record: null });
       setSelectedWallet(null); // Close detail modal after action
       fetchWallets(); // Refresh data
-    } catch (e) {
+    } catch {
       Modal.error({ title: 'Lỗi', content: 'Không thể duyệt yêu cầu.' });
     }
   };
@@ -173,7 +218,7 @@ export default function WalletsPage() {
       setRejectDialog({ visible: false, record: null });
       setSelectedWallet(null); // Close detail modal after action
       fetchWallets(); // Refresh data
-    } catch (e) {
+    } catch {
       Modal.error({ title: 'Lỗi', content: 'Không thể từ chối yêu cầu.' });
     }
   };
@@ -186,6 +231,21 @@ export default function WalletsPage() {
         </Title>
       </Card>
       <Card className="rounded-2xl border-0 shadow-sm">
+        <div style={{ marginBottom: 16, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span>Lọc theo vai trò:</span>
+          <select
+            value={roleFilter}
+            onChange={(e) => setRoleFilter(e.target.value)}
+            style={{ padding: '4px 8px', borderRadius: 6 }}
+          >
+            <option value="ALL">Tất cả</option>
+            {roles.map((role) => (
+              <option key={role.id} value={role.name}>
+                {role.name === 'LEARNER' ? 'Học viên' : role.name === 'COACH' ? 'HLV' : role.name}
+              </option>
+            ))}
+          </select>
+        </div>
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Spin size="large" />
@@ -238,10 +298,32 @@ export default function WalletsPage() {
                 ₫
               </Descriptions.Item>
               <Descriptions.Item label="Ngày tạo">
-                {new Date(selectedWallet.createdAt).toLocaleDateString('vi-VN')}
+                {(() => {
+                  const d = new Date(selectedWallet.createdAt);
+                  return (
+                    d.toLocaleDateString('vi-VN') +
+                    ' ' +
+                    d.toLocaleTimeString('vi-VN', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit',
+                    })
+                  );
+                })()}
               </Descriptions.Item>
               <Descriptions.Item label="Ngày cập nhật">
-                {new Date(selectedWallet.updatedAt).toLocaleDateString('vi-VN')}
+                {(() => {
+                  const d = new Date(selectedWallet.updatedAt);
+                  return (
+                    d.toLocaleDateString('vi-VN') +
+                    ' ' +
+                    d.toLocaleTimeString('vi-VN', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit',
+                    })
+                  );
+                })()}
               </Descriptions.Item>
             </Descriptions>
             <div style={{ marginTop: 24 }}>
@@ -290,7 +372,18 @@ export default function WalletsPage() {
                     title: 'Ngày tạo',
                     dataIndex: 'requestedAt',
                     key: 'requestedAt',
-                    render: (val: string) => new Date(val).toLocaleDateString('vi-VN'),
+                    render: (val: string) => {
+                      const d = new Date(val);
+                      return (
+                        d.toLocaleDateString('vi-VN') +
+                        ' ' +
+                        d.toLocaleTimeString('vi-VN', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          second: '2-digit',
+                        })
+                      );
+                    },
                   },
                   {
                     title: 'Ngày hoàn thành',
@@ -300,7 +393,18 @@ export default function WalletsPage() {
                       record.status === 'PENDING' ? (
                         <span style={{ color: '#aaa' }}>-</span>
                       ) : (
-                        new Date(val).toLocaleDateString('vi-VN')
+                        (() => {
+                          const d = new Date(val);
+                          return (
+                            d.toLocaleDateString('vi-VN') +
+                            ' ' +
+                            d.toLocaleTimeString('vi-VN', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              second: '2-digit',
+                            })
+                          );
+                        })()
                       ),
                   },
                   {
@@ -394,7 +498,18 @@ export default function WalletsPage() {
                     title: 'Ngày tạo',
                     dataIndex: 'createdAt',
                     key: 'createdAt',
-                    render: (val: string) => new Date(val).toLocaleDateString('vi-VN'),
+                    render: (val: string) => {
+                      const d = new Date(val);
+                      return (
+                        d.toLocaleDateString('vi-VN') +
+                        ' ' +
+                        d.toLocaleTimeString('vi-VN', {
+                          hour: '2-digit',
+                          minute: '2-digit',
+                          second: '2-digit',
+                        })
+                      );
+                    },
                   },
                 ]}
                 locale={{ emptyText: 'Không có giao dịch nào' }}
@@ -412,7 +527,7 @@ export default function WalletsPage() {
         onOk={handleApprove}
         okText="Duyệt"
         cancelText="Hủy"
-        destroyOnClose
+        destroyOnHidden
       >
         {approveDialog.record && (
           <div>Bạn có chắc muốn duyệt yêu cầu rút tiền #{approveDialog.record.id}?</div>
@@ -427,7 +542,7 @@ export default function WalletsPage() {
         onOk={handleReject}
         okText="Từ chối"
         cancelText="Hủy"
-        destroyOnClose
+        destroyOnHidden
       >
         {rejectDialog.record && (
           <div>Bạn có chắc muốn từ chối yêu cầu rút tiền #{rejectDialog.record.id}?</div>

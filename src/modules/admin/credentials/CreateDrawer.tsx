@@ -21,6 +21,7 @@ const getTypeLabel = (type: CourseCredentialType): string => {
     CERTIFICATE: 'Chứng chỉ',
     LICENSE: 'Giấy phép',
     TRAINING: 'Đào tạo',
+    PRIZE: 'Giải thưởng',
     ACHIEVEMENT: 'Thành tích',
     OTHER: 'Khác',
   };

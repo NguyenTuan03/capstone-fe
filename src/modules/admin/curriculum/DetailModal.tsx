@@ -306,9 +306,6 @@ export default function DetailModal({
                           {/* Lesson Info */}
                           <Card size="small" title="Thông tin Bài Học">
                             <Descriptions column={2} size="small">
-                              <Descriptions.Item label="Thời lượng">
-                                {lessonStats.totalDurationFormatted}
-                              </Descriptions.Item>
                               <Descriptions.Item label="Số thứ tự">
                                 Bài {lesson.lessonNumber}
                               </Descriptions.Item>
