@@ -57,7 +57,7 @@ export interface CreateCourtBody {
   latitude?: number;
   longitude?: number;
   provinceId: number;
-  districtId: number;
+  districtId?: number;
   isActive?: boolean;
 }
 
@@ -88,8 +88,17 @@ export const courtService = {
     const queryString = queryParams.toString();
     const url = queryString ? `${API_URL}?${queryString}` : API_URL;
 
-    const response = await jwtAxios.get<CourtListResponse>(url);
-    return response.data;
+    const response = await jwtAxios.get<CourtListResponse | { metadata: CourtListResponse }>(url);
+    // Handle both direct response and wrapped in metadata
+    const data = response.data as any;
+
+    // If response has metadata wrapper, extract it
+    if (data && typeof data === 'object' && 'metadata' in data) {
+      return data.metadata as CourtListResponse;
+    }
+
+    // Otherwise return data directly (should be CourtListResponse)
+    return data as CourtListResponse;
   },
 
   // Get all courts (for map view)
@@ -98,8 +107,17 @@ export const courtService = {
     queryParams.append('page', page.toString());
     queryParams.append('size', size.toString());
     const url = `${API_URL}/all?${queryParams.toString()}`;
-    const response = await jwtAxios.get<CourtListResponse>(url);
-    return response.data;
+    const response = await jwtAxios.get<CourtListResponse | { metadata: CourtListResponse }>(url);
+    // Handle both direct response and wrapped in metadata
+    const data = response.data as any;
+
+    // If response has metadata wrapper, extract it
+    if (data && typeof data === 'object' && 'metadata' in data) {
+      return data.metadata as CourtListResponse;
+    }
+
+    // Otherwise return data directly (should be CourtListResponse)
+    return data as CourtListResponse;
   },
 
   // Get single court by ID

@@ -73,11 +73,32 @@ export default function CourtsPage() {
       if (districtFilter) params.districtId = districtFilter;
 
       const response = await courtService.getCourts(params);
-      setCourts(response.items || []);
-      setTotal(response.total || 0);
+
+      // Handle response - should be CourtListResponse with items, page, pageSize, total
+      if (response && response.items && Array.isArray(response.items)) {
+        setCourts(response.items);
+        setTotal(response.total || response.items.length);
+      } else {
+        // Fallback: if response is array directly
+        if (Array.isArray(response)) {
+          setCourts(response);
+          setTotal(response.length);
+        } else {
+          // Empty or unexpected structure
+          setCourts([]);
+          setTotal(0);
+        }
+      }
     } catch (error: any) {
       console.error('Error fetching courts:', error);
-      toast.error(error?.response?.data?.message || 'Không thể tải danh sách sân tập');
+      // Only show error toast for actual errors
+      const status = error?.response?.status;
+      if (status && status >= 400) {
+        toast.error(error?.response?.data?.message || 'Không thể tải danh sách sân tập');
+      } else if (!status || status < 200) {
+        // Network error or other non-HTTP error
+        toast.error('Không thể tải danh sách sân tập');
+      }
     } finally {
       setLoading(false);
     }
@@ -155,13 +176,13 @@ export default function CourtsPage() {
 
     try {
       await courtService.deleteCourt(selectedCourtForAction.id);
-      toast.success('Xóa sân tập thành công!');
+      toast.success('Đóng sân tập thành công!');
       setIsDeleteModalVisible(false);
       setSelectedCourtForAction(null);
       fetchCourts();
     } catch (error: any) {
       console.error('Error deleting court:', error);
-      toast.error(error?.response?.data?.message || 'Không thể xóa sân tập');
+      toast.error(error?.response?.data?.message || 'Không thể đóng sân tập');
     }
   };
 
@@ -317,7 +338,7 @@ export default function CourtsPage() {
               onClick={handleCreate}
               style={{ width: '100%' }}
             >
-              Thêm sân tập
+              Kích hoạt sân tập
             </Button>
           </Col>
         </Row>

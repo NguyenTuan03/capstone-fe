@@ -32,7 +32,7 @@ interface Court {
   name: string;
   address: string;
   provinceId: number;
-  districtId: number;
+  districtId?: number;
   latitude: number;
   longitude: number;
   phoneNumber?: string;
@@ -91,10 +91,18 @@ export default function CreateDrawer({ open, onCancel, onSubmit }: CreateDrawerP
       setLoading(true);
       try {
         const res = await courtService.getAllCourts(1, 100);
+        if (!res) {
+          setCourts([]);
+          return;
+        }
+
         const items: ApiCourt[] = res.items || [];
 
         const mapped: Court[] = items
           .map((c) => {
+            // Skip if province is null (required field)
+            if (!c.province) return null;
+
             const lat =
               typeof c.latitude === 'string'
                 ? parseFloat(c.latitude)
@@ -116,14 +124,14 @@ export default function CreateDrawer({ open, onCancel, onSubmit }: CreateDrawerP
               name: c.name,
               address: c.address,
               provinceId: c.province.id,
-              districtId: c.district.id,
+              districtId: c.district?.id ?? undefined,
               latitude: lat,
               longitude: lng,
               phoneNumber: c.phoneNumber ?? undefined,
               pricePerHour: price,
               publicUrl: c.publicUrl ?? undefined,
               provinceName: c.province.name,
-              districtName: c.district.name,
+              districtName: c.district?.name ?? undefined,
               isActive: c.isActive ?? false,
             };
 
@@ -376,7 +384,7 @@ export default function CreateDrawer({ open, onCancel, onSubmit }: CreateDrawerP
                   </div>
                 ) : (
                   <MapComponent
-                    courts={courts}
+                    courts={courts as any}
                     filteredCourtIds={
                       selectedProvinceId || selectedDistrictId
                         ? filteredCourts.map((c) => c.id)

@@ -42,7 +42,7 @@ interface Court {
   name: string;
   address: string;
   provinceId: number;
-  districtId: number;
+  districtId?: number;
   latitude: number;
   longitude: number;
   phoneNumber?: string;
