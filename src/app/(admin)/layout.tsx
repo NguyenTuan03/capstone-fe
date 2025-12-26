@@ -437,6 +437,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       icon: <FileTextOutlined />,
       label: 'Chứng chỉ',
     },
+    {
+      key: '/configuration',
+      icon: <FileTextOutlined />,
+      label: 'Cấu hình',
+    },
   ];
 
   const handleUserMenuClick: MenuProps['onClick'] = ({ key }) => {
@@ -470,7 +475,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     if (pathname.includes('/curriculum')) return '/curriculum';
     if (pathname.includes('/achievements')) return '/achievements';
     if (pathname.includes('/credential')) return '/credential';
-    if (pathname.includes('/configurations')) return '/configurations';
+    if (pathname.includes('/configuration')) return '/configuration';
     if (pathname.includes('/wallets')) return '/wallets';
     return '/dashboard';
   };

@@ -295,33 +295,6 @@ export default function DashboardPage() {
           <p className="text-sm text-gray-500">Pickle Learn Dashboard</p>
         </div>
 
-        {/* Filter Controls */}
-        <Card size="small" style={{ marginBottom: 16, borderRadius: '8px' }}>
-          <Space>
-            <span style={{ fontWeight: 500 }}>Thời gian:</span>
-            <Select
-              value={timeRange}
-              onChange={setTimeRange}
-              style={{ width: 120 }}
-              disabled={isFinancialStatsLoading}
-            >
-              <Option value="week">Tuần</Option>
-              <Option value="month">Tháng</Option>
-              <Option value="quarter">Quý</Option>
-              <Option value="year">Năm</Option>
-              <Option value="custom">Tùy chọn</Option>
-            </Select>
-
-            {timeRange === 'custom' && (
-              <RangePicker
-                onChange={setCustomDateRange}
-                format="DD/MM/YYYY"
-                disabled={isFinancialStatsLoading}
-              />
-            )}
-          </Space>
-        </Card>
-
         {/* Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 mb-6">
           {stats.map((stat, index) => {
