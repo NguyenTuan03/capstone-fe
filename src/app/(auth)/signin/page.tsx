@@ -1,6 +1,6 @@
 'use client';
 import { useAuthActions } from '@/@crema/hooks/useAuth';
-import { Button, Checkbox, Form, Input } from 'antd';
+import { Button, Checkbox, Form, Input, message } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import Link from 'next/link';
 import React, { useEffect, useRef } from 'react';
@@ -43,17 +43,22 @@ export default function Login() {
 
       hasRedirected.current = true;
 
-      switch (normalizedRole) {
-        case RoleEnum.ADMIN:
-          router.replace('/dashboard');
-          break;
-        case RoleEnum.COACH:
-          router.replace('/summary');
-          break;
-        default:
-          router.replace('/home');
-          break;
+      // Chỉ cho phép ADMIN đăng nhập
+      if (normalizedRole !== RoleEnum.ADMIN) {
+        // Xóa token và user data
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        sessionStorage.removeItem('token');
+        sessionStorage.removeItem('user');
+        // Hiển thị thông báo lỗi
+        message.error(
+          'Bạn không có quyền đăng nhập vào hệ thống quản trị. Chỉ quản trị viên mới được phép truy cập.',
+        );
+        return;
       }
+
+      // Chỉ ADMIN mới được redirect
+      router.replace('/dashboard');
     } catch {}
   }, [router]);
 
