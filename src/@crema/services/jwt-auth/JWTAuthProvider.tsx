@@ -172,6 +172,21 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
         updatedAt: new Date().toISOString(),
       };
 
+      // Chỉ cho phép ADMIN đăng nhập vào hệ thống quản trị
+      if (mappedUser.role !== RoleEnum.ADMIN) {
+        // Xóa token và user data
+        cleanupAuthState();
+        try {
+          localStorage.removeItem('user');
+          sessionStorage.removeItem('user');
+        } catch {}
+        message.error(
+          'Bạn không có quyền đăng nhập vào hệ thống quản trị. Chỉ quản trị viên mới được phép truy cập.',
+        );
+        setJWTAuthData({ user: null, isAuthenticated: false, isLoading: false });
+        return;
+      }
+
       setJWTAuthData({ user: mappedUser, isAuthenticated: true, isLoading: false });
 
       try {
@@ -184,13 +199,7 @@ const JWTAuthAuthProvider: React.FC<JWTAuthAuthProviderProps> = ({ children }) =
       } catch {}
       message.success('Đăng nhập thành công!');
       setTimeout(() => {
-        if (mappedUser.role === RoleEnum.ADMIN) {
-          router.push('/dashboard');
-        } else if (mappedUser.role === RoleEnum.COACH) {
-          router.push('/summary');
-        } else {
-          router.push('/home');
-        }
+        router.push('/dashboard');
       }, 1200);
     },
     onError: (err: Error) => {
