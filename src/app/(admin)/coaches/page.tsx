@@ -23,38 +23,21 @@ import {
 import {
   UserOutlined,
   SearchOutlined,
-  FilterOutlined,
-  PlusOutlined,
-  EditOutlined,
-  DeleteOutlined,
   EyeOutlined,
   CheckCircleOutlined,
-  CloseCircleOutlined,
   ClockCircleOutlined,
-  ExclamationCircleOutlined,
   MailOutlined,
   PhoneOutlined,
   EnvironmentOutlined,
-  StarFilled,
-  StarOutlined,
   CalendarOutlined,
-  BookOutlined,
-  TeamOutlined,
-  DollarOutlined,
   CheckOutlined,
   CloseOutlined,
-  SyncOutlined,
-  MoreOutlined,
-  ArrowLeftOutlined,
-  SaveOutlined,
-  UploadOutlined,
   InfoCircleOutlined,
   TrophyOutlined,
   SafetyCertificateOutlined,
   LinkOutlined,
   MessageOutlined,
 } from '@ant-design/icons';
-import { getAvatarUrl } from '@/utils/avatarUtils';
 import type { ColumnsType } from 'antd/es/table';
 import {
   useGetAllCoaches,
@@ -67,6 +50,7 @@ import { CoachVerificationStatus } from '@/types/enums';
 import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 import { User } from '@/types/user';
 import { toast } from 'react-hot-toast';
+import { getAvatarUrl } from '@/utils/avatarUtils';
 
 const { Title, Text, Paragraph } = Typography;
 const { Search } = Input;
@@ -686,7 +670,9 @@ export default function CoachesPage() {
             const phoneToShow = dc.user?.phoneNumber || dc.phone || selectedCoach?.phone;
             const locationToShow = dc.user?.location || dc.location || selectedCoach?.location;
             const nameToShow = dc.user?.fullName || dc.user?.name || dc.name || selectedCoach?.name;
-            const avatarToShow = getAvatarUrl(dc.user?.profilePicture || dc.avatar || selectedCoach?.avatar);
+            const avatarToShow = getAvatarUrl(
+              dc.user?.profilePicture || dc.avatar || selectedCoach?.avatar,
+            );
             const yearsToShow = dc.yearOfExperience ?? selectedCoach?.yearsOfExperience ?? 0;
             const createdAtToShow = dc.createdAt || selectedCoach?.registrationDate;
             const totalCoursesToShow = dc.totalCourses ?? selectedCoach?.totalCourses ?? 0;

@@ -557,7 +557,7 @@ export default function CreateDrawer({ open, onCancel, onSubmit }: CreateDrawerP
               disabled={!selectedCourt || !phoneNumber || !pricePerHour}
               onClick={handleCreate}
             >
-              Tạo sân
+              Kích hoạt sân
             </Button>
           </Space>
         </div>
