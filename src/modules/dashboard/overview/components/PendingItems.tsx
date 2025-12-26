@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Card, List, Avatar, Typography, Tag, Button, Space, Tabs, Badge, message } from 'antd';
+import { Card, List, Typography, Tag, Space, Button, Timeline, message, Avatar, Tabs, Badge } from 'antd';
+import { UserOutlined, WarningOutlined } from '@ant-design/icons';
+import { getAvatarUrl } from '@/utils/avatarUtils';
 
 import {
-  UserOutlined,
-  WarningOutlined,
   CheckCircleOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
@@ -15,9 +15,9 @@ import { PendingApproval, RecentReport } from '@/types/dashboard';
 import { DashboardApiService } from '@/services/dashboardApi';
 
 const { Text } = Typography;
-const { TabPane } = Tabs;
 
 const PendingItems: React.FC = () => {
+  const { TabPane } = Tabs;
   const [approvals, setApprovals] = useState<PendingApproval[]>([]);
   const [reports, setReports] = useState<RecentReport[]>([]);
   const [loading, setLoading] = useState(true);
@@ -129,7 +129,7 @@ const PendingItems: React.FC = () => {
                       <Text style={{ fontSize: '12px' }}>{approval.description}</Text>
                       <br />
                       <Space size="small" style={{ marginTop: '4px' }}>
-                        <Avatar src={approval.submittedBy.avatar} icon={<UserOutlined />} />
+                        <Avatar src={getAvatarUrl(approval.submittedBy.avatar)} icon={<UserOutlined />} />
                         <Text style={{ fontSize: '11px' }}>{approval.submittedBy.name}</Text>
                         <Text type="secondary" style={{ fontSize: '11px' }}>
                           • {DashboardApiService.getTimeAgo(approval.submittedAt)}
@@ -214,7 +214,7 @@ const PendingItems: React.FC = () => {
                       <Text style={{ fontSize: '12px' }}>{report.description}</Text>
                       <br />
                       <Space size="small" style={{ marginTop: '4px' }}>
-                        <Avatar src={report.reportedBy.avatar} icon={<UserOutlined />} />
+                        <Avatar src={getAvatarUrl(report.reportedBy.avatar)} icon={<UserOutlined />} />
                         <Text style={{ fontSize: '11px' }}>{report.reportedBy.name}</Text>
                         <Text type="secondary" style={{ fontSize: '11px' }}>
                           • {DashboardApiService.getTimeAgo(report.reportedAt)}

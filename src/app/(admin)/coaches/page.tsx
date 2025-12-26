@@ -23,21 +23,38 @@ import {
 import {
   UserOutlined,
   SearchOutlined,
+  FilterOutlined,
+  PlusOutlined,
+  EditOutlined,
+  DeleteOutlined,
   EyeOutlined,
-  SafetyCertificateOutlined,
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  ClockCircleOutlined,
+  ExclamationCircleOutlined,
+  MailOutlined,
+  PhoneOutlined,
+  EnvironmentOutlined,
+  StarFilled,
+  StarOutlined,
+  CalendarOutlined,
+  BookOutlined,
+  TeamOutlined,
+  DollarOutlined,
   CheckOutlined,
   CloseOutlined,
-  TrophyOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  CalendarOutlined,
-  LinkOutlined,
-  EnvironmentOutlined,
-  PhoneOutlined,
-  MailOutlined,
-  MessageOutlined,
+  SyncOutlined,
+  MoreOutlined,
+  ArrowLeftOutlined,
+  SaveOutlined,
+  UploadOutlined,
   InfoCircleOutlined,
+  TrophyOutlined,
+  SafetyCertificateOutlined,
+  LinkOutlined,
+  MessageOutlined,
 } from '@ant-design/icons';
+import { getAvatarUrl } from '@/utils/avatarUtils';
 import type { ColumnsType } from 'antd/es/table';
 import {
   useGetAllCoaches,
@@ -240,7 +257,7 @@ export default function CoachesPage() {
           name: coachUser?.fullName || coachUser?.name || item.name || '-',
           email: coachUser?.email || item.email || '-',
           phone: coachUser?.phoneNumber || item.phone || '-',
-          avatar: coachUser?.profilePicture || item.avatar || '',
+          avatar: getAvatarUrl(coachUser?.profilePicture || item.avatar),
           location: coachUser?.location || item.location || '-',
           yearsOfExperience:
             item.yearOfExperience ?? item.yearsOfExperience ?? item.experience ?? 0,
@@ -363,7 +380,7 @@ export default function CoachesPage() {
   /** TABLE COLUMNS */
   const InfoCell: React.FC<{ record: CoachData }> = ({ record }) => (
     <div className="flex items-center gap-3">
-      <Avatar size={48} src={record.avatar || undefined} icon={<UserOutlined />} />
+      <Avatar size={48} src={getAvatarUrl(record.avatar)} icon={<UserOutlined />} />
       <div className="min-w-0">
         <div className="flex items-center gap-1">
           <span className="font-medium truncate max-w-[220px] block">{record.name}</span>
@@ -669,7 +686,7 @@ export default function CoachesPage() {
             const phoneToShow = dc.user?.phoneNumber || dc.phone || selectedCoach?.phone;
             const locationToShow = dc.user?.location || dc.location || selectedCoach?.location;
             const nameToShow = dc.user?.fullName || dc.user?.name || dc.name || selectedCoach?.name;
-            const avatarToShow = dc.user?.profilePicture || dc.avatar || selectedCoach?.avatar;
+            const avatarToShow = getAvatarUrl(dc.user?.profilePicture || dc.avatar || selectedCoach?.avatar);
             const yearsToShow = dc.yearOfExperience ?? selectedCoach?.yearsOfExperience ?? 0;
             const createdAtToShow = dc.createdAt || selectedCoach?.registrationDate;
             const totalCoursesToShow = dc.totalCourses ?? selectedCoach?.totalCourses ?? 0;
@@ -687,7 +704,7 @@ export default function CoachesPage() {
                   <div className="flex items-start gap-4">
                     {/* Left side: Avatar, Name, Rating, Email, Bio */}
                     <div className="flex items-start gap-4 flex-1" style={{ paddingRight: '20px' }}>
-                      <Avatar size={84} src={avatarToShow} icon={<UserOutlined />} />
+                      <Avatar size={84} src={getAvatarUrl(avatarToShow)} icon={<UserOutlined />} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-2">
                           <Title level={4} className="mb-0 truncate">
