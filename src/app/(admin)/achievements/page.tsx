@@ -49,7 +49,6 @@ import {
   useUpdateEventCountAchievement,
   useUpdateStreakAchievement,
   useUpdatePropertyCheckAchievement,
-  useGetEventNames,
 } from '@/@crema/services/apis/achievements';
 import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 
@@ -166,6 +165,7 @@ export default function AchievementsPage() {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [editingAchievement, setEditingAchievement] = useState<AchievementData | null>(null);
+  const [isLoadingDetail, setIsLoadingDetail] = useState(false);
 
   // Create form state
   const [createForm, setCreateForm] = useState({
@@ -274,9 +274,33 @@ export default function AchievementsPage() {
     return operator ? operatorMap[operator] || operator : '';
   };
 
-  // API queries
-  const { data: eventNamesData, isLoading: isLoadingEventNames } = useGetEventNames();
-  const eventNameOptions = eventNamesData?.eventNames || [];
+  // Event options
+  const EVENT_OPTIONS = [
+    { 
+      value: 'SESSION_ATTENDED', 
+      label: 'Tham gia buổi học',
+      availableIn: ['EVENT_COUNT', 'STREAK', 'PROPERTY_CHECK']
+    },
+    { 
+      value: 'DAILY_LOGIN', 
+      label: 'Đăng nhập hằng ngày',
+      availableIn: ['EVENT_COUNT', 'STREAK']
+    },
+    { 
+      value: 'QUIZ_COMPLETED', 
+      label: 'Hoàn thành quiz',
+      availableIn: ['EVENT_COUNT', 'STREAK', 'PROPERTY_CHECK']
+    }
+  ];
+
+  const getFilteredEvents = (type: string) => {
+    return EVENT_OPTIONS
+      .filter(event => event.availableIn.includes(type))
+      .map(event => ({
+        value: event.value,
+        label: event.label
+      }));
+  };
 
   // API mutations
   const createEventCountMutation = useCreateEventCountAchievement();
@@ -327,7 +351,7 @@ export default function AchievementsPage() {
   } = useGet<any>('achievements', apiParams);
 
   // API call - Get detail by ID
-  const { data: achievementDetail, isLoading: isLoadingDetail } = useGet<any>(
+  const { data: achievementDetail } = useGet<any>(
     selectedAchievementId ? `achievements/${selectedAchievementId}` : '',
     undefined,
     { enabled: !!selectedAchievementId && isDetailModalVisible },
@@ -1231,82 +1255,6 @@ export default function AchievementsPage() {
               </Option>
             </Select>
           </div>
-
-          {/* Name */}
-          <div>
-            <Text strong>
-              Tên thành tựu: <span className="text-red-500">*</span>
-            </Text>
-            <Input
-              style={{ marginTop: 8 }}
-              placeholder="VD: Người mới bắt đầu"
-              value={createForm.name}
-              onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <Text strong>
-              Mô tả: <span className="text-red-500">*</span>
-            </Text>
-            <TextArea
-              style={{ marginTop: 8 }}
-              rows={3}
-              placeholder="VD: Hoàn thành buổi học đầu tiên"
-              value={createForm.description}
-              onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
-            />
-          </div>
-
-          {/* Icon Upload */}
-          <div>
-            <Text strong>
-              Icon (tải ảnh lên): <span className="text-gray-400">(không bắt buộc)</span>
-            </Text>
-            <Upload
-              maxCount={1}
-              beforeUpload={(file) => {
-                // Kiểm tra loại file
-                const isImage = file.type.startsWith('image/');
-                if (!isImage) {
-                  toast.error('Chỉ được upload file ảnh!');
-                  return Upload.LIST_IGNORE;
-                }
-                // Kiểm tra kích thước (max 5MB)
-                const isLt5M = file.size / 1024 / 1024 < 5;
-                if (!isLt5M) {
-                  toast.error('Ảnh phải nhỏ hơn 5MB!');
-                  return Upload.LIST_IGNORE;
-                }
-                setCreateIconFile(file);
-                return false; // Prevent auto upload
-              }}
-              onRemove={() => {
-                setCreateIconFile(null);
-              }}
-              fileList={
-                createIconFile
-                  ? [
-                      {
-                        uid: '-1',
-                        name: createIconFile.name,
-                        status: 'done',
-                        url: URL.createObjectURL(createIconFile),
-                      },
-                    ]
-                  : []
-              }
-            >
-              <Button icon={<UploadOutlined />} style={{ marginTop: 8 }}>
-                Chọn file ảnh
-              </Button>
-            </Upload>
-            <div className="mt-2 text-xs text-gray-500">
-              💡 Chấp nhận: JPG, PNG, GIF, SVG. Tối đa 5MB
-            </div>
-          </div>
-
           {/* Type-specific fields */}
           {createForm.type === 'EVENT_COUNT' && (
             <>
@@ -1319,12 +1267,7 @@ export default function AchievementsPage() {
                   placeholder="Chọn tên sự kiện"
                   value={createForm.eventName || undefined}
                   onChange={(value) => setCreateForm({ ...createForm, eventName: value })}
-                  loading={isLoadingEventNames}
-                  options={eventNameOptions}
-                  showSearch
-                  filterOption={(input, option) =>
-                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                  }
+                  options={getFilteredEvents('EVENT_COUNT')}
                 />
               </div>
               <div>
@@ -1352,12 +1295,7 @@ export default function AchievementsPage() {
                   placeholder="Chọn tên sự kiện"
                   value={createForm.eventName || undefined}
                   onChange={(value) => setCreateForm({ ...createForm, eventName: value })}
-                  loading={isLoadingEventNames}
-                  options={eventNameOptions}
-                  showSearch
-                  filterOption={(input, option) =>
-                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                  }
+                  options={getFilteredEvents('PROPERTY_CHECK')}
                 />
               </div>
               <div>
@@ -1479,12 +1417,7 @@ export default function AchievementsPage() {
                   placeholder="Chọn tên sự kiện"
                   value={createForm.eventName || undefined}
                   onChange={(value) => setCreateForm({ ...createForm, eventName: value })}
-                  loading={isLoadingEventNames}
-                  options={eventNameOptions}
-                  showSearch
-                  filterOption={(input, option) =>
-                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                  }
+                  options={getFilteredEvents('STREAK')}
                 />
               </div>
               <Row gutter={16}>
@@ -1520,6 +1453,80 @@ export default function AchievementsPage() {
               </Row>
             </>
           )}
+          {/* Name */}
+          <div>
+            <Text strong>
+              Tên thành tựu: <span className="text-red-500">*</span>
+            </Text>
+            <Input
+              style={{ marginTop: 8 }}
+              placeholder="VD: Người mới bắt đầu"
+              value={createForm.name}
+              onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <Text strong>
+              Mô tả: <span className="text-red-500">*</span>
+            </Text>
+            <TextArea
+              style={{ marginTop: 8 }}
+              rows={3}
+              placeholder="VD: Hoàn thành buổi học đầu tiên"
+              value={createForm.description}
+              onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+            />
+          </div>
+
+          {/* Icon Upload */}
+          <div>
+            <Text strong>
+              Icon (tải ảnh lên): <span className="text-gray-400">(không bắt buộc)</span>
+            </Text>
+            <Upload
+              maxCount={1}
+              beforeUpload={(file) => {
+                // Kiểm tra loại file
+                const isImage = file.type.startsWith('image/');
+                if (!isImage) {
+                  toast.error('Chỉ được upload file ảnh!');
+                  return Upload.LIST_IGNORE;
+                }
+                // Kiểm tra kích thước (max 5MB)
+                const isLt5M = file.size / 1024 / 1024 < 5;
+                if (!isLt5M) {
+                  toast.error('Ảnh phải nhỏ hơn 5MB!');
+                  return Upload.LIST_IGNORE;
+                }
+                setCreateIconFile(file);
+                return false; // Prevent auto upload
+              }}
+              onRemove={() => {
+                setCreateIconFile(null);
+              }}
+              fileList={
+                createIconFile
+                  ? [
+                      {
+                        uid: '-1',
+                        name: createIconFile.name,
+                        status: 'done',
+                        url: URL.createObjectURL(createIconFile),
+                      },
+                    ]
+                  : []
+              }
+            >
+              <Button icon={<UploadOutlined />} style={{ marginTop: 8 }}>
+                Chọn file ảnh
+              </Button>
+            </Upload>
+            <div className="mt-2 text-xs text-gray-500">
+              💡 Chấp nhận: JPG, PNG, GIF, SVG. Tối đa 5MB
+            </div>
+          </div>
 
           {/* Status */}
           <div className="flex items-center gap-2">
@@ -1674,12 +1681,7 @@ export default function AchievementsPage() {
                   placeholder="Chọn tên sự kiện"
                   value={editForm.eventName || undefined}
                   onChange={(value) => setEditForm({ ...editForm, eventName: value })}
-                  loading={isLoadingEventNames}
-                  options={eventNameOptions}
-                  showSearch
-                  filterOption={(input, option) =>
-                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                  }
+                  options={getFilteredEvents('EVENT_COUNT')}
                 />
               </div>
               <div>
@@ -1707,12 +1709,7 @@ export default function AchievementsPage() {
                   placeholder="Chọn tên sự kiện"
                   value={editForm.eventName || undefined}
                   onChange={(value) => setEditForm({ ...editForm, eventName: value })}
-                  loading={isLoadingEventNames}
-                  options={eventNameOptions}
-                  showSearch
-                  filterOption={(input, option) =>
-                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                  }
+                  options={getFilteredEvents('PROPERTY_CHECK')}
                 />
               </div>
               <div>
@@ -1826,12 +1823,7 @@ export default function AchievementsPage() {
                   placeholder="Chọn tên sự kiện"
                   value={editForm.eventName || undefined}
                   onChange={(value) => setEditForm({ ...editForm, eventName: value })}
-                  loading={isLoadingEventNames}
-                  options={eventNameOptions}
-                  showSearch
-                  filterOption={(input, option) =>
-                    (option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                  }
+                  options={getFilteredEvents('STREAK')}
                 />
               </div>
               <Row gutter={16}>
