@@ -27,6 +27,7 @@ import {
   VideoCameraOutlined,
   ClockCircleOutlined,
 } from '@ant-design/icons';
+import { getAvatarUrl } from '@/utils/avatarUtils';
 import type { ColumnsType } from 'antd/es/table';
 import useRoleGuard from '@/@crema/hooks/useRoleGuard';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
@@ -122,7 +123,7 @@ export default function CourseVerificationPage() {
           status: request.status,
           coachName: createdBy?.fullName || 'Unknown',
           coachEmail: createdBy?.email || '',
-          coachAvatar: createdBy?.profilePicture || '',
+          coachAvatar: getAvatarUrl(createdBy?.profilePicture || undefined),
           totalLessons: lessons.length,
           totalVideos,
           totalQuizzes,
@@ -283,7 +284,7 @@ export default function CourseVerificationPage() {
       width: 200,
       render: (_, record) => (
         <div className="flex items-center gap-2">
-          <Avatar size={32} src={record.coachAvatar} icon={<UserOutlined />} />
+          <Avatar size={32} src={getAvatarUrl(record.coachAvatar)} icon={<UserOutlined />} />
           <div>
             <div className="text-sm font-medium">{record.coachName}</div>
             <div className="text-xs text-gray-500">{record.coachEmail}</div>
@@ -505,7 +506,7 @@ export default function CourseVerificationPage() {
               )}
               <Descriptions.Item label="Huấn luyện viên" span={2}>
                 <div className="flex items-center gap-2">
-                  <Avatar src={selectedVideo.coachAvatar} icon={<UserOutlined />} />
+                  <Avatar src={getAvatarUrl(selectedVideo.coachAvatar)} icon={<UserOutlined />} />
                   <div>
                     <div className="font-medium">{selectedVideo.coachName}</div>
                     <div className="text-sm text-gray-500">{selectedVideo.coachEmail}</div>
